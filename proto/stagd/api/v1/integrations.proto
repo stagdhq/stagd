@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+// IntegrationService connects the services an org's previews use, beside
+// compute and GitHub: Neon for a database branch per preview now; key
+// vaults, secret stores and blob stores for seeding later. Each kind lists
+// its own fields, so clients build their forms from it.
+service IntegrationService {
+  rpc ListIntegrationKinds(ListIntegrationKindsRequest) returns (ListIntegrationKindsResponse);
+  // CreateIntegration checks the values with the service and saves them,
+  // the secret ones encrypted, if they work.
+  rpc CreateIntegration(CreateIntegrationRequest) returns (CreateIntegrationResponse);
+  rpc ListIntegrations(ListIntegrationsRequest) returns (ListIntegrationsResponse);
+  // UpdateIntegration changes settings, and secrets when given again.
+  rpc UpdateIntegration(UpdateIntegrationRequest) returns (UpdateIntegrationResponse);
+  rpc TestIntegration(TestIntegrationRequest) returns (TestIntegrationResponse);
+  // DeleteIntegration forgets it and its credentials; refused while a
+  // preview still has something from it, e.g. a database branch.
+  rpc DeleteIntegration(DeleteIntegrationRequest) returns (DeleteIntegrationResponse);
+}
+
+message IntegrationField {
+  string key = 1;
+  string label = 2;
+  string help = 3;
+  // Encrypted at rest and never returned.
+  bool secret = 4;
+  bool required = 5;
+  // Several lines, e.g. a list.
+  bool multiline = 6;
+}
+
+message IntegrationKind {
+  // e.g. "neon".
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated IntegrationField fields = 4;
+}
+
+enum IntegrationStatus {
+  INTEGRATION_STATUS_UNSPECIFIED = 0;
+  INTEGRATION_STATUS_ACTIVE = 1;
+  INTEGRATION_STATUS_FAILING = 2;
+}
+
+message Integration {
+  string id = 1;
+  string kind = 2;
+  string name = 3;
+  // The non-secret field values.
+  map<string, string> settings = 4;
+  // What the service reported about the account at the last check.
+  string account = 5;
+  IntegrationStatus status = 6;
+  string status_message = 7;
+  // Who connected it, by email.
+  string created_by = 8;
+  google.protobuf.Timestamp create_time = 9;
+  google.protobuf.Timestamp check_time = 10;
+}
+
+message ListIntegrationKindsRequest {}
+
+message ListIntegrationKindsResponse {
+  repeated IntegrationKind kinds = 1;
+}
+
+message CreateIntegrationRequest {
+  string kind = 1 [(buf.validate.field).string.min_len = 1];
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+  }];
+  // Every field the kind lists, by key: secret and not.
+  map<string, string> values = 3;
+}
+
+message CreateIntegrationResponse {
+  Integration integration = 1;
+}
+
+message ListIntegrationsRequest {}
+
+message ListIntegrationsResponse {
+  repeated Integration integrations = 1;
+}
+
+message UpdateIntegrationRequest {
+  // An id or a name.
+  string integration = 1 [(buf.validate.field).string.min_len = 1];
+  // Only the fields to change; a secret not given stays as it was.
+  map<string, string> values = 2;
+}
+
+message UpdateIntegrationResponse {
+  Integration integration = 1;
+}
+
+message TestIntegrationRequest {
+  string integration = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message TestIntegrationResponse {
+  Integration integration = 1;
+}
+
+message DeleteIntegrationRequest {
+  string integration = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteIntegrationResponse {}

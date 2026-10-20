@@ -1,0 +1,5 @@
+.git
+bin
+.task
+.env*
+.DS_Store

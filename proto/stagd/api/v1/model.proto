@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// The public Stagd API. The dashboard, the CLI, CI jobs and coding agents all
+// call these services as the signed-in person, with that person's rights and
+// no more. The org a call acts in comes from the session, never from a
+// request.
+//
+// Nothing in the core model is specific to GitHub: a repository belongs to a
+// code host (GitHub first, others later, or none at all when previews are
+// started from CI or the CLI), and a change request is a GitHub pull request
+// or a GitLab merge request alike.
+
+// User is someone who can sign in.
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string image_url = 4;
+}
+
+// Org is one customer account. It belongs to Stagd and is not the same thing
+// as a GitHub organization: one Stagd org can connect several GitHub
+// accounts, and later other code hosts.
+message Org {
+  string id = 1;
+  // Human name for URLs and the CLI, e.g. "acme".
+  string slug = 2;
+  string name = 3;
+  google.protobuf.Timestamp create_time = 4;
+}
+
+// Membership is a user's place in one org.
+message Membership {
+  Org org = 1;
+  // owner | admin | member
+  string role = 2;
+}
+
+// ScmProvider is the code host a repository lives on.
+enum ScmProvider {
+  SCM_PROVIDER_UNSPECIFIED = 0;
+  SCM_PROVIDER_GITHUB = 1;
+  // Planned.
+  SCM_PROVIDER_GITLAB = 2;
+  // Planned.
+  SCM_PROVIDER_BITBUCKET = 3;
+  // No code host integration: previews are started from CI or the CLI, and
+  // source comes as an uploaded archive or a prebuilt image.
+  SCM_PROVIDER_GENERIC = 4;
+}
+
+// Repository is a repository Stagd can build previews for.
+message Repository {
+  string id = 1;
+  // The connection it was reached through; empty for generic repositories.
+  string connection_id = 2;
+  ScmProvider provider = 3;
+  // "owner/name" on the code host, or a name chosen for a generic repository.
+  string full_name = 4;
+  // The code host's own id for the repository.
+  string external_id = 5;
+  string default_branch = 6;
+  bool private = 7;
+  // Link to the repository on the code host.
+  string url = 8;
+  // Previews are opt-in per repository: until they're enabled, Stagd ignores
+  // its pull requests and never reads its code.
+  bool previews_enabled = 9;
+}
+
+// ChangeRequest is a GitHub pull request or a GitLab merge request.
+message ChangeRequest {
+  int64 number = 1;
+  string title = 2;
+  // The branch with the changes.
+  string head_ref = 3;
+  string head_sha = 4;
+  // The branch it merges into.
+  string base_ref = 5;
+  // The author's login on the code host.
+  string author = 6;
+  string url = 7;
+}

@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+// ActivityService is the org's activity log: who changed what its previews
+// depend on (secrets, compute, integrations, access), and when. It never
+// holds a secret's value.
+service ActivityService {
+  rpc ListActivity(ListActivityRequest) returns (ListActivityResponse);
+}
+
+message Activity {
+  string id = 1;
+  google.protobuf.Timestamp create_time = 2;
+  // Who, by email; empty for Stagd itself.
+  string actor = 3;
+  // How: "web", "cli", "stagd" or "relay".
+  string via = 4;
+  // What happened, "<area>.<what happened>": e.g. "secret.set",
+  // "compute.default_set". The list is in internal/server/store/activity.go.
+  string action = 5;
+  // What it happened to, in words.
+  string target = 6;
+  map<string, string> detail = 7;
+}
+
+message ListActivityRequest {
+  // At most this many, newest first; 50 when unset.
+  int32 page_size = 1 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 500
+  }];
+  // The next_page_token of the page before.
+  string page_token = 2;
+}
+
+message ListActivityResponse {
+  repeated Activity activity = 1;
+  // Empty on the last page.
+  string next_page_token = 2;
+}

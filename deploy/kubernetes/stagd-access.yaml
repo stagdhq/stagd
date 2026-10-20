@@ -1,0 +1,116 @@
+# Stagd's access to a cluster: a service account that can manage its own
+# preview namespaces (stagd-*) and nothing else.
+#
+#   kubectl apply -f stagd-access.yaml
+#   kubectl -n stagd-system get secret stagd -o jsonpath='{.data.token}' | base64 -d
+#
+# Cluster-wide, the account can only handle namespaces and the role binding
+# that gives it rights inside one; the admission policy at the end keeps both
+# to stagd-* namespaces. Inside a preview's namespace it gets stagd-preview,
+# through the role binding it makes there. It can't read anything in other
+# namespaces. Needs Kubernetes 1.30 or newer (ValidatingAdmissionPolicy).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stagd-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: stagd
+  namespace: stagd-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: stagd
+  namespace: stagd-system
+  annotations:
+    kubernetes.io/service-account.name: stagd
+type: kubernetes.io/service-account-token
+---
+# What Stagd does in its own namespaces.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: stagd-preview
+rules:
+  - apiGroups: [""]
+    resources: [services, persistentvolumeclaims, secrets, configmaps]
+    verbs: [get, list, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [pods, pods/log]
+    verbs: [get, list]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, create, update, patch, delete]
+  - apiGroups: [apps]
+    resources: [deployments/scale]
+    verbs: [get, update, patch]
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [get, list, create, update, patch, delete]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [get, list, create, update, patch, delete]
+---
+# Cluster-wide: namespaces, and binding stagd-preview inside one.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: stagd
+rules:
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: [get, list, create, update, patch, delete]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [rolebindings]
+    verbs: [get, create, update, patch]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterroles]
+    verbs: [bind]
+    resourceNames: [stagd-preview]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: stagd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: stagd
+subjects:
+  - kind: ServiceAccount
+    name: stagd
+    namespace: stagd-system
+---
+# Every change the account makes stays in stagd-* namespaces.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: stagd-namespaces
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources: ["*/*"]
+        operations: [CREATE, UPDATE, DELETE]
+  matchConditions:
+    - name: stagd
+      expression: request.userInfo.username == 'system:serviceaccount:stagd-system:stagd'
+  variables:
+    - name: target
+      expression: "request.namespace != '' ? request.namespace : (request.resource.resource == 'namespaces' ? request.name : '')"
+  validations:
+    - expression: variables.target.startsWith('stagd-') && variables.target != 'stagd-system'
+      message: Stagd only manages stagd-* namespaces.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: stagd-namespaces
+spec:
+  policyName: stagd-namespaces
+  validationActions: [Deny]

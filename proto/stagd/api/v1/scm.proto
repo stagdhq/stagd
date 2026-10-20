@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/model.proto";
+
+// ScmService connects code hosts to the active org and lists the
+// repositories they give Stagd access to.
+//
+// Connecting works the same way from the dashboard and the CLI:
+//
+//  1. StartConnect returns a link to the code host (for GitHub, the Stagd
+//     GitHub App's install page) and a `state` tied to this org.
+//  2. The person opens the link and picks repositories. The code host sends
+//     them back to Stagd, which checks `state` and links the installation to
+//     the org.
+//  3. The client calls GetConnectStatus with `state` until it is CONNECTED.
+service ScmService {
+  // StartConnect begins connecting a code host account to the active org.
+  rpc StartConnect(StartConnectRequest) returns (StartConnectResponse);
+  // GetConnectStatus reports how a connect started by StartConnect is going.
+  rpc GetConnectStatus(GetConnectStatusRequest) returns (GetConnectStatusResponse);
+  // ListConnections lists the code host accounts connected to the active org.
+  rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse);
+  // DeleteConnection disconnects a code host account. Its repositories stop
+  // getting previews; running previews are torn down.
+  rpc DeleteConnection(DeleteConnectionRequest) returns (DeleteConnectionResponse);
+  // ListRepositories lists the repositories the active org can preview.
+  rpc ListRepositories(ListRepositoriesRequest) returns (ListRepositoriesResponse);
+  // SetPreviewsEnabled turns previews on or off for a repository. Turning
+  // them off tears down its running previews.
+  rpc SetPreviewsEnabled(SetPreviewsEnabledRequest) returns (SetPreviewsEnabledResponse);
+}
+
+enum ConnectionStatus {
+  CONNECTION_STATUS_UNSPECIFIED = 0;
+  CONNECTION_STATUS_ACTIVE = 1;
+  // The code host suspended the installation; webhooks stop arriving.
+  CONNECTION_STATUS_SUSPENDED = 2;
+  // Uninstalled on the code host's side.
+  CONNECTION_STATUS_REMOVED = 3;
+}
+
+// Connection is one code host account linked to an org: for GitHub, one
+// installation of the Stagd GitHub App on a user or organization.
+message Connection {
+  string id = 1;
+  ScmProvider provider = 2;
+  // The account's login on the code host, e.g. "acme-inc".
+  string account = 3;
+  // The code host's id for the link: the GitHub App installation id.
+  string external_id = 4;
+  ConnectionStatus status = 5;
+  // Who connected it.
+  User created_by = 6;
+  google.protobuf.Timestamp create_time = 7;
+}
+
+message StartConnectRequest {
+  ScmProvider provider = 1 [(buf.validate.field).enum = {
+    in: [1]
+  }];
+}
+
+message StartConnectResponse {
+  // Where to send the person: the code host's install or consent page.
+  string url = 1;
+  // Opaque; pass to GetConnectStatus.
+  string state = 2;
+  google.protobuf.Timestamp expire_time = 3;
+}
+
+enum ConnectStatus {
+  CONNECT_STATUS_UNSPECIFIED = 0;
+  // Waiting for the person to finish on the code host.
+  CONNECT_STATUS_PENDING = 1;
+  CONNECT_STATUS_CONNECTED = 2;
+  CONNECT_STATUS_FAILED = 3;
+  CONNECT_STATUS_EXPIRED = 4;
+}
+
+message GetConnectStatusRequest {
+  string state = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetConnectStatusResponse {
+  ConnectStatus status = 1;
+  // Set when CONNECTED.
+  Connection connection = 2;
+  // Set when FAILED, in words a person can act on.
+  string error = 3;
+}
+
+message ListConnectionsRequest {}
+
+message ListConnectionsResponse {
+  repeated Connection connections = 1;
+}
+
+message DeleteConnectionRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteConnectionResponse {}
+
+message ListRepositoriesRequest {
+  // Only this connection's repositories; all of them when empty.
+  string connection_id = 1;
+}
+
+message ListRepositoriesResponse {
+  repeated Repository repositories = 1;
+}
+
+message SetPreviewsEnabledRequest {
+  // A repository id or "owner/name".
+  string repository = 1 [(buf.validate.field).string.min_len = 1];
+  bool enabled = 2;
+}
+
+message SetPreviewsEnabledResponse {
+  Repository repository = 1;
+  // Previews torn down because previews were turned off.
+  int32 destroyed = 2;
+}

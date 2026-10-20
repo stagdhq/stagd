@@ -1,0 +1,53 @@
+# The relay: connects the cluster to Stagd from the inside, so neither the
+# API server nor an ingress needs to be reachable. Apply stagd-access.yaml
+# first (the relay runs as its service account), then make the secret with
+# the URL of your Stagd and the compute connection's relay token:
+#
+#   kubectl -n stagd-system create secret generic stagd-relay \
+#     --from-literal=url=https://stagd.example.com --from-literal=token=stagd_relay....
+#   kubectl apply -f stagd-relay.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stagd-relay
+  namespace: stagd-system
+  labels:
+    app.kubernetes.io/name: stagd-relay
+spec:
+  # One relay per connection: a second one would take over from the first.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stagd-relay
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: stagd-relay
+    spec:
+      serviceAccountName: stagd
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: relay
+          image: ghcr.io/stagdhq/stagd:latest
+          args: [relay, --log-format=json]
+          env:
+            - name: STAGD_URL
+              valueFrom:
+                secretKeyRef: {name: stagd-relay, key: url}
+            - name: STAGD_RELAY_TOKEN
+              valueFrom:
+                secretKeyRef: {name: stagd-relay, key: token}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {memory: 256Mi}

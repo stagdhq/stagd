@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "stagd/api/v1/model.proto";
+
+// AuthService tells callers who they are.
+//
+// Signing in is not part of this service. Browsers sign in at /auth (GitHub,
+// and other providers later), and the CLI signs in with device login
+// (RFC 8628) at /auth/device/code and /auth/device/token. Both give a session
+// token, sent to this API as `Authorization: Bearer <token>`.
+service AuthService {
+  // GetMe returns the signed-in user, the org this session acts in, and
+  // every org they belong to. Works before the user has any org.
+  rpc GetMe(GetMeRequest) returns (GetMeResponse);
+}
+
+message GetMeRequest {}
+
+message GetMeResponse {
+  User user = 1;
+  // The org this session acts in; unset when the user has no org yet.
+  Membership active = 2;
+  repeated Membership memberships = 3;
+}

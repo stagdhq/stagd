@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "buf/validate/validate.proto";
+import "stagd/api/v1/model.proto";
+
+// OrgService creates orgs and moves between them. Every other service acts in
+// the session's active org.
+service OrgService {
+  // CreateOrg creates an org with the caller as its owner and makes it the
+  // session's active org.
+  rpc CreateOrg(CreateOrgRequest) returns (CreateOrgResponse);
+  // ListOrgs lists the orgs the caller belongs to.
+  rpc ListOrgs(ListOrgsRequest) returns (ListOrgsResponse);
+  // SwitchOrg makes another of the caller's orgs the active one for this
+  // session.
+  rpc SwitchOrg(SwitchOrgRequest) returns (SwitchOrgResponse);
+  // ListMembers lists the people in the active org.
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+}
+
+message CreateOrgRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+  // Lower-case letters, digits and dashes, e.g. "acme". Must be free.
+  string slug = 2 [(buf.validate.field).string = {
+    min_len: 2
+    max_len: 39
+    pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+  }];
+}
+
+message CreateOrgResponse {
+  Membership membership = 1;
+}
+
+message ListOrgsRequest {}
+
+message ListOrgsResponse {
+  // The session's active org; unset when the caller has none.
+  string active_org_id = 1;
+  repeated Membership memberships = 2;
+}
+
+message SwitchOrgRequest {
+  // A slug of an org the caller belongs to.
+  string slug = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message SwitchOrgResponse {
+  Membership active = 1;
+}
+
+message ListMembersRequest {}
+
+message Member {
+  User user = 1;
+  string role = 2;
+}
+
+message ListMembersResponse {
+  repeated Member members = 1;
+}

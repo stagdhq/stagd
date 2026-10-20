@@ -1,0 +1,61 @@
+# Tasks for the stagd CLI and relay. Task is pinned in go.mod, so `go tool
+# task <name>` works with nothing but Go installed. `go tool task --list`
+# shows them all.
+version: "3"
+
+vars:
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo dev
+  LDFLAGS: -s -w -X main.version={{.VERSION}}
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+  build:
+    desc: Build bin/stagd
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o bin/stagd ./cmd/stagd
+
+  generate:
+    desc: Regenerate internal/gen from proto/ (needs buf)
+    sources:
+      - proto/**/*.proto
+      - buf.yaml
+      - buf.gen.yaml
+    cmds:
+      - buf generate
+
+  lint:
+    desc: Lint and format-check the protos
+    cmds:
+      - buf lint
+      - buf format -d --exit-code
+
+  fmt:
+    desc: Format Go and the protos
+    cmds:
+      - gofmt -w cmd internal
+      - buf format -w
+
+  test:
+    desc: Run the tests
+    cmds:
+      - go test ./...
+
+  check:
+    desc: "What CI runs: protos, formatting, vet, tests"
+    deps: [lint]
+    cmds:
+      - cmd: |
+          unformatted=$(gofmt -l cmd internal)
+          if [ -n "$unformatted" ]; then echo "$unformatted"; echo "run: task fmt"; exit 1; fi
+      - go vet ./...
+      - go test ./...
+
+  image:
+    desc: "Build the stagd image for this machine, as stagd:local (CI publishes ghcr.io/stagdhq/stagd)"
+    cmds:
+      - docker buildx build --load --build-arg VERSION={{.VERSION}} -t stagd:local .

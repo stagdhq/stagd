@@ -1,0 +1,383 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/model.proto";
+
+// PreviewService starts, watches and tears down preview environments.
+//
+// A webhook from a code host and a call to CreatePreview take the same path:
+// a pull request opening on GitHub is just one more way to start a preview.
+// That is what lets teams without a connected code host start previews from
+// CI or the CLI.
+service PreviewService {
+  // CreatePreview starts a preview, or updates the existing one for the same
+  // change request or branch to the new commit.
+  rpc CreatePreview(CreatePreviewRequest) returns (CreatePreviewResponse);
+  rpc GetPreview(GetPreviewRequest) returns (GetPreviewResponse);
+  rpc ListPreviews(ListPreviewsRequest) returns (ListPreviewsResponse);
+  // WatchPreview streams the preview's state until it is live, failed or
+  // destroyed, starting with its current state.
+  rpc WatchPreview(WatchPreviewRequest) returns (stream WatchPreviewResponse);
+  // ListPreviewEvents returns what happened to a preview, oldest first.
+  rpc ListPreviewEvents(ListPreviewEventsRequest) returns (ListPreviewEventsResponse);
+  // WakePreview starts a sleeping preview again.
+  rpc WakePreview(WakePreviewRequest) returns (WakePreviewResponse);
+  // DestroyPreview tears a preview down now.
+  rpc DestroyPreview(DestroyPreviewRequest) returns (DestroyPreviewResponse);
+  // GetPreviewPolicy returns who may open previews and how their URLs look:
+  // the org's default, or a repository's (its own, or the default it inherits).
+  rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse);
+  // UpdatePreviewPolicy sets the org's default, or a repository's override.
+  // Access applies to existing previews on their next deploy; URL style only
+  // to new previews, so links already shared keep working.
+  rpc UpdatePreviewPolicy(UpdatePreviewPolicyRequest) returns (UpdatePreviewPolicyResponse);
+  // ValidateApp checks a repository's stagd.yaml and compose file exactly as
+  // previews read them, without starting anything (stagd validate). The
+  // client sends the files it has; when stagd.yaml points at another file,
+  // the response asks for it in `requested`, and the client calls again.
+  rpc ValidateApp(ValidateAppRequest) returns (ValidateAppResponse);
+  // ListMail lists the mail a preview captured, newest first. Only for
+  // previews with mail capture on (stagd.yaml `services: { mail: {} }`) and
+  // running: a sleeping preview keeps its mail, but has to wake to show it.
+  rpc ListMail(ListMailRequest) returns (ListMailResponse);
+  // GetMail returns one captured message with its text, HTML and headers.
+  rpc GetMail(GetMailRequest) returns (GetMailResponse);
+  // ClearMail deletes everything a preview captured.
+  rpc ClearMail(ClearMailRequest) returns (ClearMailResponse);
+}
+
+// Who may open a preview.
+enum PreviewAccess {
+  PREVIEW_ACCESS_UNSPECIFIED = 0;
+  // Members of the org, signed in to Stagd. Opt-in.
+  PREVIEW_ACCESS_ORG = 1;
+  // Anyone with the link. The default.
+  PREVIEW_ACCESS_PUBLIC = 2;
+}
+
+// PreviewPolicy is who may open previews and how their URLs look.
+message PreviewPolicy {
+  // A repository id or "owner/name"; empty for the org's default.
+  string repository = 1;
+  PreviewAccess access = 2;
+  // Ingresses anyone can reach even when access is ORG, e.g. "api" for a
+  // third-party webhook. Matched by ingress name.
+  repeated string public_ingresses = 3;
+  // Add a random token to every new preview's host, e.g.
+  // pr-42-web-acme-k3x9q2m7wd. Makes URLs hard to guess; it doesn't replace
+  // access control, since links get shared.
+  bool unguessable_urls = 4;
+}
+
+// PreviewStatus follows the environment's state machine:
+// queued → provisioning → building → deploying → live → sleeping → destroyed.
+enum PreviewStatus {
+  PREVIEW_STATUS_UNSPECIFIED = 0;
+  PREVIEW_STATUS_QUEUED = 1;
+  // Restoring data: a volume snapshot or a Neon branch.
+  PREVIEW_STATUS_PROVISIONING = 2;
+  PREVIEW_STATUS_BUILDING = 3;
+  PREVIEW_STATUS_DEPLOYING = 4;
+  PREVIEW_STATUS_LIVE = 5;
+  // Idle; the preview URL wakes it.
+  PREVIEW_STATUS_SLEEPING = 6;
+  PREVIEW_STATUS_FAILED = 7;
+  PREVIEW_STATUS_DESTROYED = 8;
+}
+
+// What started a preview.
+enum PreviewTrigger {
+  PREVIEW_TRIGGER_UNSPECIFIED = 0;
+  // A code host event: a pull request opened or pushed to.
+  PREVIEW_TRIGGER_WEBHOOK = 1;
+  // CreatePreview, from the dashboard, the CLI, CI or an agent.
+  PREVIEW_TRIGGER_API = 2;
+  // A /stagd command in a pull request comment.
+  PREVIEW_TRIGGER_COMMENT = 3;
+}
+
+// One part of the app: a service from the compose file.
+message PreviewComponent {
+  // The service name, e.g. "web", "api", "db".
+  string name = 1;
+  ComponentPhase phase = 2;
+  // What it's doing or why it failed, e.g. "building (2/3)".
+  string message = 3;
+}
+
+enum ComponentPhase {
+  COMPONENT_PHASE_UNSPECIFIED = 0;
+  COMPONENT_PHASE_PENDING = 1;
+  COMPONENT_PHASE_BUILDING = 2;
+  // Built, or nothing to build (a prebuilt or unchanged image).
+  COMPONENT_PHASE_BUILT = 3;
+  COMPONENT_PHASE_STARTING = 4;
+  COMPONENT_PHASE_RUNNING = 5;
+  COMPONENT_PHASE_FAILED = 6;
+}
+
+// A public URL into the preview. Every ingress is one DNS label under
+// stagd.dev: the primary one is https://<host>.stagd.dev, the others
+// https://<ingress>--<host>.stagd.dev.
+message PreviewIngress {
+  // Lower-case letters, digits and dashes, e.g. "web", "api", "admin".
+  string name = 1;
+  // The component it routes to, and its port.
+  string component = 2;
+  int32 port = 3;
+  string url = 4;
+  // The preview's main link, the one on the pull request.
+  bool primary = 5;
+  // Only org members, signed in to Stagd, can open it.
+  bool protected = 6;
+  // Set on ingresses Stagd adds for its own services: "mail" is the captured
+  // mail's inbox. They're always protected.
+  string builtin = 7;
+}
+
+// Where a preview's code comes from.
+message PreviewSource {
+  oneof kind {
+    option (buf.validate.oneof).required = true;
+    // A pull or merge request on the repository's code host.
+    int64 change_number = 1 [(buf.validate.field).int64.gt = 0];
+    // A branch. With `sha` set, that commit; else the branch's head on the
+    // code host.
+    string branch = 2 [(buf.validate.field).string.min_len = 1];
+  }
+  // Pin a commit. Required for generic repositories, where Stagd can't ask a
+  // code host for the branch head.
+  string sha = 3 [(buf.validate.field).string = {pattern: "^([0-9a-f]{7,40})?$"}];
+}
+
+// Preview is one preview environment.
+message Preview {
+  string id = 1;
+  Repository repository = 2;
+  // Set when the preview is for a change request.
+  ChangeRequest change = 3;
+  // The branch it runs.
+  string branch = 4;
+  // The commit it runs (or is building).
+  string sha = 5;
+  PreviewStatus status = 6;
+  // Why it failed, in words a person can act on; set when FAILED.
+  string error = 7;
+  // The primary ingress's stable URL, e.g. https://pr-42-web-acme.stagd.dev.
+  // Every ingress URL wakes the preview if it's asleep.
+  string url = 8;
+  PreviewTrigger trigger = 9;
+  // Who started it: the change request's author, or the API caller.
+  string started_by = 10;
+  google.protobuf.Timestamp create_time = 11;
+  google.protobuf.Timestamp update_time = 12;
+  // When it will be torn down if nothing happens before.
+  google.protobuf.Timestamp expire_time = 13;
+  // Every public URL, the primary one first.
+  repeated PreviewIngress ingresses = 14;
+  // The app's parts and what each is doing.
+  repeated PreviewComponent components = 15;
+  // Who may open it; individual ingresses may be public (see ingresses).
+  PreviewAccess access = 16;
+}
+
+message CreatePreviewRequest {
+  // A repository id, or its "owner/name".
+  string repository = 1 [(buf.validate.field).string.min_len = 1];
+  PreviewSource source = 2 [(buf.validate.field).required = true];
+}
+
+message CreatePreviewResponse {
+  Preview preview = 1;
+}
+
+message GetPreviewRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetPreviewResponse {
+  Preview preview = 1;
+}
+
+message ListPreviewsRequest {
+  // A repository id or "owner/name"; all repositories when empty.
+  string repository = 1;
+  // Only previews in these states; all but DESTROYED when empty.
+  repeated PreviewStatus statuses = 2;
+  int32 page_size = 3 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 200
+  }];
+  string page_token = 4;
+}
+
+message ListPreviewsResponse {
+  repeated Preview previews = 1;
+  string next_page_token = 2;
+}
+
+message WatchPreviewRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message WatchPreviewResponse {
+  Preview preview = 1;
+  // A log line or step that explains the change, e.g. "api: building (2/3)".
+  string message = 2;
+  // The component the message is about; empty when it's about the whole preview.
+  string component = 3;
+}
+
+message WakePreviewRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message WakePreviewResponse {
+  Preview preview = 1;
+}
+
+message DestroyPreviewRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DestroyPreviewResponse {
+  Preview preview = 1;
+}
+
+message GetPreviewPolicyRequest {
+  // A repository id or "owner/name"; empty for the org's default.
+  string repository = 1;
+}
+
+message GetPreviewPolicyResponse {
+  PreviewPolicy policy = 1;
+  // For a repository: true when it has no override and follows the org's default.
+  bool inherited = 2;
+}
+
+message UpdatePreviewPolicyRequest {
+  PreviewPolicy policy = 1 [(buf.validate.field).required = true];
+  // With a repository: drop its override, so it follows the org's default again.
+  bool reset = 2;
+}
+
+message UpdatePreviewPolicyResponse {
+  PreviewPolicy policy = 1;
+  bool inherited = 2;
+}
+
+message ValidateAppRequest {
+  // Root-relative path → contents, e.g. "stagd.yaml", "deploy/compose.yaml".
+  map<string, string> files = 1 [(buf.validate.field).map = {
+    max_pairs: 16
+    values: {
+      string: {max_bytes: 1048576}
+    }
+  }];
+  // Paths the client looked for and didn't find.
+  repeated string absent = 2 [(buf.validate.field).repeated.max_items = 32];
+}
+
+// One component as a preview would run it.
+message AppComponent {
+  string name = 1;
+  // Built from this context, or
+  string build_context = 2;
+  // pulled as this image.
+  string image = 3;
+}
+
+message ValidateAppResponse {
+  // Files the server needs to answer and the client didn't send or rule out;
+  // send them (or list them as absent) and call again.
+  repeated string requested = 1;
+  // The files the answer comes from, e.g. ["stagd.yaml", "deploy/compose.yaml"].
+  repeated string files = 2;
+  // Empty when previews would start; each says what to fix.
+  repeated string problems = 3;
+  // What a preview leaves out on purpose, e.g. bind mounts.
+  repeated string notes = 4;
+  repeated AppComponent components = 5;
+  // Ingress names, components and ports; URLs come with a real preview.
+  repeated PreviewIngress ingresses = 6;
+}
+
+message ListPreviewEventsRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message PreviewEvent {
+  google.protobuf.Timestamp time = 1;
+  PreviewStatus status = 2;
+  // The component it's about; empty for the whole preview.
+  string component = 3;
+  string message = 4;
+}
+
+message ListPreviewEventsResponse {
+  repeated PreviewEvent events = 1;
+}
+
+message ListMailRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  // At most this many, newest first; 0 means 50.
+  int32 limit = 2 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 500
+  }];
+}
+
+message MailAddress {
+  string name = 1;
+  string address = 2;
+}
+
+// A captured message, without its body.
+message MailSummary {
+  string id = 1;
+  MailAddress from = 2;
+  repeated MailAddress to = 3;
+  string subject = 4;
+  // The start of the text, for lists.
+  string snippet = 5;
+  google.protobuf.Timestamp receive_time = 6;
+  int64 size_bytes = 7;
+}
+
+message ListMailResponse {
+  repeated MailSummary messages = 1;
+  // How many the preview captured in all; `messages` may stop at `limit`.
+  int32 total = 2;
+}
+
+message GetMailRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  string id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message MailHeader {
+  string name = 1;
+  string value = 2;
+}
+
+message MailMessage {
+  MailSummary summary = 1;
+  repeated MailAddress cc = 2;
+  string text = 3;
+  // As the app sent it. Show it sandboxed: it's the preview's content.
+  string html = 4;
+  repeated MailHeader headers = 5;
+}
+
+message GetMailResponse {
+  MailMessage message = 1;
+}
+
+message ClearMailRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message ClearMailResponse {}

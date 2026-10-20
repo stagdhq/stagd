@@ -1,0 +1,168 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/model.proto";
+
+// ComputeService connects the compute that previews run on to the active
+// org. Previews run on the customer's own compute; Stagd only orchestrates.
+//
+// Compute is pluggable: every provider (Namespace first, then Fly.io, Azure
+// Container Apps, Kubernetes, Unikraft Cloud, and later Stagd-managed
+// compute) sits behind the same interface. ListProviders describes each
+// provider's credential and setting fields, so clients build their connect
+// forms from it instead of knowing providers themselves.
+service ComputeService {
+  // ListProviders lists the compute providers this Stagd server supports.
+  rpc ListProviders(ListProvidersRequest) returns (ListProvidersResponse);
+  // CreateConnection checks the credentials with the provider and, if they
+  // work, saves them (encrypted) as a connection of the active org.
+  rpc CreateComputeConnection(CreateComputeConnectionRequest) returns (CreateComputeConnectionResponse);
+  rpc ListComputeConnections(ListComputeConnectionsRequest) returns (ListComputeConnectionsResponse);
+  // TestConnection checks a saved connection's credentials again.
+  rpc TestComputeConnection(TestComputeConnectionRequest) returns (TestComputeConnectionResponse);
+  // SetDefaultConnection makes a connection the one new previews run on.
+  rpc SetDefaultComputeConnection(SetDefaultComputeConnectionRequest) returns (SetDefaultComputeConnectionResponse);
+  // DeleteConnection forgets a connection and its credentials.
+  rpc DeleteComputeConnection(DeleteComputeConnectionRequest) returns (DeleteComputeConnectionResponse);
+}
+
+enum ComputeProvider {
+  COMPUTE_PROVIDER_UNSPECIFIED = 0;
+  // A stand-in that runs nothing; local development and tests only.
+  COMPUTE_PROVIDER_FAKE = 1;
+  COMPUTE_PROVIDER_NAMESPACE = 2;
+  // Planned.
+  COMPUTE_PROVIDER_FLY = 3;
+  // Planned.
+  COMPUTE_PROVIDER_AZURE_CONTAINER_APPS = 4;
+  // Any cluster, directly or through stagd relay.
+  COMPUTE_PROVIDER_KUBERNETES = 5;
+  // Planned.
+  COMPUTE_PROVIDER_UNIKRAFT = 6;
+  // A Docker host, through stagd relay.
+  COMPUTE_PROVIDER_DOCKER = 7;
+}
+
+// ComputeCapabilities says what a provider can do. Stagd works around what it
+// can't: without sleep, a sleeping preview is destroyed and recreated on wake;
+// without volume snapshots, data is seeded on every create.
+message ComputeCapabilities {
+  // Instances can be stopped and resumed.
+  bool sleep = 1;
+  // A volume can be snapshotted once and restored into new instances.
+  bool volume_snapshots = 2;
+  // Where instances can run, e.g. "eu", "us".
+  repeated string regions = 3;
+  // The longest an instance can live; unset when there is no limit.
+  google.protobuf.Duration max_lifetime = 4;
+}
+
+// ProviderField is one value a provider needs to connect, e.g. an API token
+// or a region.
+message ProviderField {
+  string key = 1;
+  string label = 2;
+  // How to get or choose the value.
+  string help = 3;
+  // Secret values are encrypted at rest and never returned by the API.
+  bool secret = 4;
+  bool required = 5;
+  // When set, the value must be one of these.
+  repeated string choices = 6;
+}
+
+message ProviderInfo {
+  ComputeProvider provider = 1;
+  string name = 2;
+  string description = 3;
+  repeated ProviderField fields = 4;
+  ComputeCapabilities capabilities = 5;
+}
+
+enum ComputeConnectionStatus {
+  COMPUTE_CONNECTION_STATUS_UNSPECIFIED = 0;
+  // The last check worked.
+  COMPUTE_CONNECTION_STATUS_ACTIVE = 1;
+  // The last check failed; see status_message.
+  COMPUTE_CONNECTION_STATUS_FAILING = 2;
+}
+
+// ComputeConnection is one compute account linked to an org.
+message ComputeConnection {
+  string id = 1;
+  ComputeProvider provider = 2;
+  // A name chosen by the org, e.g. "namespace-eu". Unique in the org.
+  string name = 3;
+  // The non-secret field values, e.g. {"region": "eu"}.
+  map<string, string> settings = 4;
+  // What the provider reported about the account when last checked, e.g.
+  // the workspace name.
+  string account = 5;
+  ComputeConnectionStatus status = 6;
+  string status_message = 7;
+  ComputeCapabilities capabilities = 8;
+  // New previews run on the default connection.
+  bool default = 9;
+  User created_by = 10;
+  google.protobuf.Timestamp create_time = 11;
+  google.protobuf.Timestamp check_time = 12;
+}
+
+message ListProvidersRequest {}
+
+message ListProvidersResponse {
+  repeated ProviderInfo providers = 1;
+}
+
+message CreateComputeConnectionRequest {
+  ComputeProvider provider = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+  }];
+  // Every field the provider lists, by key: secret and non-secret alike.
+  map<string, string> values = 3;
+}
+
+message CreateComputeConnectionResponse {
+  ComputeConnection connection = 1;
+  // For a connection through `stagd relay`: the token the relay connects
+  // with. Only ever shown here; Stagd keeps a hash.
+  string relay_token = 2;
+}
+
+message ListComputeConnectionsRequest {}
+
+message ListComputeConnectionsResponse {
+  repeated ComputeConnection connections = 1;
+}
+
+message TestComputeConnectionRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message TestComputeConnectionResponse {
+  ComputeConnection connection = 1;
+}
+
+message SetDefaultComputeConnectionRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message SetDefaultComputeConnectionResponse {
+  ComputeConnection connection = 1;
+}
+
+message DeleteComputeConnectionRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteComputeConnectionResponse {}

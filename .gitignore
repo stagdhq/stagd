@@ -1,0 +1,5 @@
+.DS_Store
+/bin/
+/.task/
+/.env.local
+/.claude/settings.local.json

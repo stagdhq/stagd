@@ -1,0 +1,19 @@
+# Go for the stagd.api.v1 protos in proto/, into internal/gen. Run
+# `task generate`; never edit generated code by hand.
+version: v2
+clean: true
+managed:
+  enabled: true
+  disable:
+    # Use protovalidate's published Go package instead of generating our own copy.
+    - module: buf.build/bufbuild/protovalidate
+  override:
+    - file_option: go_package_prefix
+      value: stagd.dev/stagd/internal/gen
+plugins:
+  - local: ["go", "tool", "protoc-gen-go"]
+    out: internal/gen
+    opt: paths=source_relative
+  - local: ["go", "tool", "protoc-gen-connect-go"]
+    out: internal/gen
+    opt: paths=source_relative
