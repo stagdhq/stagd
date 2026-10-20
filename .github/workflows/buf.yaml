@@ -1,0 +1,32 @@
+# The stagd.api.v1 contract: linted and format-checked on every push and pull
+# request, checked against what's published for breaking changes, and pushed
+# to buf.build/stagdhq/stagd from main (labelled main, and with each v* tag).
+#
+# Needs secrets.BUF_TOKEN: a Buf token that can push to the stagdhq org.
+name: Buf
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths: ['proto/**', 'buf.yaml', 'buf.lock', '.github/workflows/buf.yaml']
+  pull_request:
+    paths: ['proto/**', 'buf.yaml', 'buf.lock', '.github/workflows/buf.yaml']
+  delete: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  buf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: bufbuild/buf-action@v1
+        with:
+          token: ${{ secrets.BUF_TOKEN }}
+          # Breaking changes are against the published main.
+          breaking_against: buf.build/stagdhq/stagd:main
