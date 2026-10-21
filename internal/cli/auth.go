@@ -18,7 +18,7 @@ import (
 var store = auth.Store{}
 
 func authClient(cmd *cli.Command) *auth.Client {
-	return &auth.Client{BaseURL: cmd.String("api-url"), HTTP: &http.Client{Timeout: 30 * time.Second}}
+	return &auth.Client{BaseURL: cmd.String("api-url"), HTTP: &http.Client{Timeout: 30 * time.Second}, Version: cmd.Root().Version}
 }
 
 // token returns --token / STAGD_TOKEN if set, else the one stored by `stagd login`.

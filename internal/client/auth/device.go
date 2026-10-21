@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -44,6 +46,9 @@ type tokenResponse struct {
 type Client struct {
 	BaseURL string
 	HTTP    *http.Client
+
+	// Version is the CLI's, shown on the page where the person approves the sign-in.
+	Version string
 }
 
 func (c *Client) post(ctx context.Context, path string, body any, out any) (int, error) {
@@ -79,7 +84,16 @@ func (c *Client) Start(ctx context.Context) (*DeviceCode, error) {
 		tokenResponse
 	}
 
-	status, err := c.post(ctx, "/auth/device/code", map[string]string{"client_id": ClientID}, &res)
+	// What the person approving sees, so they can tell it's their terminal.
+	host, _ := os.Hostname()
+	body := map[string]string{
+		"client_id":       ClientID,
+		"client_version":  c.Version,
+		"client_platform": runtime.GOOS + "/" + runtime.GOARCH,
+		"device_name":     host,
+	}
+
+	status, err := c.post(ctx, "/auth/device/code", body, &res)
 	if err != nil {
 		return nil, err
 	}
