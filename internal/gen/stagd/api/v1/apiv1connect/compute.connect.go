@@ -45,6 +45,9 @@ const (
 	// ComputeServiceTestComputeConnectionProcedure is the fully-qualified name of the ComputeService's
 	// TestComputeConnection RPC.
 	ComputeServiceTestComputeConnectionProcedure = "/stagd.api.v1.ComputeService/TestComputeConnection"
+	// ComputeServiceUpdateComputeConnectionProcedure is the fully-qualified name of the
+	// ComputeService's UpdateComputeConnection RPC.
+	ComputeServiceUpdateComputeConnectionProcedure = "/stagd.api.v1.ComputeService/UpdateComputeConnection"
 	// ComputeServiceSetDefaultComputeConnectionProcedure is the fully-qualified name of the
 	// ComputeService's SetDefaultComputeConnection RPC.
 	ComputeServiceSetDefaultComputeConnectionProcedure = "/stagd.api.v1.ComputeService/SetDefaultComputeConnection"
@@ -63,6 +66,10 @@ type ComputeServiceClient interface {
 	ListComputeConnections(context.Context, *connect.Request[v1.ListComputeConnectionsRequest]) (*connect.Response[v1.ListComputeConnectionsResponse], error)
 	// TestConnection checks a saved connection's credentials again.
 	TestComputeConnection(context.Context, *connect.Request[v1.TestComputeConnectionRequest]) (*connect.Response[v1.TestComputeConnectionResponse], error)
+	// UpdateConnection changes a connection's fields, e.g. a new token, and
+	// checks the result with the provider before saving it. A secret not given
+	// stays as it was.
+	UpdateComputeConnection(context.Context, *connect.Request[v1.UpdateComputeConnectionRequest]) (*connect.Response[v1.UpdateComputeConnectionResponse], error)
 	// SetDefaultConnection makes a connection the one new previews run on.
 	SetDefaultComputeConnection(context.Context, *connect.Request[v1.SetDefaultComputeConnectionRequest]) (*connect.Response[v1.SetDefaultComputeConnectionResponse], error)
 	// DeleteConnection forgets a connection and its credentials.
@@ -104,6 +111,12 @@ func NewComputeServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(computeServiceMethods.ByName("TestComputeConnection")),
 			connect.WithClientOptions(opts...),
 		),
+		updateComputeConnection: connect.NewClient[v1.UpdateComputeConnectionRequest, v1.UpdateComputeConnectionResponse](
+			httpClient,
+			baseURL+ComputeServiceUpdateComputeConnectionProcedure,
+			connect.WithSchema(computeServiceMethods.ByName("UpdateComputeConnection")),
+			connect.WithClientOptions(opts...),
+		),
 		setDefaultComputeConnection: connect.NewClient[v1.SetDefaultComputeConnectionRequest, v1.SetDefaultComputeConnectionResponse](
 			httpClient,
 			baseURL+ComputeServiceSetDefaultComputeConnectionProcedure,
@@ -125,6 +138,7 @@ type computeServiceClient struct {
 	createComputeConnection     *connect.Client[v1.CreateComputeConnectionRequest, v1.CreateComputeConnectionResponse]
 	listComputeConnections      *connect.Client[v1.ListComputeConnectionsRequest, v1.ListComputeConnectionsResponse]
 	testComputeConnection       *connect.Client[v1.TestComputeConnectionRequest, v1.TestComputeConnectionResponse]
+	updateComputeConnection     *connect.Client[v1.UpdateComputeConnectionRequest, v1.UpdateComputeConnectionResponse]
 	setDefaultComputeConnection *connect.Client[v1.SetDefaultComputeConnectionRequest, v1.SetDefaultComputeConnectionResponse]
 	deleteComputeConnection     *connect.Client[v1.DeleteComputeConnectionRequest, v1.DeleteComputeConnectionResponse]
 }
@@ -149,6 +163,11 @@ func (c *computeServiceClient) TestComputeConnection(ctx context.Context, req *c
 	return c.testComputeConnection.CallUnary(ctx, req)
 }
 
+// UpdateComputeConnection calls stagd.api.v1.ComputeService.UpdateComputeConnection.
+func (c *computeServiceClient) UpdateComputeConnection(ctx context.Context, req *connect.Request[v1.UpdateComputeConnectionRequest]) (*connect.Response[v1.UpdateComputeConnectionResponse], error) {
+	return c.updateComputeConnection.CallUnary(ctx, req)
+}
+
 // SetDefaultComputeConnection calls stagd.api.v1.ComputeService.SetDefaultComputeConnection.
 func (c *computeServiceClient) SetDefaultComputeConnection(ctx context.Context, req *connect.Request[v1.SetDefaultComputeConnectionRequest]) (*connect.Response[v1.SetDefaultComputeConnectionResponse], error) {
 	return c.setDefaultComputeConnection.CallUnary(ctx, req)
@@ -169,6 +188,10 @@ type ComputeServiceHandler interface {
 	ListComputeConnections(context.Context, *connect.Request[v1.ListComputeConnectionsRequest]) (*connect.Response[v1.ListComputeConnectionsResponse], error)
 	// TestConnection checks a saved connection's credentials again.
 	TestComputeConnection(context.Context, *connect.Request[v1.TestComputeConnectionRequest]) (*connect.Response[v1.TestComputeConnectionResponse], error)
+	// UpdateConnection changes a connection's fields, e.g. a new token, and
+	// checks the result with the provider before saving it. A secret not given
+	// stays as it was.
+	UpdateComputeConnection(context.Context, *connect.Request[v1.UpdateComputeConnectionRequest]) (*connect.Response[v1.UpdateComputeConnectionResponse], error)
 	// SetDefaultConnection makes a connection the one new previews run on.
 	SetDefaultComputeConnection(context.Context, *connect.Request[v1.SetDefaultComputeConnectionRequest]) (*connect.Response[v1.SetDefaultComputeConnectionResponse], error)
 	// DeleteConnection forgets a connection and its credentials.
@@ -206,6 +229,12 @@ func NewComputeServiceHandler(svc ComputeServiceHandler, opts ...connect.Handler
 		connect.WithSchema(computeServiceMethods.ByName("TestComputeConnection")),
 		connect.WithHandlerOptions(opts...),
 	)
+	computeServiceUpdateComputeConnectionHandler := connect.NewUnaryHandler(
+		ComputeServiceUpdateComputeConnectionProcedure,
+		svc.UpdateComputeConnection,
+		connect.WithSchema(computeServiceMethods.ByName("UpdateComputeConnection")),
+		connect.WithHandlerOptions(opts...),
+	)
 	computeServiceSetDefaultComputeConnectionHandler := connect.NewUnaryHandler(
 		ComputeServiceSetDefaultComputeConnectionProcedure,
 		svc.SetDefaultComputeConnection,
@@ -228,6 +257,8 @@ func NewComputeServiceHandler(svc ComputeServiceHandler, opts ...connect.Handler
 			computeServiceListComputeConnectionsHandler.ServeHTTP(w, r)
 		case ComputeServiceTestComputeConnectionProcedure:
 			computeServiceTestComputeConnectionHandler.ServeHTTP(w, r)
+		case ComputeServiceUpdateComputeConnectionProcedure:
+			computeServiceUpdateComputeConnectionHandler.ServeHTTP(w, r)
 		case ComputeServiceSetDefaultComputeConnectionProcedure:
 			computeServiceSetDefaultComputeConnectionHandler.ServeHTTP(w, r)
 		case ComputeServiceDeleteComputeConnectionProcedure:
@@ -255,6 +286,10 @@ func (UnimplementedComputeServiceHandler) ListComputeConnections(context.Context
 
 func (UnimplementedComputeServiceHandler) TestComputeConnection(context.Context, *connect.Request[v1.TestComputeConnectionRequest]) (*connect.Response[v1.TestComputeConnectionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ComputeService.TestComputeConnection is not implemented"))
+}
+
+func (UnimplementedComputeServiceHandler) UpdateComputeConnection(context.Context, *connect.Request[v1.UpdateComputeConnectionRequest]) (*connect.Response[v1.UpdateComputeConnectionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ComputeService.UpdateComputeConnection is not implemented"))
 }
 
 func (UnimplementedComputeServiceHandler) SetDefaultComputeConnection(context.Context, *connect.Request[v1.SetDefaultComputeConnectionRequest]) (*connect.Response[v1.SetDefaultComputeConnectionResponse], error) {

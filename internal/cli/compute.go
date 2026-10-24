@@ -57,6 +57,17 @@ func computeCommand() *cli.Command {
 				Action:    computeTest,
 			},
 			{
+				Name:      "update",
+				Usage:     "change a connection's settings, or give it a new secret",
+				ArgsUsage: nameArg,
+				Description: "Only the values given change; a secret not given stays as it was. Stagd checks the result\n" +
+					"with the provider before saving it. For a new token: --value token=@- reads it from stdin.",
+				Flags: []cli.Flag{
+					&cli.StringSliceFlag{Name: "value", Usage: "a field value, key=value or key=@- (stdin)"},
+				},
+				Action: computeUpdate,
+			},
+			{
 				Name:      "default",
 				Usage:     "run new previews on this connection",
 				ArgsUsage: nameArg,
@@ -374,6 +385,36 @@ func computeTest(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	_, err = fmt.Fprintf(cmd.Root().Writer, "%s works (%s)\n", tested.GetName(), tested.GetAccount())
+
+	return err
+}
+
+func computeUpdate(ctx context.Context, cmd *cli.Command) error {
+	if len(cmd.StringSlice("value")) == 0 {
+		return cli.Exit("usage: stagd compute update <name> --value key=value …", 2)
+	}
+
+	values, err := parseValues(cmd.StringSlice("value"))
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+
+	c, err := clients(cmd)
+	if err != nil {
+		return err
+	}
+
+	conn, err := resolveConnection(ctx, c, cmd.Args().First())
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Compute.UpdateComputeConnection(ctx, connect.NewRequest(&apiv1.UpdateComputeConnectionRequest{Id: conn.GetId(), Values: values}))
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(cmd.Root().Writer, "Updated %s (%s)\n", res.Msg.GetConnection().GetName(), res.Msg.GetConnection().GetAccount())
 
 	return err
 }

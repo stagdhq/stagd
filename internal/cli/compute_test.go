@@ -17,6 +17,7 @@ import (
 type fakeCompute struct {
 	apiv1connect.UnimplementedComputeServiceHandler
 	created *apiv1.CreateComputeConnectionRequest
+	updated *apiv1.UpdateComputeConnectionRequest
 	deleted string
 }
 
@@ -52,6 +53,12 @@ func (f *fakeCompute) CreateComputeConnection(_ context.Context, req *connect.Re
 
 func (f *fakeCompute) ListComputeConnections(context.Context, *connect.Request[apiv1.ListComputeConnectionsRequest]) (*connect.Response[apiv1.ListComputeConnectionsResponse], error) {
 	return connect.NewResponse(&apiv1.ListComputeConnectionsResponse{Connections: []*apiv1.ComputeConnection{fakeConn}}), nil
+}
+
+func (f *fakeCompute) UpdateComputeConnection(_ context.Context, req *connect.Request[apiv1.UpdateComputeConnectionRequest]) (*connect.Response[apiv1.UpdateComputeConnectionResponse], error) {
+	f.updated = req.Msg
+
+	return connect.NewResponse(&apiv1.UpdateComputeConnectionResponse{Connection: fakeConn}), nil
 }
 
 func (f *fakeCompute) DeleteComputeConnection(_ context.Context, req *connect.Request[apiv1.DeleteComputeConnectionRequest]) (*connect.Response[apiv1.DeleteComputeConnectionResponse], error) {
@@ -124,5 +131,29 @@ func TestComputeListAndDeleteByName(t *testing.T) {
 
 	if _, err := run(t, srv, "--token", "tok-1", "compute", "delete", "--yes", "fake"); err != nil || f.deleted != "cc-1" {
 		t.Fatalf("delete: %v, deleted %q", err, f.deleted)
+	}
+}
+
+func TestComputeUpdateSendsOnlyWhatChanged(t *testing.T) {
+	f := &fakeCompute{}
+	srv := computeServer(t, f)
+	stdin = strings.NewReader("new-token\n")
+	t.Cleanup(func() { stdin = nil })
+
+	out, err := run(t, srv, "--token", "tok-1", "compute", "update", "fake", "--value", "token=@-")
+	if err != nil {
+		t.Fatalf("update: %v\n%s", err, out)
+	}
+
+	if f.updated.GetId() != "cc-1" || len(f.updated.GetValues()) != 1 || f.updated.GetValues()["token"] != "new-token" {
+		t.Errorf("sent %v", f.updated)
+	}
+
+	if !strings.Contains(out, "Updated fake") {
+		t.Errorf("output:\n%s", out)
+	}
+
+	if _, err := run(t, srv, "--token", "tok-1", "compute", "update", "fake"); err == nil {
+		t.Error("update without values: no error")
 	}
 }

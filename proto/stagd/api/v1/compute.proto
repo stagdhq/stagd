@@ -24,6 +24,10 @@ service ComputeService {
   rpc ListComputeConnections(ListComputeConnectionsRequest) returns (ListComputeConnectionsResponse);
   // TestConnection checks a saved connection's credentials again.
   rpc TestComputeConnection(TestComputeConnectionRequest) returns (TestComputeConnectionResponse);
+  // UpdateConnection changes a connection's fields, e.g. a new token, and
+  // checks the result with the provider before saving it. A secret not given
+  // stays as it was.
+  rpc UpdateComputeConnection(UpdateComputeConnectionRequest) returns (UpdateComputeConnectionResponse);
   // SetDefaultConnection makes a connection the one new previews run on.
   rpc SetDefaultComputeConnection(SetDefaultComputeConnectionRequest) returns (SetDefaultComputeConnectionResponse);
   // DeleteConnection forgets a connection and its credentials.
@@ -150,6 +154,16 @@ message TestComputeConnectionRequest {
 }
 
 message TestComputeConnectionResponse {
+  ComputeConnection connection = 1;
+}
+
+message UpdateComputeConnectionRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  // Only the fields to change, by key.
+  map<string, string> values = 2;
+}
+
+message UpdateComputeConnectionResponse {
   ComputeConnection connection = 1;
 }
 
