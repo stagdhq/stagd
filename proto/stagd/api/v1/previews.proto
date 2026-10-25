@@ -57,6 +57,13 @@ service PreviewService {
   // preview is live, on compute that can say: nothing while it sleeps, so
   // the series have gaps.
   rpc GetServiceUsage(GetServiceUsageRequest) returns (GetServiceUsageResponse);
+
+  // ListLogs returns the latest lines a preview's services wrote, read from
+  // its compute when asked: Stagd keeps no copy. Each line is read for its
+  // level and message, and JSON and logfmt lines for their fields. The
+  // preview's secrets are hidden. A sleeping preview has to wake first; a
+  // torn-down one's logs are gone.
+  rpc ListLogs(ListLogsRequest) returns (ListLogsResponse);
 }
 
 // Who may open a preview.
@@ -446,4 +453,65 @@ message UsagePoint {
   google.protobuf.Timestamp time = 1;
   double cpu_percent = 2;
   int64 memory_bytes = 3;
+}
+
+message ListLogsRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  // Only these services; all when empty.
+  repeated string services = 2;
+  // Lines at or after this time; as far back as kept when unset. To follow
+  // a preview's logs, ask again with the last line's time.
+  google.protobuf.Timestamp since = 3;
+  // At most this many of the latest lines; 500 when unset.
+  int32 limit = 4 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 5000
+  }];
+}
+
+message ListLogsResponse {
+  // Oldest first.
+  repeated LogLine lines = 1;
+  // There were more lines than the limit; older ones were left out.
+  bool truncated = 2;
+}
+
+// How bad a line says it is.
+enum LogLevel {
+  // The line doesn't say.
+  LOG_LEVEL_UNSPECIFIED = 0;
+  LOG_LEVEL_DEBUG = 1;
+  LOG_LEVEL_INFO = 2;
+  LOG_LEVEL_WARN = 3;
+  // Errors, and worse: fatal, panic, critical.
+  LOG_LEVEL_ERROR = 4;
+}
+
+// How a line was written.
+enum LogFormat {
+  LOG_FORMAT_TEXT = 0;
+  LOG_FORMAT_JSON = 1;
+  LOG_FORMAT_LOGFMT = 2;
+}
+
+// One line a service wrote.
+message LogLine {
+  // When the engine got it.
+  google.protobuf.Timestamp time = 1;
+  string service = 2;
+  LogLevel level = 3;
+  // The message: a structured line's msg or message, a plain line whole.
+  string message = 4;
+  // A structured line's other keys, in the order written; nested objects
+  // are dotted keys (user.id). Its time, level and message aren't here.
+  repeated LogField fields = 5;
+  LogFormat format = 6;
+  // The line as written, secrets hidden.
+  string text = 7;
+}
+
+message LogField {
+  string key = 1;
+  // Strings as they are, other JSON values as JSON: 1540, false, ["a"].
+  string value = 2;
 }
