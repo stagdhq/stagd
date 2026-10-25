@@ -160,3 +160,22 @@ func TestPreviewPolicyChangesOnlyWhatsAsked(t *testing.T) {
 		t.Error("--access everyone should be refused")
 	}
 }
+
+func TestPolicyDurations(t *testing.T) {
+	for in, want := range map[string]string{"2h": "2h", "90m": "1h30m", "7d": "7d", "45m": "45m", "default": "24h (Stagd's default)"} {
+		d, err := policyDuration(in)
+		if err != nil {
+			t.Fatalf("%s: %v", in, err)
+		}
+
+		if got := policySpan(d, "24h"); got != want {
+			t.Errorf("%s: shown as %q, want %q", in, got, want)
+		}
+	}
+
+	for _, in := range []string{"", "soon", "0d", "-1h", "1.5d"} {
+		if _, err := policyDuration(in); err == nil {
+			t.Errorf("%q: no error", in)
+		}
+	}
+}

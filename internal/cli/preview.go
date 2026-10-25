@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"stagd.dev/stagd/internal/client/api"
 	apiv1 "stagd.dev/stagd/internal/gen/stagd/api/v1"
@@ -57,12 +59,15 @@ func previewCommand() *cli.Command {
 				Usage: "who may open previews, and how their URLs look",
 				Description: "Without flags, shows the policy. --repo picks one repository (its own override, or the org's default\n" +
 					"it follows); without --repo it's the org's default. Access applies to existing previews on their\n" +
-					"next deploy; URL style only to new previews, so links already shared keep working.",
+					"next deploy; URL style only to new previews, so links already shared keep working. A repository's\n" +
+					"stagd.yaml can set its own sleep and expiry (lifecycle: { sleep_after: 2h, expire_after: 7d }), which win.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "repo", Usage: "a repository, owner/name; the org's default when left out"},
 					&cli.StringFlag{Name: "access", Usage: "org (members signed in to Stagd) or public (anyone with the link)"},
 					&cli.StringSliceFlag{Name: "public-ingress", Usage: "an ingress anyone can reach even when access is org (repeatable)"},
 					&cli.BoolFlag{Name: "unguessable-urls", Usage: "add a random token to new previews' URLs (--unguessable-urls=false to stop)"},
+					&cli.StringFlag{Name: "sleep-after", Usage: "how long a preview nobody opens stays awake, 5m to 24h, e.g. 2h; default for Stagd's (45m)"},
+					&cli.StringFlag{Name: "expire-after", Usage: "how long a preview lives without a new commit, 1h to 30d, e.g. 7d; default for Stagd's (24h)"},
 					&cli.BoolFlag{Name: "reset", Usage: "drop the repository's override; it follows the org's default again"},
 				},
 				Action: previewPolicy,
@@ -88,7 +93,7 @@ func previewPolicy(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	res := &apiv1.UpdatePreviewPolicyResponse{Policy: current.Msg.GetPolicy(), Inherited: current.Msg.GetInherited()}
-	changing := cmd.IsSet("access") || cmd.IsSet("public-ingress") || cmd.IsSet("unguessable-urls") || cmd.Bool("reset")
+	changing := cmd.IsSet("access") || cmd.IsSet("public-ingress") || cmd.IsSet("unguessable-urls") || cmd.IsSet("sleep-after") || cmd.IsSet("expire-after") || cmd.Bool("reset")
 
 	if changing {
 		// Start from what applies now and change only what was asked.
@@ -112,6 +117,24 @@ func previewPolicy(ctx context.Context, cmd *cli.Command) error {
 
 		if cmd.IsSet("unguessable-urls") {
 			policy.UnguessableUrls = cmd.Bool("unguessable-urls")
+		}
+
+		if cmd.IsSet("sleep-after") {
+			d, err := policyDuration(cmd.String("sleep-after"))
+			if err != nil {
+				return cli.Exit("--sleep-after: "+err.Error(), 2)
+			}
+
+			policy.SleepAfter = d
+		}
+
+		if cmd.IsSet("expire-after") {
+			d, err := policyDuration(cmd.String("expire-after"))
+			if err != nil {
+				return cli.Exit("--expire-after: "+err.Error(), 2)
+			}
+
+			policy.ExpireAfter = d
 		}
 
 		updated, err := c.Previews.UpdatePreviewPolicy(ctx, connect.NewRequest(&apiv1.UpdatePreviewPolicyRequest{Policy: policy, Reset_: cmd.Bool("reset")}))
@@ -147,8 +170,56 @@ func previewPolicy(ctx context.Context, cmd *cli.Command) error {
 	fmt.Fprintf(w, "access:           %s\n", accessLabel(p.GetAccess()))
 	fmt.Fprintf(w, "public ingresses: %s\n", public)
 	fmt.Fprintf(w, "unguessable URLs: %s\n", yesNo(p.GetUnguessableUrls()))
+	fmt.Fprintf(w, "sleeps after:     %s\n", policySpan(p.GetSleepAfter(), "45m"))
+	fmt.Fprintf(w, "expires after:    %s\n", policySpan(p.GetExpireAfter(), "24h"))
 
 	return nil
+}
+
+// policyDuration reads 2h, 90m or 7d; "default" (nil) leaves it to Stagd.
+func policyDuration(s string) (*durationpb.Duration, error) {
+	s = strings.TrimSpace(s)
+
+	if s == "default" {
+		return nil, nil
+	}
+
+	if days, ok := strings.CutSuffix(s, "d"); ok {
+		n, err := strconv.Atoi(days)
+		if err != nil || n < 1 {
+			return nil, fmt.Errorf("a duration like 2h, 90m or 7d, or default; not %q", s)
+		}
+
+		return durationpb.New(time.Duration(n) * 24 * time.Hour), nil
+	}
+
+	d, err := time.ParseDuration(s)
+	if err != nil || d <= 0 {
+		return nil, fmt.Errorf("a duration like 2h, 90m or 7d, or default; not %q", s)
+	}
+
+	return durationpb.New(d), nil
+}
+
+// policySpan shows a policy's duration, or Stagd's default when it has none.
+func policySpan(d *durationpb.Duration, fallback string) string {
+	if d == nil {
+		return fallback + " (Stagd's default)"
+	}
+
+	v := d.AsDuration()
+
+	if v >= 24*time.Hour && v%(24*time.Hour) == 0 {
+		return fmt.Sprintf("%dd", v/(24*time.Hour))
+	}
+
+	out := strings.TrimSuffix(v.String(), "0s")
+
+	if strings.HasSuffix(out, "h0m") {
+		out = strings.TrimSuffix(out, "0m")
+	}
+
+	return out
 }
 
 func statusLabel(s apiv1.PreviewStatus) string {
