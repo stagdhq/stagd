@@ -48,6 +48,8 @@ service PreviewService {
   rpc GetMail(GetMailRequest) returns (GetMailResponse);
   // ClearMail deletes everything a preview captured.
   rpc ClearMail(ClearMailRequest) returns (ClearMailResponse);
+  // DeleteMail deletes one message a preview captured.
+  rpc DeleteMail(DeleteMailRequest) returns (DeleteMailResponse);
 }
 
 // Who may open a preview.
@@ -392,3 +394,11 @@ message ClearMailRequest {
 }
 
 message ClearMailResponse {}
+
+message DeleteMailRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  // The message's id, from ListMail.
+  string id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteMailResponse {}
