@@ -21,7 +21,8 @@ service PreviewService {
   // WatchPreview streams the preview's state until it is live, failed or
   // destroyed, starting with its current state.
   rpc WatchPreview(WatchPreviewRequest) returns (stream WatchPreviewResponse);
-  // ListPreviewEvents returns what happened to a preview, oldest first.
+  // ListPreviewEvents returns what happened to a preview: all of it, oldest
+  // first; or, with a page_size, a page at a time, newest first.
   rpc ListPreviewEvents(ListPreviewEventsRequest) returns (ListPreviewEventsResponse);
   // WakePreview starts a sleeping preview again.
   rpc WakePreview(WakePreviewRequest) returns (WakePreviewResponse);
@@ -307,6 +308,14 @@ message ValidateAppResponse {
 
 message ListPreviewEventsRequest {
   string id = 1 [(buf.validate.field).string.min_len = 1];
+  // With a page size, events come newest first, a page at a time; without
+  // one, all of them, oldest first.
+  int32 page_size = 2 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 200
+  }];
+  // The next_page_token of the page before: the events older than it.
+  string page_token = 3;
 }
 
 message PreviewEvent {
@@ -319,6 +328,8 @@ message PreviewEvent {
 
 message ListPreviewEventsResponse {
   repeated PreviewEvent events = 1;
+  // Set when there are older events; empty on the last page and without a page size.
+  string next_page_token = 2;
 }
 
 message ListMailRequest {
