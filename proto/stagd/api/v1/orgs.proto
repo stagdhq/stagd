@@ -10,7 +10,9 @@ import "stagd/api/v1/model.proto";
 // the session's active org.
 service OrgService {
   // CreateOrg creates an org with the caller as its owner and makes it the
-  // session's active org.
+  // session's active org. Refused with FAILED_PRECONDITION when the server
+  // runs one org that exists already, or lets each person create only one
+  // and the caller has.
   rpc CreateOrg(CreateOrgRequest) returns (CreateOrgResponse);
   // ListOrgs lists the orgs the caller belongs to.
   rpc ListOrgs(ListOrgsRequest) returns (ListOrgsResponse);

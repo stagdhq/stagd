@@ -25,4 +25,7 @@ message GetMeResponse {
   repeated Membership memberships = 3;
   // How Stagd looks and behaves for them.
   Preferences preferences = 4;
+  // Whether CreateOrg would let them make an org now. A server may run one
+  // org, or let each person create only one of their own.
+  bool can_create_org = 5;
 }
