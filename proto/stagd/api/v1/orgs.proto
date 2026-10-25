@@ -41,12 +41,14 @@ service InviteService {
   rpc ResendInvite(ResendInviteRequest) returns (ResendInviteResponse);
   // RevokeInvite cancels an invite; its link stops working.
   rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse);
-  // GetInviteLink returns the org's invite link, making one when there's
-  // none or it has expired. The link is only shown to admins.
+  // GetInviteLink returns the org's invite link; none while it's off (the
+  // default) or expired. The link is only shown to admins.
   rpc GetInviteLink(GetInviteLinkRequest) returns (GetInviteLinkResponse);
-  // ResetInviteLink replaces the invite link, optionally with another role;
-  // the old one stops working.
+  // ResetInviteLink turns the invite link on, or replaces it, optionally with
+  // another role; an old one stops working.
   rpc ResetInviteLink(ResetInviteLinkRequest) returns (ResetInviteLinkResponse);
+  // DisableInviteLink turns the invite link off; it stops working.
+  rpc DisableInviteLink(DisableInviteLinkRequest) returns (DisableInviteLinkResponse);
 }
 
 // What someone may do in an org.
@@ -201,6 +203,7 @@ message InviteLink {
 message GetInviteLinkRequest {}
 
 message GetInviteLinkResponse {
+  // Unset while the link is off.
   InviteLink link = 1;
 }
 
@@ -212,6 +215,10 @@ message ResetInviteLinkRequest {
 message ResetInviteLinkResponse {
   InviteLink link = 1;
 }
+
+message DisableInviteLinkRequest {}
+
+message DisableInviteLinkResponse {}
 
 message ListMembersResponse {
   repeated Member members = 1;
