@@ -489,7 +489,8 @@ enum LogLevel {
 
 // How a line was written.
 enum LogFormat {
-  LOG_FORMAT_TEXT = 0;
+  // Plain text.
+  LOG_FORMAT_UNSPECIFIED = 0;
   LOG_FORMAT_JSON = 1;
   LOG_FORMAT_LOGFMT = 2;
 }
