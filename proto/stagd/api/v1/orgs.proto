@@ -3,6 +3,7 @@ syntax = "proto3";
 package stagd.api.v1;
 
 import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/model.proto";
 
 // OrgService creates orgs and moves between them. Every other service acts in
@@ -18,6 +19,46 @@ service OrgService {
   rpc SwitchOrg(SwitchOrgRequest) returns (SwitchOrgResponse);
   // ListMembers lists the people in the active org.
   rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+  // UpdateMemberRole changes someone's role. The last admin can't be
+  // demoted: make someone else an admin first.
+  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse);
+  // RemoveMember takes someone out of the active org and ends their sessions
+  // in it. The last admin can't be removed.
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
+}
+
+// InviteService brings people into the active org: invites by email or by
+// code-host username, and one invite link. Accepting happens in the browser,
+// at /join/<token>, or on its own when someone signs in with an invited
+// email or username.
+service InviteService {
+  // CreateInvites invites people with a role. Emails get a message with a
+  // link; usernames join when they next sign in with that account.
+  rpc CreateInvites(CreateInvitesRequest) returns (CreateInvitesResponse);
+  // ListInvites lists the invites not yet accepted, revoked or expired.
+  rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse);
+  // ResendInvite sends the invite again with a new link and a new expiry.
+  rpc ResendInvite(ResendInviteRequest) returns (ResendInviteResponse);
+  // RevokeInvite cancels an invite; its link stops working.
+  rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse);
+  // GetInviteLink returns the org's invite link, making one when there's
+  // none or it has expired. The link is only shown to admins.
+  rpc GetInviteLink(GetInviteLinkRequest) returns (GetInviteLinkResponse);
+  // ResetInviteLink replaces the invite link, optionally with another role;
+  // the old one stops working.
+  rpc ResetInviteLink(ResetInviteLinkRequest) returns (ResetInviteLinkResponse);
+}
+
+// What someone may do in an org.
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  // Everything, members and settings included.
+  ROLE_ADMIN = 1;
+  // Previews: deploy, tear down, read; no settings.
+  ROLE_MEMBER = 2;
+  // Read-only: open and wake previews, read their logs, traces and mail.
+  // For people who review rather than build; no code-host account needed.
+  ROLE_VIEWER = 3;
 }
 
 message CreateOrgRequest {
@@ -58,7 +99,116 @@ message ListMembersRequest {}
 
 message Member {
   User user = 1;
+  // "admin", "member" or "viewer"; kept as text for older clients.
   string role = 2;
+  Role role_kind = 3;
+  // How they joined: "created" (made the org), "invite", "link", "server"
+  // (a single-org server lets everyone in).
+  string joined_via = 4;
+  google.protobuf.Timestamp joined_at = 5;
+  // Their last request in this org; unset when unknown.
+  google.protobuf.Timestamp last_active_at = 6;
+  // Their code-host login, e.g. GitHub's, when they have one.
+  string login = 7;
+}
+
+message UpdateMemberRoleRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+  Role role = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+
+message UpdateMemberRoleResponse {
+  Member member = 1;
+}
+
+message RemoveMemberRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message RemoveMemberResponse {}
+
+message CreateInvitesRequest {
+  // Emails, or code-host usernames (GitHub's, with or without @).
+  repeated string invitees = 1 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 50
+  }];
+  Role role = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+
+message CreateInvitesResponse {
+  repeated Invite invites = 1;
+  // Invitees that weren't invited, and why: already a member, not an email
+  // or a username.
+  repeated InviteProblem problems = 2;
+}
+
+message InviteProblem {
+  string invitee = 1;
+  string reason = 2;
+}
+
+message Invite {
+  string id = 1;
+  // One of the two.
+  string email = 2;
+  string login = 3;
+  Role role = 4;
+  User invited_by = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp expires_at = 7;
+  // The invite's own link, only in CreateInvites' and ResendInvite's answers:
+  // to send by hand when the server sends no email, or for a username.
+  string url = 8;
+  // An email went out with the link.
+  bool emailed = 9;
+}
+
+message ListInvitesRequest {}
+
+message ListInvitesResponse {
+  repeated Invite invites = 1;
+}
+
+message ResendInviteRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message ResendInviteResponse {
+  Invite invite = 1;
+}
+
+message RevokeInviteRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message RevokeInviteResponse {}
+
+message InviteLink {
+  string url = 1;
+  Role role = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message GetInviteLinkRequest {}
+
+message GetInviteLinkResponse {
+  InviteLink link = 1;
+}
+
+message ResetInviteLinkRequest {
+  // The role people join with; the current one when unset.
+  Role role = 1 [(buf.validate.field).enum.defined_only = true];
+}
+
+message ResetInviteLinkResponse {
+  InviteLink link = 1;
 }
 
 message ListMembersResponse {

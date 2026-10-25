@@ -36,7 +36,7 @@ message Org {
 // Membership is a user's place in one org.
 message Membership {
   Org org = 1;
-  // owner | admin | member
+  // admin | member | viewer ("owner" from servers before roles; read it as admin)
   string role = 2;
 }
 
