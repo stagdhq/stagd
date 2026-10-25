@@ -17,6 +17,11 @@ service PreviewService {
   // CreatePreview starts a preview, or updates the existing one for the same
   // change request or branch to the new commit.
   rpc CreatePreview(CreatePreviewRequest) returns (CreatePreviewResponse);
+  // ListSources lists what a repository's previews can be of, from its code
+  // host: its open pull requests (not from forks: those never get
+  // previews), newest first, and its branches. Only for repositories with
+  // previews on: Stagd never reads the others.
+  rpc ListSources(ListSourcesRequest) returns (ListSourcesResponse);
   rpc GetPreview(GetPreviewRequest) returns (GetPreviewResponse);
   rpc ListPreviews(ListPreviewsRequest) returns (ListPreviewsResponse);
   // WatchPreview streams the preview's state until it is live, failed or
@@ -231,6 +236,18 @@ message Preview {
   // wait: the commit's checks and how they stand, e.g. "build-images
   // (running)". Empty when it isn't waiting.
   string waiting = 18;
+}
+
+message ListSourcesRequest {
+  // A repository id or "owner/name".
+  string repository = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message ListSourcesResponse {
+  // Open pull requests, most recently updated first; at most 100.
+  repeated ChangeRequest changes = 1;
+  // Branch names, the default branch first; at most 100.
+  repeated string branches = 2;
 }
 
 message CreatePreviewRequest {
