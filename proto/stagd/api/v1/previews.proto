@@ -3,6 +3,7 @@ syntax = "proto3";
 package stagd.api.v1;
 
 import "buf/validate/validate.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/model.proto";
 
@@ -50,6 +51,12 @@ service PreviewService {
   rpc ClearMail(ClearMailRequest) returns (ClearMailResponse);
   // DeleteMail deletes one message a preview captured.
   rpc DeleteMail(DeleteMailRequest) returns (DeleteMailResponse);
+
+  // GetServiceUsage returns CPU and memory per service of a preview over a
+  // window up to 24 hours. Stagd samples them every 30 seconds while a
+  // preview is live, on compute that can say: nothing while it sleeps, so
+  // the series have gaps.
+  rpc GetServiceUsage(GetServiceUsageRequest) returns (GetServiceUsageResponse);
 }
 
 // Who may open a preview.
@@ -402,3 +409,41 @@ message DeleteMailRequest {
 }
 
 message DeleteMailResponse {}
+
+message GetServiceUsageRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  // How far back: up to 24 hours. Points are averaged into about 120 buckets.
+  google.protobuf.Duration window = 2 [(buf.validate.field).duration = {
+    gte: {seconds: 60}
+    lte: {seconds: 86400}
+  }];
+}
+
+message GetServiceUsageResponse {
+  // By service name; services never sampled aren't here.
+  repeated ServiceUsage services = 1;
+}
+
+// One service's CPU and memory over the window, and how it runs now.
+message ServiceUsage {
+  string service = 1;
+  // Oldest first, one per bucket that has samples.
+  repeated UsagePoint points = 2;
+  // From the latest sample.
+  google.protobuf.Timestamp sampled_at = 3;
+  // Of one CPU: 150 is one and a half.
+  double cpu_percent = 4;
+  int64 memory_bytes = 5;
+  // What the service may use; without a limit of its own, the machine's memory.
+  int64 memory_limit_bytes = 6;
+  int32 restarts = 7;
+  google.protobuf.Timestamp started_at = 8;
+  string image = 9;
+}
+
+// Average CPU and peak memory over one bucket of time.
+message UsagePoint {
+  google.protobuf.Timestamp time = 1;
+  double cpu_percent = 2;
+  int64 memory_bytes = 3;
+}
