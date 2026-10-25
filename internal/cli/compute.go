@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strings"
+	"time"
 
 	"charm.land/huh/v2"
 	"connectrpc.com/connect"
@@ -42,6 +44,7 @@ func computeCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "name", Usage: "a name for the connection (default: the provider's name)"},
 					&cli.StringSliceFlag{Name: "value", Usage: "a field value, key=value or key=@- (stdin)"},
+					&cli.BoolFlag{Name: "wait", Usage: "through a relay: wait until it connects"},
 				},
 				Action: computeConnect,
 			},
@@ -66,6 +69,18 @@ func computeCommand() *cli.Command {
 					&cli.StringSliceFlag{Name: "value", Usage: "a field value, key=value or key=@- (stdin)"},
 				},
 				Action: computeUpdate,
+			},
+			{
+				Name:      "install",
+				Usage:     "install a connection's relay again: a new token, and how to run it",
+				ArgsUsage: nameArg,
+				Description: "For a connection through stagd relay whose install command ran out, or a relay to move.\n" +
+					"The old token stops working: a relay still running with it is cut off.",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "don't ask for confirmation when its relay is connected"},
+					&cli.BoolFlag{Name: "wait", Usage: "wait until the relay connects"},
+				},
+				Action: computeInstall,
 			},
 			{
 				Name:      "default",
@@ -292,7 +307,13 @@ func computeConnect(ctx context.Context, cmd *cli.Command) error {
 
 	if token := created.Msg.GetRelayToken(); token != "" {
 		fmt.Fprintf(w, "Created %s as %q; it works once its relay connects.\n\n", provider.GetName(), conn.GetName())
-		fmt.Fprint(w, relayInstructions(provider.GetProvider(), cmd.String("api-url"), token))
+		fmt.Fprint(w, relayInstructions(provider.GetProvider(), cmd.String("api-url"), token, created.Msg.GetRelayInstallUrl(), relayImage(cmd.Root().Version)))
+
+		if cmd.Bool("wait") {
+			if err := waitForRelay(ctx, cmd, c, conn.GetId()); err != nil {
+				return err
+			}
+		}
 	} else {
 		fmt.Fprintf(w, "Connected %s (%s) as %q\n", provider.GetName(), conn.GetAccount(), conn.GetName())
 	}
@@ -482,7 +503,9 @@ func computeDelete(ctx context.Context, cmd *cli.Command) error {
 }
 
 // relayInstructions is how to run a connection's relay next to its compute.
-func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token string) string {
+// installURL is the server's one-command install for Kubernetes; without it
+// (an older server), the steps one by one.
+func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, installURL, image string) string {
 	const manifests = "https://raw.githubusercontent.com/stagdhq/stagd/main/deploy/kubernetes/"
 
 	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER {
@@ -491,8 +514,15 @@ func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token string) s
 			"    -v /var/run/docker.sock:/var/run/docker.sock \\\n" +
 			"    -e STAGD_URL=" + stagdURL + " \\\n" +
 			"    -e STAGD_RELAY_TOKEN=" + token + " \\\n" +
-			"    ghcr.io/stagdhq/stagd:latest relay\n\n" +
+			"    " + image + " relay\n\n" +
 			"The token is only shown now. `stagd compute list` shows when the relay is connected.\n"
+	}
+
+	if installURL != "" {
+		return "Install it in the cluster: Stagd's access (its own stagd-* namespaces only), the relay and its token:\n\n" +
+			"  kubectl apply -f " + installURL + "\n\n" +
+			"The link works for an hour, or until the relay connects; running it again is fine.\n" +
+			"`stagd compute list` shows when the relay is connected; `stagd compute install` makes a new command.\n"
 	}
 
 	return "Run the relay in the cluster:\n\n" +
@@ -502,4 +532,106 @@ func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token string) s
 		"    --from-literal=token=" + token + "\n" +
 		"  kubectl apply -f " + manifests + "stagd-relay.yaml\n\n" +
 		"The token is only shown now. `stagd compute list` shows when the relay is connected.\n"
+}
+
+// relayImage is the relay's image for this CLI's version: a release runs
+// its own, anything else the latest release.
+func relayImage(version string) string {
+	if v := strings.TrimPrefix(version, "v"); regexp.MustCompile(`^\d+\.\d+\.\d+$`).MatchString(v) {
+		return "ghcr.io/stagdhq/stagd:" + v
+	}
+
+	return "ghcr.io/stagdhq/stagd:latest"
+}
+
+// relayWait is how long --wait waits for a relay to connect.
+var relayWait = 10 * time.Minute
+
+// waitForRelay waits until a relay connection's relay has connected and the
+// connection works.
+func waitForRelay(ctx context.Context, cmd *cli.Command, c *api.Clients, id string) error {
+	w := cmd.Root().Writer
+	fmt.Fprintln(w, "\nWaiting for the relay to connect…")
+
+	ctx, cancel := context.WithTimeout(ctx, relayWait)
+	defer cancel()
+
+	for {
+		res, err := c.Compute.ListComputeConnections(ctx, connect.NewRequest(&apiv1.ListComputeConnectionsRequest{}))
+		if err != nil && ctx.Err() == nil {
+			return err
+		}
+
+		for _, conn := range res.Msg.GetConnections() {
+			if conn.GetId() == id && conn.GetStatus() == apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE {
+				_, err := fmt.Fprintf(w, "Connected: %s\n", conn.GetAccount())
+
+				return err
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("the relay didn't connect within %s: check it's running (kubectl -n stagd-system logs deploy/stagd-relay)", relayWait)
+
+		case <-time.After(relayPoll):
+		}
+	}
+}
+
+var relayPoll = 2 * time.Second
+
+func computeInstall(ctx context.Context, cmd *cli.Command) error {
+	c, err := clients(cmd)
+	if err != nil {
+		return err
+	}
+
+	conn, err := resolveConnection(ctx, c, cmd.Args().First())
+	if err != nil {
+		return err
+	}
+
+	// A relay running now is cut off: ask first.
+	if conn.GetStatus() == apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE && !cmd.Bool("yes") {
+		if !interactive() {
+			return cli.Exit("its relay is connected: pass --yes to give it a new token anyway", 2)
+		}
+
+		confirmed := false
+		form := huh.NewForm(huh.NewGroup(huh.NewConfirm().
+			Title(fmt.Sprintf("A new relay token for %s?", conn.GetName())).
+			Description("The relay running now is cut off until the new install runs.").
+			Affirmative("New token").
+			Negative("Cancel").
+			Value(&confirmed)))
+
+		if err := form.RunWithContext(ctx); err != nil {
+			return err
+		}
+
+		if !confirmed {
+			return nil
+		}
+	}
+
+	res, err := c.Compute.CreateRelayInstall(ctx, connect.NewRequest(&apiv1.CreateRelayInstallRequest{Id: conn.GetId()}))
+	if err != nil {
+		return err
+	}
+
+	w := cmd.Root().Writer
+
+	if cmd.Bool("json") {
+		return output.JSON(w, res.Msg)
+	}
+
+	fmt.Fprintf(w, "A new relay token for %s; the old one no longer works.\n\n", conn.GetName())
+	fmt.Fprint(w, relayInstructions(conn.GetProvider(), cmd.String("api-url"), res.Msg.GetRelayToken(), res.Msg.GetRelayInstallUrl(), relayImage(cmd.Root().Version)))
+
+	if cmd.Bool("wait") {
+		return waitForRelay(ctx, cmd, c, conn.GetId())
+	}
+
+	return nil
 }

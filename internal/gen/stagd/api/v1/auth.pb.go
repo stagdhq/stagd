@@ -61,8 +61,13 @@ type GetMeResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	User  *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
 	// The org this session acts in; unset when the user has no org yet.
-	Active        *Membership   `protobuf:"bytes,2,opt,name=active,proto3" json:"active,omitempty"`
-	Memberships   []*Membership `protobuf:"bytes,3,rep,name=memberships,proto3" json:"memberships,omitempty"`
+	Active      *Membership   `protobuf:"bytes,2,opt,name=active,proto3" json:"active,omitempty"`
+	Memberships []*Membership `protobuf:"bytes,3,rep,name=memberships,proto3" json:"memberships,omitempty"`
+	// How Stagd looks and behaves for them.
+	Preferences *Preferences `protobuf:"bytes,4,opt,name=preferences,proto3" json:"preferences,omitempty"`
+	// Whether CreateOrg would let them make an org now. A server may run one
+	// org, or let each person create only one of their own.
+	CanCreateOrg  bool `protobuf:"varint,5,opt,name=can_create_org,json=canCreateOrg,proto3" json:"can_create_org,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -118,16 +123,32 @@ func (x *GetMeResponse) GetMemberships() []*Membership {
 	return nil
 }
 
+func (x *GetMeResponse) GetPreferences() *Preferences {
+	if x != nil {
+		return x.Preferences
+	}
+	return nil
+}
+
+func (x *GetMeResponse) GetCanCreateOrg() bool {
+	if x != nil {
+		return x.CanCreateOrg
+	}
+	return false
+}
+
 var File_stagd_api_v1_auth_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"\x17stagd/api/v1/auth.proto\x12\fstagd.api.v1\x1a\x18stagd/api/v1/model.proto\"\x0e\n" +
-	"\fGetMeRequest\"\xa5\x01\n" +
+	"\fGetMeRequest\"\x88\x02\n" +
 	"\rGetMeResponse\x12&\n" +
 	"\x04user\x18\x01 \x01(\v2\x12.stagd.api.v1.UserR\x04user\x120\n" +
 	"\x06active\x18\x02 \x01(\v2\x18.stagd.api.v1.MembershipR\x06active\x12:\n" +
-	"\vmemberships\x18\x03 \x03(\v2\x18.stagd.api.v1.MembershipR\vmemberships2O\n" +
+	"\vmemberships\x18\x03 \x03(\v2\x18.stagd.api.v1.MembershipR\vmemberships\x12;\n" +
+	"\vpreferences\x18\x04 \x01(\v2\x19.stagd.api.v1.PreferencesR\vpreferences\x12$\n" +
+	"\x0ecan_create_org\x18\x05 \x01(\bR\fcanCreateOrg2O\n" +
 	"\vAuthService\x12@\n" +
 	"\x05GetMe\x12\x1a.stagd.api.v1.GetMeRequest\x1a\x1b.stagd.api.v1.GetMeResponseB\xa0\x01\n" +
 	"\x10com.stagd.api.v1B\tAuthProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
@@ -150,18 +171,20 @@ var file_stagd_api_v1_auth_proto_goTypes = []any{
 	(*GetMeResponse)(nil), // 1: stagd.api.v1.GetMeResponse
 	(*User)(nil),          // 2: stagd.api.v1.User
 	(*Membership)(nil),    // 3: stagd.api.v1.Membership
+	(*Preferences)(nil),   // 4: stagd.api.v1.Preferences
 }
 var file_stagd_api_v1_auth_proto_depIdxs = []int32{
 	2, // 0: stagd.api.v1.GetMeResponse.user:type_name -> stagd.api.v1.User
 	3, // 1: stagd.api.v1.GetMeResponse.active:type_name -> stagd.api.v1.Membership
 	3, // 2: stagd.api.v1.GetMeResponse.memberships:type_name -> stagd.api.v1.Membership
-	0, // 3: stagd.api.v1.AuthService.GetMe:input_type -> stagd.api.v1.GetMeRequest
-	1, // 4: stagd.api.v1.AuthService.GetMe:output_type -> stagd.api.v1.GetMeResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	4, // 3: stagd.api.v1.GetMeResponse.preferences:type_name -> stagd.api.v1.Preferences
+	0, // 4: stagd.api.v1.AuthService.GetMe:input_type -> stagd.api.v1.GetMeRequest
+	1, // 5: stagd.api.v1.AuthService.GetMe:output_type -> stagd.api.v1.GetMeResponse
+	5, // [5:6] is the sub-list for method output_type
+	4, // [4:5] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_auth_proto_init() }

@@ -54,6 +54,9 @@ const (
 	// ComputeServiceDeleteComputeConnectionProcedure is the fully-qualified name of the
 	// ComputeService's DeleteComputeConnection RPC.
 	ComputeServiceDeleteComputeConnectionProcedure = "/stagd.api.v1.ComputeService/DeleteComputeConnection"
+	// ComputeServiceCreateRelayInstallProcedure is the fully-qualified name of the ComputeService's
+	// CreateRelayInstall RPC.
+	ComputeServiceCreateRelayInstallProcedure = "/stagd.api.v1.ComputeService/CreateRelayInstall"
 )
 
 // ComputeServiceClient is a client for the stagd.api.v1.ComputeService service.
@@ -74,6 +77,10 @@ type ComputeServiceClient interface {
 	SetDefaultComputeConnection(context.Context, *connect.Request[v1.SetDefaultComputeConnectionRequest]) (*connect.Response[v1.SetDefaultComputeConnectionResponse], error)
 	// DeleteConnection forgets a connection and its credentials.
 	DeleteComputeConnection(context.Context, *connect.Request[v1.DeleteComputeConnectionRequest]) (*connect.Response[v1.DeleteComputeConnectionResponse], error)
+	// CreateRelayInstall makes a relay connection's install again: a new
+	// relay token (the old one stops working, and a relay using it is cut off)
+	// and, for Kubernetes, a new one-hour link for `kubectl apply -f`.
+	CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error)
 }
 
 // NewComputeServiceClient constructs a client for the stagd.api.v1.ComputeService service. By
@@ -129,6 +136,12 @@ func NewComputeServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(computeServiceMethods.ByName("DeleteComputeConnection")),
 			connect.WithClientOptions(opts...),
 		),
+		createRelayInstall: connect.NewClient[v1.CreateRelayInstallRequest, v1.CreateRelayInstallResponse](
+			httpClient,
+			baseURL+ComputeServiceCreateRelayInstallProcedure,
+			connect.WithSchema(computeServiceMethods.ByName("CreateRelayInstall")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -141,6 +154,7 @@ type computeServiceClient struct {
 	updateComputeConnection     *connect.Client[v1.UpdateComputeConnectionRequest, v1.UpdateComputeConnectionResponse]
 	setDefaultComputeConnection *connect.Client[v1.SetDefaultComputeConnectionRequest, v1.SetDefaultComputeConnectionResponse]
 	deleteComputeConnection     *connect.Client[v1.DeleteComputeConnectionRequest, v1.DeleteComputeConnectionResponse]
+	createRelayInstall          *connect.Client[v1.CreateRelayInstallRequest, v1.CreateRelayInstallResponse]
 }
 
 // ListProviders calls stagd.api.v1.ComputeService.ListProviders.
@@ -178,6 +192,11 @@ func (c *computeServiceClient) DeleteComputeConnection(ctx context.Context, req 
 	return c.deleteComputeConnection.CallUnary(ctx, req)
 }
 
+// CreateRelayInstall calls stagd.api.v1.ComputeService.CreateRelayInstall.
+func (c *computeServiceClient) CreateRelayInstall(ctx context.Context, req *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error) {
+	return c.createRelayInstall.CallUnary(ctx, req)
+}
+
 // ComputeServiceHandler is an implementation of the stagd.api.v1.ComputeService service.
 type ComputeServiceHandler interface {
 	// ListProviders lists the compute providers this Stagd server supports.
@@ -196,6 +215,10 @@ type ComputeServiceHandler interface {
 	SetDefaultComputeConnection(context.Context, *connect.Request[v1.SetDefaultComputeConnectionRequest]) (*connect.Response[v1.SetDefaultComputeConnectionResponse], error)
 	// DeleteConnection forgets a connection and its credentials.
 	DeleteComputeConnection(context.Context, *connect.Request[v1.DeleteComputeConnectionRequest]) (*connect.Response[v1.DeleteComputeConnectionResponse], error)
+	// CreateRelayInstall makes a relay connection's install again: a new
+	// relay token (the old one stops working, and a relay using it is cut off)
+	// and, for Kubernetes, a new one-hour link for `kubectl apply -f`.
+	CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error)
 }
 
 // NewComputeServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -247,6 +270,12 @@ func NewComputeServiceHandler(svc ComputeServiceHandler, opts ...connect.Handler
 		connect.WithSchema(computeServiceMethods.ByName("DeleteComputeConnection")),
 		connect.WithHandlerOptions(opts...),
 	)
+	computeServiceCreateRelayInstallHandler := connect.NewUnaryHandler(
+		ComputeServiceCreateRelayInstallProcedure,
+		svc.CreateRelayInstall,
+		connect.WithSchema(computeServiceMethods.ByName("CreateRelayInstall")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.ComputeService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ComputeServiceListProvidersProcedure:
@@ -263,6 +292,8 @@ func NewComputeServiceHandler(svc ComputeServiceHandler, opts ...connect.Handler
 			computeServiceSetDefaultComputeConnectionHandler.ServeHTTP(w, r)
 		case ComputeServiceDeleteComputeConnectionProcedure:
 			computeServiceDeleteComputeConnectionHandler.ServeHTTP(w, r)
+		case ComputeServiceCreateRelayInstallProcedure:
+			computeServiceCreateRelayInstallHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -298,4 +329,8 @@ func (UnimplementedComputeServiceHandler) SetDefaultComputeConnection(context.Co
 
 func (UnimplementedComputeServiceHandler) DeleteComputeConnection(context.Context, *connect.Request[v1.DeleteComputeConnectionRequest]) (*connect.Response[v1.DeleteComputeConnectionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ComputeService.DeleteComputeConnection is not implemented"))
+}
+
+func (UnimplementedComputeServiceHandler) CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ComputeService.CreateRelayInstall is not implemented"))
 }

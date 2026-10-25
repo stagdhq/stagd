@@ -145,8 +145,11 @@ type Connection struct {
 	ExternalId string           `protobuf:"bytes,4,opt,name=external_id,json=externalId,proto3" json:"external_id,omitempty"`
 	Status     ConnectionStatus `protobuf:"varint,5,opt,name=status,proto3,enum=stagd.api.v1.ConnectionStatus" json:"status,omitempty"`
 	// Who connected it.
-	CreatedBy     *User                  `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	CreatedBy  *User                  `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// Where to change it on the code host: which repositories it shares, new
+	// permissions to accept. For GitHub, the installation's settings page.
+	ManageUrl     string `protobuf:"bytes,8,opt,name=manage_url,json=manageUrl,proto3" json:"manage_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -228,6 +231,13 @@ func (x *Connection) GetCreateTime() *timestamppb.Timestamp {
 		return x.CreateTime
 	}
 	return nil
+}
+
+func (x *Connection) GetManageUrl() string {
+	if x != nil {
+		return x.ManageUrl
+	}
+	return ""
 }
 
 type StartConnectRequest struct {
@@ -801,7 +811,7 @@ var File_stagd_api_v1_scm_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_scm_proto_rawDesc = "" +
 	"\n" +
-	"\x16stagd/api/v1/scm.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\xb6\x02\n" +
+	"\x16stagd/api/v1/scm.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\xd5\x02\n" +
 	"\n" +
 	"Connection\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x125\n" +
@@ -813,7 +823,9 @@ const file_stagd_api_v1_scm_proto_rawDesc = "" +
 	"\n" +
 	"created_by\x18\x06 \x01(\v2\x12.stagd.api.v1.UserR\tcreatedBy\x12;\n" +
 	"\vcreate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\"V\n" +
+	"createTime\x12\x1d\n" +
+	"\n" +
+	"manage_url\x18\b \x01(\tR\tmanageUrl\"V\n" +
 	"\x13StartConnectRequest\x12?\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x19.stagd.api.v1.ScmProviderB\b\xbaH\x05\x82\x01\x02\x18\x01R\bprovider\"{\n" +
 	"\x14StartConnectResponse\x12\x10\n" +

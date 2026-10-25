@@ -10,6 +10,7 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -21,6 +22,65 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// What someone may do in an org.
+type Role int32
+
+const (
+	Role_ROLE_UNSPECIFIED Role = 0
+	// Everything, members and settings included.
+	Role_ROLE_ADMIN Role = 1
+	// Previews: deploy, tear down, read; no settings.
+	Role_ROLE_MEMBER Role = 2
+	// Opens the workspace's previews, and reads their captured mail unless the
+	// preview access policy hides it; no dashboard beyond the list of
+	// previews. For people who review rather than build: product, design,
+	// QA. They sign in with a code by email; no code-host account needed.
+	Role_ROLE_VIEWER Role = 3
+)
+
+// Enum value maps for Role.
+var (
+	Role_name = map[int32]string{
+		0: "ROLE_UNSPECIFIED",
+		1: "ROLE_ADMIN",
+		2: "ROLE_MEMBER",
+		3: "ROLE_VIEWER",
+	}
+	Role_value = map[string]int32{
+		"ROLE_UNSPECIFIED": 0,
+		"ROLE_ADMIN":       1,
+		"ROLE_MEMBER":      2,
+		"ROLE_VIEWER":      3,
+	}
+)
+
+func (x Role) Enum() *Role {
+	p := new(Role)
+	*p = x
+	return p
+}
+
+func (x Role) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Role) Descriptor() protoreflect.EnumDescriptor {
+	return file_stagd_api_v1_orgs_proto_enumTypes[0].Descriptor()
+}
+
+func (Role) Type() protoreflect.EnumType {
+	return &file_stagd_api_v1_orgs_proto_enumTypes[0]
+}
+
+func (x Role) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Role.Descriptor instead.
+func (Role) EnumDescriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{0}
+}
 
 type CreateOrgRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -334,9 +394,19 @@ func (*ListMembersRequest) Descriptor() ([]byte, []int) {
 }
 
 type Member struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
-	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	User  *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	// "admin", "member" or "viewer"; kept as text for older clients.
+	Role     string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	RoleKind Role   `protobuf:"varint,3,opt,name=role_kind,json=roleKind,proto3,enum=stagd.api.v1.Role" json:"role_kind,omitempty"`
+	// How they joined: "created" (made the org), "invite", "link", "server"
+	// (a single-org server lets everyone in).
+	JoinedVia string                 `protobuf:"bytes,4,opt,name=joined_via,json=joinedVia,proto3" json:"joined_via,omitempty"`
+	JoinedAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
+	// Their last request in this org; unset when unknown.
+	LastActiveAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_active_at,json=lastActiveAt,proto3" json:"last_active_at,omitempty"`
+	// Their code-host login, e.g. GitHub's, when they have one.
+	Login         string `protobuf:"bytes,7,opt,name=login,proto3" json:"login,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -385,6 +455,1038 @@ func (x *Member) GetRole() string {
 	return ""
 }
 
+func (x *Member) GetRoleKind() Role {
+	if x != nil {
+		return x.RoleKind
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+func (x *Member) GetJoinedVia() string {
+	if x != nil {
+		return x.JoinedVia
+	}
+	return ""
+}
+
+func (x *Member) GetJoinedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.JoinedAt
+	}
+	return nil
+}
+
+func (x *Member) GetLastActiveAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastActiveAt
+	}
+	return nil
+}
+
+func (x *Member) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+type UpdateMemberRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Role          Role                   `protobuf:"varint,2,opt,name=role,proto3,enum=stagd.api.v1.Role" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMemberRoleRequest) Reset() {
+	*x = UpdateMemberRoleRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMemberRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMemberRoleRequest) ProtoMessage() {}
+
+func (x *UpdateMemberRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMemberRoleRequest.ProtoReflect.Descriptor instead.
+func (*UpdateMemberRoleRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UpdateMemberRoleRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateMemberRoleRequest) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+type UpdateMemberRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Member        *Member                `protobuf:"bytes,1,opt,name=member,proto3" json:"member,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMemberRoleResponse) Reset() {
+	*x = UpdateMemberRoleResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMemberRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMemberRoleResponse) ProtoMessage() {}
+
+func (x *UpdateMemberRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMemberRoleResponse.ProtoReflect.Descriptor instead.
+func (*UpdateMemberRoleResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateMemberRoleResponse) GetMember() *Member {
+	if x != nil {
+		return x.Member
+	}
+	return nil
+}
+
+type RemoveMemberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveMemberRequest) Reset() {
+	*x = RemoveMemberRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveMemberRequest) ProtoMessage() {}
+
+func (x *RemoveMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveMemberRequest.ProtoReflect.Descriptor instead.
+func (*RemoveMemberRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *RemoveMemberRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type RemoveMemberResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveMemberResponse) Reset() {
+	*x = RemoveMemberResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveMemberResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveMemberResponse) ProtoMessage() {}
+
+func (x *RemoveMemberResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveMemberResponse.ProtoReflect.Descriptor instead.
+func (*RemoveMemberResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{11}
+}
+
+type CreateInvitesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Emails, or code-host usernames (GitHub's, with or without @).
+	Invitees      []string `protobuf:"bytes,1,rep,name=invitees,proto3" json:"invitees,omitempty"`
+	Role          Role     `protobuf:"varint,2,opt,name=role,proto3,enum=stagd.api.v1.Role" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateInvitesRequest) Reset() {
+	*x = CreateInvitesRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateInvitesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateInvitesRequest) ProtoMessage() {}
+
+func (x *CreateInvitesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateInvitesRequest.ProtoReflect.Descriptor instead.
+func (*CreateInvitesRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CreateInvitesRequest) GetInvitees() []string {
+	if x != nil {
+		return x.Invitees
+	}
+	return nil
+}
+
+func (x *CreateInvitesRequest) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+type CreateInvitesResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Invites []*Invite              `protobuf:"bytes,1,rep,name=invites,proto3" json:"invites,omitempty"`
+	// Invitees that weren't invited, and why: already a member, not an email
+	// or a username.
+	Problems      []*InviteProblem `protobuf:"bytes,2,rep,name=problems,proto3" json:"problems,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateInvitesResponse) Reset() {
+	*x = CreateInvitesResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateInvitesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateInvitesResponse) ProtoMessage() {}
+
+func (x *CreateInvitesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateInvitesResponse.ProtoReflect.Descriptor instead.
+func (*CreateInvitesResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *CreateInvitesResponse) GetInvites() []*Invite {
+	if x != nil {
+		return x.Invites
+	}
+	return nil
+}
+
+func (x *CreateInvitesResponse) GetProblems() []*InviteProblem {
+	if x != nil {
+		return x.Problems
+	}
+	return nil
+}
+
+type InviteProblem struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Invitee       string                 `protobuf:"bytes,1,opt,name=invitee,proto3" json:"invitee,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InviteProblem) Reset() {
+	*x = InviteProblem{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InviteProblem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InviteProblem) ProtoMessage() {}
+
+func (x *InviteProblem) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InviteProblem.ProtoReflect.Descriptor instead.
+func (*InviteProblem) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *InviteProblem) GetInvitee() string {
+	if x != nil {
+		return x.Invitee
+	}
+	return ""
+}
+
+func (x *InviteProblem) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type Invite struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// One of the two.
+	Email     string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Login     string                 `protobuf:"bytes,3,opt,name=login,proto3" json:"login,omitempty"`
+	Role      Role                   `protobuf:"varint,4,opt,name=role,proto3,enum=stagd.api.v1.Role" json:"role,omitempty"`
+	InvitedBy *User                  `protobuf:"bytes,5,opt,name=invited_by,json=invitedBy,proto3" json:"invited_by,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// The invite's own link, only in CreateInvites' and ResendInvite's answers:
+	// to send by hand when the server sends no email, or for a username.
+	Url string `protobuf:"bytes,8,opt,name=url,proto3" json:"url,omitempty"`
+	// An email went out with the link.
+	Emailed       bool `protobuf:"varint,9,opt,name=emailed,proto3" json:"emailed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Invite) Reset() {
+	*x = Invite{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Invite) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Invite) ProtoMessage() {}
+
+func (x *Invite) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Invite.ProtoReflect.Descriptor instead.
+func (*Invite) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *Invite) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Invite) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *Invite) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+func (x *Invite) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+func (x *Invite) GetInvitedBy() *User {
+	if x != nil {
+		return x.InvitedBy
+	}
+	return nil
+}
+
+func (x *Invite) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Invite) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *Invite) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *Invite) GetEmailed() bool {
+	if x != nil {
+		return x.Emailed
+	}
+	return false
+}
+
+type ListInvitesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInvitesRequest) Reset() {
+	*x = ListInvitesRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInvitesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInvitesRequest) ProtoMessage() {}
+
+func (x *ListInvitesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInvitesRequest.ProtoReflect.Descriptor instead.
+func (*ListInvitesRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{16}
+}
+
+type ListInvitesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Invites       []*Invite              `protobuf:"bytes,1,rep,name=invites,proto3" json:"invites,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInvitesResponse) Reset() {
+	*x = ListInvitesResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInvitesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInvitesResponse) ProtoMessage() {}
+
+func (x *ListInvitesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInvitesResponse.ProtoReflect.Descriptor instead.
+func (*ListInvitesResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListInvitesResponse) GetInvites() []*Invite {
+	if x != nil {
+		return x.Invites
+	}
+	return nil
+}
+
+type ResendInviteRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResendInviteRequest) Reset() {
+	*x = ResendInviteRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResendInviteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResendInviteRequest) ProtoMessage() {}
+
+func (x *ResendInviteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResendInviteRequest.ProtoReflect.Descriptor instead.
+func (*ResendInviteRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ResendInviteRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type ResendInviteResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Invite        *Invite                `protobuf:"bytes,1,opt,name=invite,proto3" json:"invite,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResendInviteResponse) Reset() {
+	*x = ResendInviteResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResendInviteResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResendInviteResponse) ProtoMessage() {}
+
+func (x *ResendInviteResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResendInviteResponse.ProtoReflect.Descriptor instead.
+func (*ResendInviteResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ResendInviteResponse) GetInvite() *Invite {
+	if x != nil {
+		return x.Invite
+	}
+	return nil
+}
+
+type RevokeInviteRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeInviteRequest) Reset() {
+	*x = RevokeInviteRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeInviteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeInviteRequest) ProtoMessage() {}
+
+func (x *RevokeInviteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeInviteRequest.ProtoReflect.Descriptor instead.
+func (*RevokeInviteRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RevokeInviteRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type RevokeInviteResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeInviteResponse) Reset() {
+	*x = RevokeInviteResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeInviteResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeInviteResponse) ProtoMessage() {}
+
+func (x *RevokeInviteResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeInviteResponse.ProtoReflect.Descriptor instead.
+func (*RevokeInviteResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{21}
+}
+
+type InviteLink struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Role          Role                   `protobuf:"varint,2,opt,name=role,proto3,enum=stagd.api.v1.Role" json:"role,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InviteLink) Reset() {
+	*x = InviteLink{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InviteLink) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InviteLink) ProtoMessage() {}
+
+func (x *InviteLink) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InviteLink.ProtoReflect.Descriptor instead.
+func (*InviteLink) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *InviteLink) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *InviteLink) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+func (x *InviteLink) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+type GetInviteLinkRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInviteLinkRequest) Reset() {
+	*x = GetInviteLinkRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInviteLinkRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInviteLinkRequest) ProtoMessage() {}
+
+func (x *GetInviteLinkRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInviteLinkRequest.ProtoReflect.Descriptor instead.
+func (*GetInviteLinkRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{23}
+}
+
+type GetInviteLinkResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Unset while the link is off.
+	Link          *InviteLink `protobuf:"bytes,1,opt,name=link,proto3" json:"link,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInviteLinkResponse) Reset() {
+	*x = GetInviteLinkResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInviteLinkResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInviteLinkResponse) ProtoMessage() {}
+
+func (x *GetInviteLinkResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInviteLinkResponse.ProtoReflect.Descriptor instead.
+func (*GetInviteLinkResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *GetInviteLinkResponse) GetLink() *InviteLink {
+	if x != nil {
+		return x.Link
+	}
+	return nil
+}
+
+type ResetInviteLinkRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The role people join with; the current one when unset.
+	Role          Role `protobuf:"varint,1,opt,name=role,proto3,enum=stagd.api.v1.Role" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResetInviteLinkRequest) Reset() {
+	*x = ResetInviteLinkRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResetInviteLinkRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResetInviteLinkRequest) ProtoMessage() {}
+
+func (x *ResetInviteLinkRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResetInviteLinkRequest.ProtoReflect.Descriptor instead.
+func (*ResetInviteLinkRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ResetInviteLinkRequest) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+type ResetInviteLinkResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Link          *InviteLink            `protobuf:"bytes,1,opt,name=link,proto3" json:"link,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResetInviteLinkResponse) Reset() {
+	*x = ResetInviteLinkResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResetInviteLinkResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResetInviteLinkResponse) ProtoMessage() {}
+
+func (x *ResetInviteLinkResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResetInviteLinkResponse.ProtoReflect.Descriptor instead.
+func (*ResetInviteLinkResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ResetInviteLinkResponse) GetLink() *InviteLink {
+	if x != nil {
+		return x.Link
+	}
+	return nil
+}
+
+type DisableInviteLinkRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DisableInviteLinkRequest) Reset() {
+	*x = DisableInviteLinkRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisableInviteLinkRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisableInviteLinkRequest) ProtoMessage() {}
+
+func (x *DisableInviteLinkRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisableInviteLinkRequest.ProtoReflect.Descriptor instead.
+func (*DisableInviteLinkRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{27}
+}
+
+type DisableInviteLinkResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DisableInviteLinkResponse) Reset() {
+	*x = DisableInviteLinkResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisableInviteLinkResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisableInviteLinkResponse) ProtoMessage() {}
+
+func (x *DisableInviteLinkResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisableInviteLinkResponse.ProtoReflect.Descriptor instead.
+func (*DisableInviteLinkResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{28}
+}
+
 type ListMembersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Members       []*Member              `protobuf:"bytes,1,rep,name=members,proto3" json:"members,omitempty"`
@@ -394,7 +1496,7 @@ type ListMembersResponse struct {
 
 func (x *ListMembersResponse) Reset() {
 	*x = ListMembersResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -406,7 +1508,7 @@ func (x *ListMembersResponse) String() string {
 func (*ListMembersResponse) ProtoMessage() {}
 
 func (x *ListMembersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -419,7 +1521,7 @@ func (x *ListMembersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMembersResponse.ProtoReflect.Descriptor instead.
 func (*ListMembersResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{8}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ListMembersResponse) GetMembers() []*Member {
@@ -433,7 +1535,7 @@ var File_stagd_api_v1_orgs_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\n" +
-	"\x17stagd/api/v1/orgs.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18stagd/api/v1/model.proto\"q\n" +
+	"\x17stagd/api/v1/orgs.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"q\n" +
 	"\x10CreateOrgRequest\x12\x1d\n" +
 	"\x04name\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18@R\x04name\x12>\n" +
 	"\x04slug\x18\x02 \x01(\tB*\xbaH'r%\x10\x02\x18'2\x1f^[a-z0-9]([a-z0-9-]*[a-z0-9])?$R\x04slug\"M\n" +
@@ -449,18 +1551,98 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\x04slug\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04slug\"E\n" +
 	"\x11SwitchOrgResponse\x120\n" +
 	"\x06active\x18\x01 \x01(\v2\x18.stagd.api.v1.MembershipR\x06active\"\x14\n" +
-	"\x12ListMembersRequest\"D\n" +
+	"\x12ListMembersRequest\"\xa5\x02\n" +
 	"\x06Member\x12&\n" +
 	"\x04user\x18\x01 \x01(\v2\x12.stagd.api.v1.UserR\x04user\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\"E\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\x12/\n" +
+	"\trole_kind\x18\x03 \x01(\x0e2\x12.stagd.api.v1.RoleR\broleKind\x12\x1d\n" +
+	"\n" +
+	"joined_via\x18\x04 \x01(\tR\tjoinedVia\x127\n" +
+	"\tjoined_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bjoinedAt\x12@\n" +
+	"\x0elast_active_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\flastActiveAt\x12\x14\n" +
+	"\x05login\x18\a \x01(\tR\x05login\"o\n" +
+	"\x17UpdateMemberRoleRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x122\n" +
+	"\x04role\x18\x02 \x01(\x0e2\x12.stagd.api.v1.RoleB\n" +
+	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\x04role\"H\n" +
+	"\x18UpdateMemberRoleResponse\x12,\n" +
+	"\x06member\x18\x01 \x01(\v2\x14.stagd.api.v1.MemberR\x06member\"7\n" +
+	"\x13RemoveMemberRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\x16\n" +
+	"\x14RemoveMemberResponse\"r\n" +
+	"\x14CreateInvitesRequest\x12&\n" +
+	"\binvitees\x18\x01 \x03(\tB\n" +
+	"\xbaH\a\x92\x01\x04\b\x01\x102R\binvitees\x122\n" +
+	"\x04role\x18\x02 \x01(\x0e2\x12.stagd.api.v1.RoleB\n" +
+	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\x04role\"\x80\x01\n" +
+	"\x15CreateInvitesResponse\x12.\n" +
+	"\ainvites\x18\x01 \x03(\v2\x14.stagd.api.v1.InviteR\ainvites\x127\n" +
+	"\bproblems\x18\x02 \x03(\v2\x1b.stagd.api.v1.InviteProblemR\bproblems\"A\n" +
+	"\rInviteProblem\x12\x18\n" +
+	"\ainvitee\x18\x01 \x01(\tR\ainvitee\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\xc1\x02\n" +
+	"\x06Invite\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x14\n" +
+	"\x05login\x18\x03 \x01(\tR\x05login\x12&\n" +
+	"\x04role\x18\x04 \x01(\x0e2\x12.stagd.api.v1.RoleR\x04role\x121\n" +
+	"\n" +
+	"invited_by\x18\x05 \x01(\v2\x12.stagd.api.v1.UserR\tinvitedBy\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x10\n" +
+	"\x03url\x18\b \x01(\tR\x03url\x12\x18\n" +
+	"\aemailed\x18\t \x01(\bR\aemailed\"\x14\n" +
+	"\x12ListInvitesRequest\"E\n" +
+	"\x13ListInvitesResponse\x12.\n" +
+	"\ainvites\x18\x01 \x03(\v2\x14.stagd.api.v1.InviteR\ainvites\".\n" +
+	"\x13ResendInviteRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"D\n" +
+	"\x14ResendInviteResponse\x12,\n" +
+	"\x06invite\x18\x01 \x01(\v2\x14.stagd.api.v1.InviteR\x06invite\".\n" +
+	"\x13RevokeInviteRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"\x16\n" +
+	"\x14RevokeInviteResponse\"\x81\x01\n" +
+	"\n" +
+	"InviteLink\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12&\n" +
+	"\x04role\x18\x02 \x01(\x0e2\x12.stagd.api.v1.RoleR\x04role\x129\n" +
+	"\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x16\n" +
+	"\x14GetInviteLinkRequest\"E\n" +
+	"\x15GetInviteLinkResponse\x12,\n" +
+	"\x04link\x18\x01 \x01(\v2\x18.stagd.api.v1.InviteLinkR\x04link\"J\n" +
+	"\x16ResetInviteLinkRequest\x120\n" +
+	"\x04role\x18\x01 \x01(\x0e2\x12.stagd.api.v1.RoleB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04role\"G\n" +
+	"\x17ResetInviteLinkResponse\x12,\n" +
+	"\x04link\x18\x01 \x01(\v2\x18.stagd.api.v1.InviteLinkR\x04link\"\x1a\n" +
+	"\x18DisableInviteLinkRequest\"\x1b\n" +
+	"\x19DisableInviteLinkResponse\"E\n" +
 	"\x13ListMembersResponse\x12.\n" +
-	"\amembers\x18\x01 \x03(\v2\x14.stagd.api.v1.MemberR\amembers2\xc7\x02\n" +
+	"\amembers\x18\x01 \x03(\v2\x14.stagd.api.v1.MemberR\amembers*N\n" +
+	"\x04Role\x12\x14\n" +
+	"\x10ROLE_UNSPECIFIED\x10\x00\x12\x0e\n" +
+	"\n" +
+	"ROLE_ADMIN\x10\x01\x12\x0f\n" +
+	"\vROLE_MEMBER\x10\x02\x12\x0f\n" +
+	"\vROLE_VIEWER\x10\x032\x81\x04\n" +
 	"\n" +
 	"OrgService\x12L\n" +
 	"\tCreateOrg\x12\x1e.stagd.api.v1.CreateOrgRequest\x1a\x1f.stagd.api.v1.CreateOrgResponse\x12I\n" +
 	"\bListOrgs\x12\x1d.stagd.api.v1.ListOrgsRequest\x1a\x1e.stagd.api.v1.ListOrgsResponse\x12L\n" +
 	"\tSwitchOrg\x12\x1e.stagd.api.v1.SwitchOrgRequest\x1a\x1f.stagd.api.v1.SwitchOrgResponse\x12R\n" +
-	"\vListMembers\x12 .stagd.api.v1.ListMembersRequest\x1a!.stagd.api.v1.ListMembersResponseB\xa0\x01\n" +
+	"\vListMembers\x12 .stagd.api.v1.ListMembersRequest\x1a!.stagd.api.v1.ListMembersResponse\x12a\n" +
+	"\x10UpdateMemberRole\x12%.stagd.api.v1.UpdateMemberRoleRequest\x1a&.stagd.api.v1.UpdateMemberRoleResponse\x12U\n" +
+	"\fRemoveMember\x12!.stagd.api.v1.RemoveMemberRequest\x1a\".stagd.api.v1.RemoveMemberResponse2\x8b\x05\n" +
+	"\rInviteService\x12X\n" +
+	"\rCreateInvites\x12\".stagd.api.v1.CreateInvitesRequest\x1a#.stagd.api.v1.CreateInvitesResponse\x12R\n" +
+	"\vListInvites\x12 .stagd.api.v1.ListInvitesRequest\x1a!.stagd.api.v1.ListInvitesResponse\x12U\n" +
+	"\fResendInvite\x12!.stagd.api.v1.ResendInviteRequest\x1a\".stagd.api.v1.ResendInviteResponse\x12U\n" +
+	"\fRevokeInvite\x12!.stagd.api.v1.RevokeInviteRequest\x1a\".stagd.api.v1.RevokeInviteResponse\x12X\n" +
+	"\rGetInviteLink\x12\".stagd.api.v1.GetInviteLinkRequest\x1a#.stagd.api.v1.GetInviteLinkResponse\x12^\n" +
+	"\x0fResetInviteLink\x12$.stagd.api.v1.ResetInviteLinkRequest\x1a%.stagd.api.v1.ResetInviteLinkResponse\x12d\n" +
+	"\x11DisableInviteLink\x12&.stagd.api.v1.DisableInviteLinkRequest\x1a'.stagd.api.v1.DisableInviteLinkResponseB\xa0\x01\n" +
 	"\x10com.stagd.api.v1B\tOrgsProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -475,39 +1657,100 @@ func file_stagd_api_v1_orgs_proto_rawDescGZIP() []byte {
 	return file_stagd_api_v1_orgs_proto_rawDescData
 }
 
-var file_stagd_api_v1_orgs_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_stagd_api_v1_orgs_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_stagd_api_v1_orgs_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_stagd_api_v1_orgs_proto_goTypes = []any{
-	(*CreateOrgRequest)(nil),    // 0: stagd.api.v1.CreateOrgRequest
-	(*CreateOrgResponse)(nil),   // 1: stagd.api.v1.CreateOrgResponse
-	(*ListOrgsRequest)(nil),     // 2: stagd.api.v1.ListOrgsRequest
-	(*ListOrgsResponse)(nil),    // 3: stagd.api.v1.ListOrgsResponse
-	(*SwitchOrgRequest)(nil),    // 4: stagd.api.v1.SwitchOrgRequest
-	(*SwitchOrgResponse)(nil),   // 5: stagd.api.v1.SwitchOrgResponse
-	(*ListMembersRequest)(nil),  // 6: stagd.api.v1.ListMembersRequest
-	(*Member)(nil),              // 7: stagd.api.v1.Member
-	(*ListMembersResponse)(nil), // 8: stagd.api.v1.ListMembersResponse
-	(*Membership)(nil),          // 9: stagd.api.v1.Membership
-	(*User)(nil),                // 10: stagd.api.v1.User
+	(Role)(0),                         // 0: stagd.api.v1.Role
+	(*CreateOrgRequest)(nil),          // 1: stagd.api.v1.CreateOrgRequest
+	(*CreateOrgResponse)(nil),         // 2: stagd.api.v1.CreateOrgResponse
+	(*ListOrgsRequest)(nil),           // 3: stagd.api.v1.ListOrgsRequest
+	(*ListOrgsResponse)(nil),          // 4: stagd.api.v1.ListOrgsResponse
+	(*SwitchOrgRequest)(nil),          // 5: stagd.api.v1.SwitchOrgRequest
+	(*SwitchOrgResponse)(nil),         // 6: stagd.api.v1.SwitchOrgResponse
+	(*ListMembersRequest)(nil),        // 7: stagd.api.v1.ListMembersRequest
+	(*Member)(nil),                    // 8: stagd.api.v1.Member
+	(*UpdateMemberRoleRequest)(nil),   // 9: stagd.api.v1.UpdateMemberRoleRequest
+	(*UpdateMemberRoleResponse)(nil),  // 10: stagd.api.v1.UpdateMemberRoleResponse
+	(*RemoveMemberRequest)(nil),       // 11: stagd.api.v1.RemoveMemberRequest
+	(*RemoveMemberResponse)(nil),      // 12: stagd.api.v1.RemoveMemberResponse
+	(*CreateInvitesRequest)(nil),      // 13: stagd.api.v1.CreateInvitesRequest
+	(*CreateInvitesResponse)(nil),     // 14: stagd.api.v1.CreateInvitesResponse
+	(*InviteProblem)(nil),             // 15: stagd.api.v1.InviteProblem
+	(*Invite)(nil),                    // 16: stagd.api.v1.Invite
+	(*ListInvitesRequest)(nil),        // 17: stagd.api.v1.ListInvitesRequest
+	(*ListInvitesResponse)(nil),       // 18: stagd.api.v1.ListInvitesResponse
+	(*ResendInviteRequest)(nil),       // 19: stagd.api.v1.ResendInviteRequest
+	(*ResendInviteResponse)(nil),      // 20: stagd.api.v1.ResendInviteResponse
+	(*RevokeInviteRequest)(nil),       // 21: stagd.api.v1.RevokeInviteRequest
+	(*RevokeInviteResponse)(nil),      // 22: stagd.api.v1.RevokeInviteResponse
+	(*InviteLink)(nil),                // 23: stagd.api.v1.InviteLink
+	(*GetInviteLinkRequest)(nil),      // 24: stagd.api.v1.GetInviteLinkRequest
+	(*GetInviteLinkResponse)(nil),     // 25: stagd.api.v1.GetInviteLinkResponse
+	(*ResetInviteLinkRequest)(nil),    // 26: stagd.api.v1.ResetInviteLinkRequest
+	(*ResetInviteLinkResponse)(nil),   // 27: stagd.api.v1.ResetInviteLinkResponse
+	(*DisableInviteLinkRequest)(nil),  // 28: stagd.api.v1.DisableInviteLinkRequest
+	(*DisableInviteLinkResponse)(nil), // 29: stagd.api.v1.DisableInviteLinkResponse
+	(*ListMembersResponse)(nil),       // 30: stagd.api.v1.ListMembersResponse
+	(*Membership)(nil),                // 31: stagd.api.v1.Membership
+	(*User)(nil),                      // 32: stagd.api.v1.User
+	(*timestamppb.Timestamp)(nil),     // 33: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_orgs_proto_depIdxs = []int32{
-	9,  // 0: stagd.api.v1.CreateOrgResponse.membership:type_name -> stagd.api.v1.Membership
-	9,  // 1: stagd.api.v1.ListOrgsResponse.memberships:type_name -> stagd.api.v1.Membership
-	9,  // 2: stagd.api.v1.SwitchOrgResponse.active:type_name -> stagd.api.v1.Membership
-	10, // 3: stagd.api.v1.Member.user:type_name -> stagd.api.v1.User
-	7,  // 4: stagd.api.v1.ListMembersResponse.members:type_name -> stagd.api.v1.Member
-	0,  // 5: stagd.api.v1.OrgService.CreateOrg:input_type -> stagd.api.v1.CreateOrgRequest
-	2,  // 6: stagd.api.v1.OrgService.ListOrgs:input_type -> stagd.api.v1.ListOrgsRequest
-	4,  // 7: stagd.api.v1.OrgService.SwitchOrg:input_type -> stagd.api.v1.SwitchOrgRequest
-	6,  // 8: stagd.api.v1.OrgService.ListMembers:input_type -> stagd.api.v1.ListMembersRequest
-	1,  // 9: stagd.api.v1.OrgService.CreateOrg:output_type -> stagd.api.v1.CreateOrgResponse
-	3,  // 10: stagd.api.v1.OrgService.ListOrgs:output_type -> stagd.api.v1.ListOrgsResponse
-	5,  // 11: stagd.api.v1.OrgService.SwitchOrg:output_type -> stagd.api.v1.SwitchOrgResponse
-	8,  // 12: stagd.api.v1.OrgService.ListMembers:output_type -> stagd.api.v1.ListMembersResponse
-	9,  // [9:13] is the sub-list for method output_type
-	5,  // [5:9] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	31, // 0: stagd.api.v1.CreateOrgResponse.membership:type_name -> stagd.api.v1.Membership
+	31, // 1: stagd.api.v1.ListOrgsResponse.memberships:type_name -> stagd.api.v1.Membership
+	31, // 2: stagd.api.v1.SwitchOrgResponse.active:type_name -> stagd.api.v1.Membership
+	32, // 3: stagd.api.v1.Member.user:type_name -> stagd.api.v1.User
+	0,  // 4: stagd.api.v1.Member.role_kind:type_name -> stagd.api.v1.Role
+	33, // 5: stagd.api.v1.Member.joined_at:type_name -> google.protobuf.Timestamp
+	33, // 6: stagd.api.v1.Member.last_active_at:type_name -> google.protobuf.Timestamp
+	0,  // 7: stagd.api.v1.UpdateMemberRoleRequest.role:type_name -> stagd.api.v1.Role
+	8,  // 8: stagd.api.v1.UpdateMemberRoleResponse.member:type_name -> stagd.api.v1.Member
+	0,  // 9: stagd.api.v1.CreateInvitesRequest.role:type_name -> stagd.api.v1.Role
+	16, // 10: stagd.api.v1.CreateInvitesResponse.invites:type_name -> stagd.api.v1.Invite
+	15, // 11: stagd.api.v1.CreateInvitesResponse.problems:type_name -> stagd.api.v1.InviteProblem
+	0,  // 12: stagd.api.v1.Invite.role:type_name -> stagd.api.v1.Role
+	32, // 13: stagd.api.v1.Invite.invited_by:type_name -> stagd.api.v1.User
+	33, // 14: stagd.api.v1.Invite.created_at:type_name -> google.protobuf.Timestamp
+	33, // 15: stagd.api.v1.Invite.expires_at:type_name -> google.protobuf.Timestamp
+	16, // 16: stagd.api.v1.ListInvitesResponse.invites:type_name -> stagd.api.v1.Invite
+	16, // 17: stagd.api.v1.ResendInviteResponse.invite:type_name -> stagd.api.v1.Invite
+	0,  // 18: stagd.api.v1.InviteLink.role:type_name -> stagd.api.v1.Role
+	33, // 19: stagd.api.v1.InviteLink.expires_at:type_name -> google.protobuf.Timestamp
+	23, // 20: stagd.api.v1.GetInviteLinkResponse.link:type_name -> stagd.api.v1.InviteLink
+	0,  // 21: stagd.api.v1.ResetInviteLinkRequest.role:type_name -> stagd.api.v1.Role
+	23, // 22: stagd.api.v1.ResetInviteLinkResponse.link:type_name -> stagd.api.v1.InviteLink
+	8,  // 23: stagd.api.v1.ListMembersResponse.members:type_name -> stagd.api.v1.Member
+	1,  // 24: stagd.api.v1.OrgService.CreateOrg:input_type -> stagd.api.v1.CreateOrgRequest
+	3,  // 25: stagd.api.v1.OrgService.ListOrgs:input_type -> stagd.api.v1.ListOrgsRequest
+	5,  // 26: stagd.api.v1.OrgService.SwitchOrg:input_type -> stagd.api.v1.SwitchOrgRequest
+	7,  // 27: stagd.api.v1.OrgService.ListMembers:input_type -> stagd.api.v1.ListMembersRequest
+	9,  // 28: stagd.api.v1.OrgService.UpdateMemberRole:input_type -> stagd.api.v1.UpdateMemberRoleRequest
+	11, // 29: stagd.api.v1.OrgService.RemoveMember:input_type -> stagd.api.v1.RemoveMemberRequest
+	13, // 30: stagd.api.v1.InviteService.CreateInvites:input_type -> stagd.api.v1.CreateInvitesRequest
+	17, // 31: stagd.api.v1.InviteService.ListInvites:input_type -> stagd.api.v1.ListInvitesRequest
+	19, // 32: stagd.api.v1.InviteService.ResendInvite:input_type -> stagd.api.v1.ResendInviteRequest
+	21, // 33: stagd.api.v1.InviteService.RevokeInvite:input_type -> stagd.api.v1.RevokeInviteRequest
+	24, // 34: stagd.api.v1.InviteService.GetInviteLink:input_type -> stagd.api.v1.GetInviteLinkRequest
+	26, // 35: stagd.api.v1.InviteService.ResetInviteLink:input_type -> stagd.api.v1.ResetInviteLinkRequest
+	28, // 36: stagd.api.v1.InviteService.DisableInviteLink:input_type -> stagd.api.v1.DisableInviteLinkRequest
+	2,  // 37: stagd.api.v1.OrgService.CreateOrg:output_type -> stagd.api.v1.CreateOrgResponse
+	4,  // 38: stagd.api.v1.OrgService.ListOrgs:output_type -> stagd.api.v1.ListOrgsResponse
+	6,  // 39: stagd.api.v1.OrgService.SwitchOrg:output_type -> stagd.api.v1.SwitchOrgResponse
+	30, // 40: stagd.api.v1.OrgService.ListMembers:output_type -> stagd.api.v1.ListMembersResponse
+	10, // 41: stagd.api.v1.OrgService.UpdateMemberRole:output_type -> stagd.api.v1.UpdateMemberRoleResponse
+	12, // 42: stagd.api.v1.OrgService.RemoveMember:output_type -> stagd.api.v1.RemoveMemberResponse
+	14, // 43: stagd.api.v1.InviteService.CreateInvites:output_type -> stagd.api.v1.CreateInvitesResponse
+	18, // 44: stagd.api.v1.InviteService.ListInvites:output_type -> stagd.api.v1.ListInvitesResponse
+	20, // 45: stagd.api.v1.InviteService.ResendInvite:output_type -> stagd.api.v1.ResendInviteResponse
+	22, // 46: stagd.api.v1.InviteService.RevokeInvite:output_type -> stagd.api.v1.RevokeInviteResponse
+	25, // 47: stagd.api.v1.InviteService.GetInviteLink:output_type -> stagd.api.v1.GetInviteLinkResponse
+	27, // 48: stagd.api.v1.InviteService.ResetInviteLink:output_type -> stagd.api.v1.ResetInviteLinkResponse
+	29, // 49: stagd.api.v1.InviteService.DisableInviteLink:output_type -> stagd.api.v1.DisableInviteLinkResponse
+	37, // [37:50] is the sub-list for method output_type
+	24, // [24:37] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_orgs_proto_init() }
@@ -521,13 +1764,14 @@ func file_stagd_api_v1_orgs_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_orgs_proto_rawDesc), len(file_stagd_api_v1_orgs_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   9,
+			NumEnums:      1,
+			NumMessages:   30,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_stagd_api_v1_orgs_proto_goTypes,
 		DependencyIndexes: file_stagd_api_v1_orgs_proto_depIdxs,
+		EnumInfos:         file_stagd_api_v1_orgs_proto_enumTypes,
 		MessageInfos:      file_stagd_api_v1_orgs_proto_msgTypes,
 	}.Build()
 	File_stagd_api_v1_orgs_proto = out.File

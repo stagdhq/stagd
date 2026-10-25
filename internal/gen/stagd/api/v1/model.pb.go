@@ -22,6 +22,56 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Theme int32
+
+const (
+	// Follows the operating system.
+	Theme_THEME_UNSPECIFIED Theme = 0
+	Theme_THEME_LIGHT       Theme = 1
+	Theme_THEME_DARK        Theme = 2
+)
+
+// Enum value maps for Theme.
+var (
+	Theme_name = map[int32]string{
+		0: "THEME_UNSPECIFIED",
+		1: "THEME_LIGHT",
+		2: "THEME_DARK",
+	}
+	Theme_value = map[string]int32{
+		"THEME_UNSPECIFIED": 0,
+		"THEME_LIGHT":       1,
+		"THEME_DARK":        2,
+	}
+)
+
+func (x Theme) Enum() *Theme {
+	p := new(Theme)
+	*p = x
+	return p
+}
+
+func (x Theme) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Theme) Descriptor() protoreflect.EnumDescriptor {
+	return file_stagd_api_v1_model_proto_enumTypes[0].Descriptor()
+}
+
+func (Theme) Type() protoreflect.EnumType {
+	return &file_stagd_api_v1_model_proto_enumTypes[0]
+}
+
+func (x Theme) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Theme.Descriptor instead.
+func (Theme) EnumDescriptor() ([]byte, []int) {
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{0}
+}
+
 // ScmProvider is the code host a repository lives on.
 type ScmProvider int32
 
@@ -66,11 +116,11 @@ func (x ScmProvider) String() string {
 }
 
 func (ScmProvider) Descriptor() protoreflect.EnumDescriptor {
-	return file_stagd_api_v1_model_proto_enumTypes[0].Descriptor()
+	return file_stagd_api_v1_model_proto_enumTypes[1].Descriptor()
 }
 
 func (ScmProvider) Type() protoreflect.EnumType {
-	return &file_stagd_api_v1_model_proto_enumTypes[0]
+	return &file_stagd_api_v1_model_proto_enumTypes[1]
 }
 
 func (x ScmProvider) Number() protoreflect.EnumNumber {
@@ -79,7 +129,7 @@ func (x ScmProvider) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ScmProvider.Descriptor instead.
 func (ScmProvider) EnumDescriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{0}
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{1}
 }
 
 // User is someone who can sign in.
@@ -151,6 +201,69 @@ func (x *User) GetImageUrl() string {
 	return ""
 }
 
+// Preferences are how Stagd looks and behaves for one person, in every org.
+type Preferences struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Theme Theme                  `protobuf:"varint,1,opt,name=theme,proto3,enum=stagd.api.v1.Theme" json:"theme,omitempty"`
+	// An IANA time zone, e.g. "Europe/Oslo"; empty follows the browser.
+	TimeZone string `protobuf:"bytes,2,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	// No animated build bars or live pulses.
+	ReduceMotion  bool `protobuf:"varint,3,opt,name=reduce_motion,json=reduceMotion,proto3" json:"reduce_motion,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Preferences) Reset() {
+	*x = Preferences{}
+	mi := &file_stagd_api_v1_model_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Preferences) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Preferences) ProtoMessage() {}
+
+func (x *Preferences) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_model_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Preferences.ProtoReflect.Descriptor instead.
+func (*Preferences) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Preferences) GetTheme() Theme {
+	if x != nil {
+		return x.Theme
+	}
+	return Theme_THEME_UNSPECIFIED
+}
+
+func (x *Preferences) GetTimeZone() string {
+	if x != nil {
+		return x.TimeZone
+	}
+	return ""
+}
+
+func (x *Preferences) GetReduceMotion() bool {
+	if x != nil {
+		return x.ReduceMotion
+	}
+	return false
+}
+
 // Org is one customer account. It belongs to Stagd and is not the same thing
 // as a GitHub organization: one Stagd org can connect several GitHub
 // accounts, and later other code hosts.
@@ -167,7 +280,7 @@ type Org struct {
 
 func (x *Org) Reset() {
 	*x = Org{}
-	mi := &file_stagd_api_v1_model_proto_msgTypes[1]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -179,7 +292,7 @@ func (x *Org) String() string {
 func (*Org) ProtoMessage() {}
 
 func (x *Org) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_model_proto_msgTypes[1]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -192,7 +305,7 @@ func (x *Org) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Org.ProtoReflect.Descriptor instead.
 func (*Org) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{1}
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Org) GetId() string {
@@ -227,7 +340,7 @@ func (x *Org) GetCreateTime() *timestamppb.Timestamp {
 type Membership struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Org   *Org                   `protobuf:"bytes,1,opt,name=org,proto3" json:"org,omitempty"`
-	// owner | admin | member
+	// admin | member | viewer ("owner" from servers before roles; read it as admin)
 	Role          string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -235,7 +348,7 @@ type Membership struct {
 
 func (x *Membership) Reset() {
 	*x = Membership{}
-	mi := &file_stagd_api_v1_model_proto_msgTypes[2]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -247,7 +360,7 @@ func (x *Membership) String() string {
 func (*Membership) ProtoMessage() {}
 
 func (x *Membership) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_model_proto_msgTypes[2]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -260,7 +373,7 @@ func (x *Membership) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Membership.ProtoReflect.Descriptor instead.
 func (*Membership) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{2}
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Membership) GetOrg() *Org {
@@ -301,7 +414,7 @@ type Repository struct {
 
 func (x *Repository) Reset() {
 	*x = Repository{}
-	mi := &file_stagd_api_v1_model_proto_msgTypes[3]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -313,7 +426,7 @@ func (x *Repository) String() string {
 func (*Repository) ProtoMessage() {}
 
 func (x *Repository) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_model_proto_msgTypes[3]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -326,7 +439,7 @@ func (x *Repository) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Repository.ProtoReflect.Descriptor instead.
 func (*Repository) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{3}
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Repository) GetId() string {
@@ -411,7 +524,7 @@ type ChangeRequest struct {
 
 func (x *ChangeRequest) Reset() {
 	*x = ChangeRequest{}
-	mi := &file_stagd_api_v1_model_proto_msgTypes[4]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -423,7 +536,7 @@ func (x *ChangeRequest) String() string {
 func (*ChangeRequest) ProtoMessage() {}
 
 func (x *ChangeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_model_proto_msgTypes[4]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -436,7 +549,7 @@ func (x *ChangeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeRequest.ProtoReflect.Descriptor instead.
 func (*ChangeRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{4}
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ChangeRequest) GetNumber() int64 {
@@ -498,6 +611,10 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1b\n" +
 	"\timage_url\x18\x04 \x01(\tR\bimageUrl\"z\n" +
+	"\vPreferences\x12)\n" +
+	"\x05theme\x18\x01 \x01(\x0e2\x13.stagd.api.v1.ThemeR\x05theme\x12\x1b\n" +
+	"\ttime_zone\x18\x02 \x01(\tR\btimeZone\x12#\n" +
+	"\rreduce_motion\x18\x03 \x01(\bR\freduceMotion\"z\n" +
 	"\x03Org\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04slug\x18\x02 \x01(\tR\x04slug\x12\x12\n" +
@@ -527,7 +644,12 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\bhead_sha\x18\x04 \x01(\tR\aheadSha\x12\x19\n" +
 	"\bbase_ref\x18\x05 \x01(\tR\abaseRef\x12\x16\n" +
 	"\x06author\x18\x06 \x01(\tR\x06author\x12\x10\n" +
-	"\x03url\x18\a \x01(\tR\x03url*\x93\x01\n" +
+	"\x03url\x18\a \x01(\tR\x03url*?\n" +
+	"\x05Theme\x12\x15\n" +
+	"\x11THEME_UNSPECIFIED\x10\x00\x12\x0f\n" +
+	"\vTHEME_LIGHT\x10\x01\x12\x0e\n" +
+	"\n" +
+	"THEME_DARK\x10\x02*\x93\x01\n" +
 	"\vScmProvider\x12\x1c\n" +
 	"\x18SCM_PROVIDER_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13SCM_PROVIDER_GITHUB\x10\x01\x12\x17\n" +
@@ -549,26 +671,29 @@ func file_stagd_api_v1_model_proto_rawDescGZIP() []byte {
 	return file_stagd_api_v1_model_proto_rawDescData
 }
 
-var file_stagd_api_v1_model_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_stagd_api_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_stagd_api_v1_model_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_stagd_api_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_stagd_api_v1_model_proto_goTypes = []any{
-	(ScmProvider)(0),              // 0: stagd.api.v1.ScmProvider
-	(*User)(nil),                  // 1: stagd.api.v1.User
-	(*Org)(nil),                   // 2: stagd.api.v1.Org
-	(*Membership)(nil),            // 3: stagd.api.v1.Membership
-	(*Repository)(nil),            // 4: stagd.api.v1.Repository
-	(*ChangeRequest)(nil),         // 5: stagd.api.v1.ChangeRequest
-	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
+	(Theme)(0),                    // 0: stagd.api.v1.Theme
+	(ScmProvider)(0),              // 1: stagd.api.v1.ScmProvider
+	(*User)(nil),                  // 2: stagd.api.v1.User
+	(*Preferences)(nil),           // 3: stagd.api.v1.Preferences
+	(*Org)(nil),                   // 4: stagd.api.v1.Org
+	(*Membership)(nil),            // 5: stagd.api.v1.Membership
+	(*Repository)(nil),            // 6: stagd.api.v1.Repository
+	(*ChangeRequest)(nil),         // 7: stagd.api.v1.ChangeRequest
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_model_proto_depIdxs = []int32{
-	6, // 0: stagd.api.v1.Org.create_time:type_name -> google.protobuf.Timestamp
-	2, // 1: stagd.api.v1.Membership.org:type_name -> stagd.api.v1.Org
-	0, // 2: stagd.api.v1.Repository.provider:type_name -> stagd.api.v1.ScmProvider
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 0: stagd.api.v1.Preferences.theme:type_name -> stagd.api.v1.Theme
+	8, // 1: stagd.api.v1.Org.create_time:type_name -> google.protobuf.Timestamp
+	4, // 2: stagd.api.v1.Membership.org:type_name -> stagd.api.v1.Org
+	1, // 3: stagd.api.v1.Repository.provider:type_name -> stagd.api.v1.ScmProvider
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_model_proto_init() }
@@ -581,8 +706,8 @@ func file_stagd_api_v1_model_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_model_proto_rawDesc), len(file_stagd_api_v1_model_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   5,
+			NumEnums:      2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -669,9 +669,15 @@ type CreateComputeConnectionResponse struct {
 	Connection *ComputeConnection     `protobuf:"bytes,1,opt,name=connection,proto3" json:"connection,omitempty"`
 	// For a connection through `stagd relay`: the token the relay connects
 	// with. Only ever shown here; Stagd keeps a hash.
-	RelayToken    string `protobuf:"bytes,2,opt,name=relay_token,json=relayToken,proto3" json:"relay_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RelayToken string `protobuf:"bytes,2,opt,name=relay_token,json=relayToken,proto3" json:"relay_token,omitempty"`
+	// For a Kubernetes connection through the relay: everything the cluster
+	// needs (Stagd's access, the relay and its token) as one manifest, for
+	// `kubectl apply -f <url>`. The link works for an hour, or until the relay
+	// first connects; the token isn't in the URL.
+	RelayInstallUrl        string                 `protobuf:"bytes,3,opt,name=relay_install_url,json=relayInstallUrl,proto3" json:"relay_install_url,omitempty"`
+	RelayInstallExpireTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=relay_install_expire_time,json=relayInstallExpireTime,proto3" json:"relay_install_expire_time,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *CreateComputeConnectionResponse) Reset() {
@@ -716,6 +722,20 @@ func (x *CreateComputeConnectionResponse) GetRelayToken() string {
 		return x.RelayToken
 	}
 	return ""
+}
+
+func (x *CreateComputeConnectionResponse) GetRelayInstallUrl() string {
+	if x != nil {
+		return x.RelayInstallUrl
+	}
+	return ""
+}
+
+func (x *CreateComputeConnectionResponse) GetRelayInstallExpireTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RelayInstallExpireTime
+	}
+	return nil
 }
 
 type ListComputeConnectionsRequest struct {
@@ -1151,6 +1171,112 @@ func (*DeleteComputeConnectionResponse) Descriptor() ([]byte, []int) {
 	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{17}
 }
 
+type CreateRelayInstallRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateRelayInstallRequest) Reset() {
+	*x = CreateRelayInstallRequest{}
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRelayInstallRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRelayInstallRequest) ProtoMessage() {}
+
+func (x *CreateRelayInstallRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRelayInstallRequest.ProtoReflect.Descriptor instead.
+func (*CreateRelayInstallRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *CreateRelayInstallRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type CreateRelayInstallResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The new token the relay connects with. Only ever shown here.
+	RelayToken string `protobuf:"bytes,1,opt,name=relay_token,json=relayToken,proto3" json:"relay_token,omitempty"`
+	// For Kubernetes: everything the cluster needs, for `kubectl apply -f <url>`.
+	RelayInstallUrl        string                 `protobuf:"bytes,2,opt,name=relay_install_url,json=relayInstallUrl,proto3" json:"relay_install_url,omitempty"`
+	RelayInstallExpireTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=relay_install_expire_time,json=relayInstallExpireTime,proto3" json:"relay_install_expire_time,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *CreateRelayInstallResponse) Reset() {
+	*x = CreateRelayInstallResponse{}
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRelayInstallResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRelayInstallResponse) ProtoMessage() {}
+
+func (x *CreateRelayInstallResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRelayInstallResponse.ProtoReflect.Descriptor instead.
+func (*CreateRelayInstallResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *CreateRelayInstallResponse) GetRelayToken() string {
+	if x != nil {
+		return x.RelayToken
+	}
+	return ""
+}
+
+func (x *CreateRelayInstallResponse) GetRelayInstallUrl() string {
+	if x != nil {
+		return x.RelayInstallUrl
+	}
+	return ""
+}
+
+func (x *CreateRelayInstallResponse) GetRelayInstallExpireTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RelayInstallExpireTime
+	}
+	return nil
+}
+
 var File_stagd_api_v1_compute_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_compute_proto_rawDesc = "" +
@@ -1204,13 +1330,15 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x06values\x18\x03 \x03(\v28.stagd.api.v1.CreateComputeConnectionRequest.ValuesEntryR\x06values\x1a9\n" +
 	"\vValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x83\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x86\x02\n" +
 	"\x1fCreateComputeConnectionResponse\x12?\n" +
 	"\n" +
 	"connection\x18\x01 \x01(\v2\x1f.stagd.api.v1.ComputeConnectionR\n" +
 	"connection\x12\x1f\n" +
 	"\vrelay_token\x18\x02 \x01(\tR\n" +
-	"relayToken\"\x1f\n" +
+	"relayToken\x12*\n" +
+	"\x11relay_install_url\x18\x03 \x01(\tR\x0frelayInstallUrl\x12U\n" +
+	"\x19relay_install_expire_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x16relayInstallExpireTime\"\x1f\n" +
 	"\x1dListComputeConnectionsRequest\"c\n" +
 	"\x1eListComputeConnectionsResponse\x12A\n" +
 	"\vconnections\x18\x01 \x03(\v2\x1f.stagd.api.v1.ComputeConnectionR\vconnections\"7\n" +
@@ -1238,7 +1366,14 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"connection\"9\n" +
 	"\x1eDeleteComputeConnectionRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"!\n" +
-	"\x1fDeleteComputeConnectionResponse*\x90\x02\n" +
+	"\x1fDeleteComputeConnectionResponse\"4\n" +
+	"\x19CreateRelayInstallRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"\xc0\x01\n" +
+	"\x1aCreateRelayInstallResponse\x12\x1f\n" +
+	"\vrelay_token\x18\x01 \x01(\tR\n" +
+	"relayToken\x12*\n" +
+	"\x11relay_install_url\x18\x02 \x01(\tR\x0frelayInstallUrl\x12U\n" +
+	"\x19relay_install_expire_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x16relayInstallExpireTime*\x90\x02\n" +
 	"\x0fComputeProvider\x12 \n" +
 	"\x1cCOMPUTE_PROVIDER_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15COMPUTE_PROVIDER_FAKE\x10\x01\x12\x1e\n" +
@@ -1251,7 +1386,7 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x17ComputeConnectionStatus\x12)\n" +
 	"%COMPUTE_CONNECTION_STATUS_UNSPECIFIED\x10\x00\x12$\n" +
 	" COMPUTE_CONNECTION_STATUS_ACTIVE\x10\x01\x12%\n" +
-	"!COMPUTE_CONNECTION_STATUS_FAILING\x10\x022\xbe\x06\n" +
+	"!COMPUTE_CONNECTION_STATUS_FAILING\x10\x022\xa7\a\n" +
 	"\x0eComputeService\x12X\n" +
 	"\rListProviders\x12\".stagd.api.v1.ListProvidersRequest\x1a#.stagd.api.v1.ListProvidersResponse\x12v\n" +
 	"\x17CreateComputeConnection\x12,.stagd.api.v1.CreateComputeConnectionRequest\x1a-.stagd.api.v1.CreateComputeConnectionResponse\x12s\n" +
@@ -1259,7 +1394,8 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x15TestComputeConnection\x12*.stagd.api.v1.TestComputeConnectionRequest\x1a+.stagd.api.v1.TestComputeConnectionResponse\x12v\n" +
 	"\x17UpdateComputeConnection\x12,.stagd.api.v1.UpdateComputeConnectionRequest\x1a-.stagd.api.v1.UpdateComputeConnectionResponse\x12\x82\x01\n" +
 	"\x1bSetDefaultComputeConnection\x120.stagd.api.v1.SetDefaultComputeConnectionRequest\x1a1.stagd.api.v1.SetDefaultComputeConnectionResponse\x12v\n" +
-	"\x17DeleteComputeConnection\x12,.stagd.api.v1.DeleteComputeConnectionRequest\x1a-.stagd.api.v1.DeleteComputeConnectionResponseB\xa3\x01\n" +
+	"\x17DeleteComputeConnection\x12,.stagd.api.v1.DeleteComputeConnectionRequest\x1a-.stagd.api.v1.DeleteComputeConnectionResponse\x12g\n" +
+	"\x12CreateRelayInstall\x12'.stagd.api.v1.CreateRelayInstallRequest\x1a(.stagd.api.v1.CreateRelayInstallResponseB\xa3\x01\n" +
 	"\x10com.stagd.api.v1B\fComputeProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -1275,7 +1411,7 @@ func file_stagd_api_v1_compute_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_compute_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_stagd_api_v1_compute_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_stagd_api_v1_compute_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_stagd_api_v1_compute_proto_goTypes = []any{
 	(ComputeProvider)(0),                        // 0: stagd.api.v1.ComputeProvider
 	(ComputeConnectionStatus)(0),                // 1: stagd.api.v1.ComputeConnectionStatus
@@ -1297,53 +1433,59 @@ var file_stagd_api_v1_compute_proto_goTypes = []any{
 	(*SetDefaultComputeConnectionResponse)(nil), // 17: stagd.api.v1.SetDefaultComputeConnectionResponse
 	(*DeleteComputeConnectionRequest)(nil),      // 18: stagd.api.v1.DeleteComputeConnectionRequest
 	(*DeleteComputeConnectionResponse)(nil),     // 19: stagd.api.v1.DeleteComputeConnectionResponse
-	nil,                                         // 20: stagd.api.v1.ComputeConnection.SettingsEntry
-	nil,                                         // 21: stagd.api.v1.CreateComputeConnectionRequest.ValuesEntry
-	nil,                                         // 22: stagd.api.v1.UpdateComputeConnectionRequest.ValuesEntry
-	(*durationpb.Duration)(nil),                 // 23: google.protobuf.Duration
-	(*User)(nil),                                // 24: stagd.api.v1.User
-	(*timestamppb.Timestamp)(nil),               // 25: google.protobuf.Timestamp
+	(*CreateRelayInstallRequest)(nil),           // 20: stagd.api.v1.CreateRelayInstallRequest
+	(*CreateRelayInstallResponse)(nil),          // 21: stagd.api.v1.CreateRelayInstallResponse
+	nil,                                         // 22: stagd.api.v1.ComputeConnection.SettingsEntry
+	nil,                                         // 23: stagd.api.v1.CreateComputeConnectionRequest.ValuesEntry
+	nil,                                         // 24: stagd.api.v1.UpdateComputeConnectionRequest.ValuesEntry
+	(*durationpb.Duration)(nil),                 // 25: google.protobuf.Duration
+	(*User)(nil),                                // 26: stagd.api.v1.User
+	(*timestamppb.Timestamp)(nil),               // 27: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_compute_proto_depIdxs = []int32{
-	23, // 0: stagd.api.v1.ComputeCapabilities.max_lifetime:type_name -> google.protobuf.Duration
+	25, // 0: stagd.api.v1.ComputeCapabilities.max_lifetime:type_name -> google.protobuf.Duration
 	0,  // 1: stagd.api.v1.ProviderInfo.provider:type_name -> stagd.api.v1.ComputeProvider
 	3,  // 2: stagd.api.v1.ProviderInfo.fields:type_name -> stagd.api.v1.ProviderField
 	2,  // 3: stagd.api.v1.ProviderInfo.capabilities:type_name -> stagd.api.v1.ComputeCapabilities
 	0,  // 4: stagd.api.v1.ComputeConnection.provider:type_name -> stagd.api.v1.ComputeProvider
-	20, // 5: stagd.api.v1.ComputeConnection.settings:type_name -> stagd.api.v1.ComputeConnection.SettingsEntry
+	22, // 5: stagd.api.v1.ComputeConnection.settings:type_name -> stagd.api.v1.ComputeConnection.SettingsEntry
 	1,  // 6: stagd.api.v1.ComputeConnection.status:type_name -> stagd.api.v1.ComputeConnectionStatus
 	2,  // 7: stagd.api.v1.ComputeConnection.capabilities:type_name -> stagd.api.v1.ComputeCapabilities
-	24, // 8: stagd.api.v1.ComputeConnection.created_by:type_name -> stagd.api.v1.User
-	25, // 9: stagd.api.v1.ComputeConnection.create_time:type_name -> google.protobuf.Timestamp
-	25, // 10: stagd.api.v1.ComputeConnection.check_time:type_name -> google.protobuf.Timestamp
+	26, // 8: stagd.api.v1.ComputeConnection.created_by:type_name -> stagd.api.v1.User
+	27, // 9: stagd.api.v1.ComputeConnection.create_time:type_name -> google.protobuf.Timestamp
+	27, // 10: stagd.api.v1.ComputeConnection.check_time:type_name -> google.protobuf.Timestamp
 	4,  // 11: stagd.api.v1.ListProvidersResponse.providers:type_name -> stagd.api.v1.ProviderInfo
 	0,  // 12: stagd.api.v1.CreateComputeConnectionRequest.provider:type_name -> stagd.api.v1.ComputeProvider
-	21, // 13: stagd.api.v1.CreateComputeConnectionRequest.values:type_name -> stagd.api.v1.CreateComputeConnectionRequest.ValuesEntry
+	23, // 13: stagd.api.v1.CreateComputeConnectionRequest.values:type_name -> stagd.api.v1.CreateComputeConnectionRequest.ValuesEntry
 	5,  // 14: stagd.api.v1.CreateComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
-	5,  // 15: stagd.api.v1.ListComputeConnectionsResponse.connections:type_name -> stagd.api.v1.ComputeConnection
-	5,  // 16: stagd.api.v1.TestComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
-	22, // 17: stagd.api.v1.UpdateComputeConnectionRequest.values:type_name -> stagd.api.v1.UpdateComputeConnectionRequest.ValuesEntry
-	5,  // 18: stagd.api.v1.UpdateComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
-	5,  // 19: stagd.api.v1.SetDefaultComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
-	6,  // 20: stagd.api.v1.ComputeService.ListProviders:input_type -> stagd.api.v1.ListProvidersRequest
-	8,  // 21: stagd.api.v1.ComputeService.CreateComputeConnection:input_type -> stagd.api.v1.CreateComputeConnectionRequest
-	10, // 22: stagd.api.v1.ComputeService.ListComputeConnections:input_type -> stagd.api.v1.ListComputeConnectionsRequest
-	12, // 23: stagd.api.v1.ComputeService.TestComputeConnection:input_type -> stagd.api.v1.TestComputeConnectionRequest
-	14, // 24: stagd.api.v1.ComputeService.UpdateComputeConnection:input_type -> stagd.api.v1.UpdateComputeConnectionRequest
-	16, // 25: stagd.api.v1.ComputeService.SetDefaultComputeConnection:input_type -> stagd.api.v1.SetDefaultComputeConnectionRequest
-	18, // 26: stagd.api.v1.ComputeService.DeleteComputeConnection:input_type -> stagd.api.v1.DeleteComputeConnectionRequest
-	7,  // 27: stagd.api.v1.ComputeService.ListProviders:output_type -> stagd.api.v1.ListProvidersResponse
-	9,  // 28: stagd.api.v1.ComputeService.CreateComputeConnection:output_type -> stagd.api.v1.CreateComputeConnectionResponse
-	11, // 29: stagd.api.v1.ComputeService.ListComputeConnections:output_type -> stagd.api.v1.ListComputeConnectionsResponse
-	13, // 30: stagd.api.v1.ComputeService.TestComputeConnection:output_type -> stagd.api.v1.TestComputeConnectionResponse
-	15, // 31: stagd.api.v1.ComputeService.UpdateComputeConnection:output_type -> stagd.api.v1.UpdateComputeConnectionResponse
-	17, // 32: stagd.api.v1.ComputeService.SetDefaultComputeConnection:output_type -> stagd.api.v1.SetDefaultComputeConnectionResponse
-	19, // 33: stagd.api.v1.ComputeService.DeleteComputeConnection:output_type -> stagd.api.v1.DeleteComputeConnectionResponse
-	27, // [27:34] is the sub-list for method output_type
-	20, // [20:27] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	27, // 15: stagd.api.v1.CreateComputeConnectionResponse.relay_install_expire_time:type_name -> google.protobuf.Timestamp
+	5,  // 16: stagd.api.v1.ListComputeConnectionsResponse.connections:type_name -> stagd.api.v1.ComputeConnection
+	5,  // 17: stagd.api.v1.TestComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
+	24, // 18: stagd.api.v1.UpdateComputeConnectionRequest.values:type_name -> stagd.api.v1.UpdateComputeConnectionRequest.ValuesEntry
+	5,  // 19: stagd.api.v1.UpdateComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
+	5,  // 20: stagd.api.v1.SetDefaultComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
+	27, // 21: stagd.api.v1.CreateRelayInstallResponse.relay_install_expire_time:type_name -> google.protobuf.Timestamp
+	6,  // 22: stagd.api.v1.ComputeService.ListProviders:input_type -> stagd.api.v1.ListProvidersRequest
+	8,  // 23: stagd.api.v1.ComputeService.CreateComputeConnection:input_type -> stagd.api.v1.CreateComputeConnectionRequest
+	10, // 24: stagd.api.v1.ComputeService.ListComputeConnections:input_type -> stagd.api.v1.ListComputeConnectionsRequest
+	12, // 25: stagd.api.v1.ComputeService.TestComputeConnection:input_type -> stagd.api.v1.TestComputeConnectionRequest
+	14, // 26: stagd.api.v1.ComputeService.UpdateComputeConnection:input_type -> stagd.api.v1.UpdateComputeConnectionRequest
+	16, // 27: stagd.api.v1.ComputeService.SetDefaultComputeConnection:input_type -> stagd.api.v1.SetDefaultComputeConnectionRequest
+	18, // 28: stagd.api.v1.ComputeService.DeleteComputeConnection:input_type -> stagd.api.v1.DeleteComputeConnectionRequest
+	20, // 29: stagd.api.v1.ComputeService.CreateRelayInstall:input_type -> stagd.api.v1.CreateRelayInstallRequest
+	7,  // 30: stagd.api.v1.ComputeService.ListProviders:output_type -> stagd.api.v1.ListProvidersResponse
+	9,  // 31: stagd.api.v1.ComputeService.CreateComputeConnection:output_type -> stagd.api.v1.CreateComputeConnectionResponse
+	11, // 32: stagd.api.v1.ComputeService.ListComputeConnections:output_type -> stagd.api.v1.ListComputeConnectionsResponse
+	13, // 33: stagd.api.v1.ComputeService.TestComputeConnection:output_type -> stagd.api.v1.TestComputeConnectionResponse
+	15, // 34: stagd.api.v1.ComputeService.UpdateComputeConnection:output_type -> stagd.api.v1.UpdateComputeConnectionResponse
+	17, // 35: stagd.api.v1.ComputeService.SetDefaultComputeConnection:output_type -> stagd.api.v1.SetDefaultComputeConnectionResponse
+	19, // 36: stagd.api.v1.ComputeService.DeleteComputeConnection:output_type -> stagd.api.v1.DeleteComputeConnectionResponse
+	21, // 37: stagd.api.v1.ComputeService.CreateRelayInstall:output_type -> stagd.api.v1.CreateRelayInstallResponse
+	30, // [30:38] is the sub-list for method output_type
+	22, // [22:30] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_compute_proto_init() }
@@ -1358,7 +1500,7 @@ func file_stagd_api_v1_compute_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_compute_proto_rawDesc), len(file_stagd_api_v1_compute_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

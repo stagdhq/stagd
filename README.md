@@ -38,7 +38,7 @@ stagd activity
 
 `stagd relay` runs next to compute Stagd can't reach, and dials out to it: Stagd manages the compute and sends preview traffic through that one connection, so nothing next to the relay needs to be reachable from outside.
 
-- **Kubernetes:** `deploy/kubernetes/stagd-access.yaml` makes Stagd's service account, kept to `stagd-*` namespaces by an admission policy; `stagd-relay.yaml` runs the relay as it. The relay only connects Stagd to services in `stagd-*` namespaces.
+- **Kubernetes:** `deploy/kubernetes/stagd-access.yaml` makes Stagd's service account, kept to `stagd-*` namespaces by an admission policy; `stagd-relay.yaml` runs the relay as it. The relay only connects Stagd to services in `stagd-*` namespaces. `stagd compute connect kubernetes` (or the dashboard) prints one `kubectl apply -f <link>` that installs both with the relay's token; `stagd compute install <name>` makes a new one, and `--wait` waits for the relay to connect.
 - **Docker:** run it on the host with the Docker socket. Whoever reaches the Docker API controls the host: use a host meant for previews.
 
 ```bash

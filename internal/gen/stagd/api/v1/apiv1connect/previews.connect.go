@@ -70,6 +70,19 @@ const (
 	// PreviewServiceClearMailProcedure is the fully-qualified name of the PreviewService's ClearMail
 	// RPC.
 	PreviewServiceClearMailProcedure = "/stagd.api.v1.PreviewService/ClearMail"
+	// PreviewServiceDeleteMailProcedure is the fully-qualified name of the PreviewService's DeleteMail
+	// RPC.
+	PreviewServiceDeleteMailProcedure = "/stagd.api.v1.PreviewService/DeleteMail"
+	// PreviewServiceGetServiceUsageProcedure is the fully-qualified name of the PreviewService's
+	// GetServiceUsage RPC.
+	PreviewServiceGetServiceUsageProcedure = "/stagd.api.v1.PreviewService/GetServiceUsage"
+	// PreviewServiceListLogsProcedure is the fully-qualified name of the PreviewService's ListLogs RPC.
+	PreviewServiceListLogsProcedure = "/stagd.api.v1.PreviewService/ListLogs"
+	// PreviewServiceListTracesProcedure is the fully-qualified name of the PreviewService's ListTraces
+	// RPC.
+	PreviewServiceListTracesProcedure = "/stagd.api.v1.PreviewService/ListTraces"
+	// PreviewServiceGetTraceProcedure is the fully-qualified name of the PreviewService's GetTrace RPC.
+	PreviewServiceGetTraceProcedure = "/stagd.api.v1.PreviewService/GetTrace"
 )
 
 // PreviewServiceClient is a client for the stagd.api.v1.PreviewService service.
@@ -82,7 +95,8 @@ type PreviewServiceClient interface {
 	// WatchPreview streams the preview's state until it is live, failed or
 	// destroyed, starting with its current state.
 	WatchPreview(context.Context, *connect.Request[v1.WatchPreviewRequest]) (*connect.ServerStreamForClient[v1.WatchPreviewResponse], error)
-	// ListPreviewEvents returns what happened to a preview, oldest first.
+	// ListPreviewEvents returns what happened to a preview: all of it, oldest
+	// first; or, with a page_size, a page at a time, newest first.
 	ListPreviewEvents(context.Context, *connect.Request[v1.ListPreviewEventsRequest]) (*connect.Response[v1.ListPreviewEventsResponse], error)
 	// WakePreview starts a sleeping preview again.
 	WakePreview(context.Context, *connect.Request[v1.WakePreviewRequest]) (*connect.Response[v1.WakePreviewResponse], error)
@@ -108,6 +122,25 @@ type PreviewServiceClient interface {
 	GetMail(context.Context, *connect.Request[v1.GetMailRequest]) (*connect.Response[v1.GetMailResponse], error)
 	// ClearMail deletes everything a preview captured.
 	ClearMail(context.Context, *connect.Request[v1.ClearMailRequest]) (*connect.Response[v1.ClearMailResponse], error)
+	// DeleteMail deletes one message a preview captured.
+	DeleteMail(context.Context, *connect.Request[v1.DeleteMailRequest]) (*connect.Response[v1.DeleteMailResponse], error)
+	// GetServiceUsage returns CPU and memory per service of a preview over a
+	// window up to 24 hours. Stagd samples them every 30 seconds while a
+	// preview is live, on compute that can say: nothing while it sleeps, so
+	// the series have gaps.
+	GetServiceUsage(context.Context, *connect.Request[v1.GetServiceUsageRequest]) (*connect.Response[v1.GetServiceUsageResponse], error)
+	// ListLogs returns the latest lines a preview's services wrote, read from
+	// its compute when asked: Stagd keeps no copy. Each line is read for its
+	// level and message, and JSON and logfmt lines for their fields. The
+	// preview's secrets are hidden. A sleeping preview has to wake first; a
+	// torn-down one's logs are gone.
+	ListLogs(context.Context, *connect.Request[v1.ListLogsRequest]) (*connect.Response[v1.ListLogsResponse], error)
+	// ListTraces lists a preview's traces, newest first, from its own
+	// OpenTelemetry endpoint (stagd.yaml `services: { otel: {} }`), read when
+	// asked: Stagd keeps no copy. A sleeping preview has to wake first.
+	ListTraces(context.Context, *connect.Request[v1.ListTracesRequest]) (*connect.Response[v1.ListTracesResponse], error)
+	// GetTrace returns one trace's spans, for a waterfall.
+	GetTrace(context.Context, *connect.Request[v1.GetTraceRequest]) (*connect.Response[v1.GetTraceResponse], error)
 }
 
 // NewPreviewServiceClient constructs a client for the stagd.api.v1.PreviewService service. By
@@ -199,6 +232,36 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("ClearMail")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteMail: connect.NewClient[v1.DeleteMailRequest, v1.DeleteMailResponse](
+			httpClient,
+			baseURL+PreviewServiceDeleteMailProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("DeleteMail")),
+			connect.WithClientOptions(opts...),
+		),
+		getServiceUsage: connect.NewClient[v1.GetServiceUsageRequest, v1.GetServiceUsageResponse](
+			httpClient,
+			baseURL+PreviewServiceGetServiceUsageProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("GetServiceUsage")),
+			connect.WithClientOptions(opts...),
+		),
+		listLogs: connect.NewClient[v1.ListLogsRequest, v1.ListLogsResponse](
+			httpClient,
+			baseURL+PreviewServiceListLogsProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("ListLogs")),
+			connect.WithClientOptions(opts...),
+		),
+		listTraces: connect.NewClient[v1.ListTracesRequest, v1.ListTracesResponse](
+			httpClient,
+			baseURL+PreviewServiceListTracesProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("ListTraces")),
+			connect.WithClientOptions(opts...),
+		),
+		getTrace: connect.NewClient[v1.GetTraceRequest, v1.GetTraceResponse](
+			httpClient,
+			baseURL+PreviewServiceGetTraceProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("GetTrace")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -217,6 +280,11 @@ type previewServiceClient struct {
 	listMail            *connect.Client[v1.ListMailRequest, v1.ListMailResponse]
 	getMail             *connect.Client[v1.GetMailRequest, v1.GetMailResponse]
 	clearMail           *connect.Client[v1.ClearMailRequest, v1.ClearMailResponse]
+	deleteMail          *connect.Client[v1.DeleteMailRequest, v1.DeleteMailResponse]
+	getServiceUsage     *connect.Client[v1.GetServiceUsageRequest, v1.GetServiceUsageResponse]
+	listLogs            *connect.Client[v1.ListLogsRequest, v1.ListLogsResponse]
+	listTraces          *connect.Client[v1.ListTracesRequest, v1.ListTracesResponse]
+	getTrace            *connect.Client[v1.GetTraceRequest, v1.GetTraceResponse]
 }
 
 // CreatePreview calls stagd.api.v1.PreviewService.CreatePreview.
@@ -284,6 +352,31 @@ func (c *previewServiceClient) ClearMail(ctx context.Context, req *connect.Reque
 	return c.clearMail.CallUnary(ctx, req)
 }
 
+// DeleteMail calls stagd.api.v1.PreviewService.DeleteMail.
+func (c *previewServiceClient) DeleteMail(ctx context.Context, req *connect.Request[v1.DeleteMailRequest]) (*connect.Response[v1.DeleteMailResponse], error) {
+	return c.deleteMail.CallUnary(ctx, req)
+}
+
+// GetServiceUsage calls stagd.api.v1.PreviewService.GetServiceUsage.
+func (c *previewServiceClient) GetServiceUsage(ctx context.Context, req *connect.Request[v1.GetServiceUsageRequest]) (*connect.Response[v1.GetServiceUsageResponse], error) {
+	return c.getServiceUsage.CallUnary(ctx, req)
+}
+
+// ListLogs calls stagd.api.v1.PreviewService.ListLogs.
+func (c *previewServiceClient) ListLogs(ctx context.Context, req *connect.Request[v1.ListLogsRequest]) (*connect.Response[v1.ListLogsResponse], error) {
+	return c.listLogs.CallUnary(ctx, req)
+}
+
+// ListTraces calls stagd.api.v1.PreviewService.ListTraces.
+func (c *previewServiceClient) ListTraces(ctx context.Context, req *connect.Request[v1.ListTracesRequest]) (*connect.Response[v1.ListTracesResponse], error) {
+	return c.listTraces.CallUnary(ctx, req)
+}
+
+// GetTrace calls stagd.api.v1.PreviewService.GetTrace.
+func (c *previewServiceClient) GetTrace(ctx context.Context, req *connect.Request[v1.GetTraceRequest]) (*connect.Response[v1.GetTraceResponse], error) {
+	return c.getTrace.CallUnary(ctx, req)
+}
+
 // PreviewServiceHandler is an implementation of the stagd.api.v1.PreviewService service.
 type PreviewServiceHandler interface {
 	// CreatePreview starts a preview, or updates the existing one for the same
@@ -294,7 +387,8 @@ type PreviewServiceHandler interface {
 	// WatchPreview streams the preview's state until it is live, failed or
 	// destroyed, starting with its current state.
 	WatchPreview(context.Context, *connect.Request[v1.WatchPreviewRequest], *connect.ServerStream[v1.WatchPreviewResponse]) error
-	// ListPreviewEvents returns what happened to a preview, oldest first.
+	// ListPreviewEvents returns what happened to a preview: all of it, oldest
+	// first; or, with a page_size, a page at a time, newest first.
 	ListPreviewEvents(context.Context, *connect.Request[v1.ListPreviewEventsRequest]) (*connect.Response[v1.ListPreviewEventsResponse], error)
 	// WakePreview starts a sleeping preview again.
 	WakePreview(context.Context, *connect.Request[v1.WakePreviewRequest]) (*connect.Response[v1.WakePreviewResponse], error)
@@ -320,6 +414,25 @@ type PreviewServiceHandler interface {
 	GetMail(context.Context, *connect.Request[v1.GetMailRequest]) (*connect.Response[v1.GetMailResponse], error)
 	// ClearMail deletes everything a preview captured.
 	ClearMail(context.Context, *connect.Request[v1.ClearMailRequest]) (*connect.Response[v1.ClearMailResponse], error)
+	// DeleteMail deletes one message a preview captured.
+	DeleteMail(context.Context, *connect.Request[v1.DeleteMailRequest]) (*connect.Response[v1.DeleteMailResponse], error)
+	// GetServiceUsage returns CPU and memory per service of a preview over a
+	// window up to 24 hours. Stagd samples them every 30 seconds while a
+	// preview is live, on compute that can say: nothing while it sleeps, so
+	// the series have gaps.
+	GetServiceUsage(context.Context, *connect.Request[v1.GetServiceUsageRequest]) (*connect.Response[v1.GetServiceUsageResponse], error)
+	// ListLogs returns the latest lines a preview's services wrote, read from
+	// its compute when asked: Stagd keeps no copy. Each line is read for its
+	// level and message, and JSON and logfmt lines for their fields. The
+	// preview's secrets are hidden. A sleeping preview has to wake first; a
+	// torn-down one's logs are gone.
+	ListLogs(context.Context, *connect.Request[v1.ListLogsRequest]) (*connect.Response[v1.ListLogsResponse], error)
+	// ListTraces lists a preview's traces, newest first, from its own
+	// OpenTelemetry endpoint (stagd.yaml `services: { otel: {} }`), read when
+	// asked: Stagd keeps no copy. A sleeping preview has to wake first.
+	ListTraces(context.Context, *connect.Request[v1.ListTracesRequest]) (*connect.Response[v1.ListTracesResponse], error)
+	// GetTrace returns one trace's spans, for a waterfall.
+	GetTrace(context.Context, *connect.Request[v1.GetTraceRequest]) (*connect.Response[v1.GetTraceResponse], error)
 }
 
 // NewPreviewServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -407,6 +520,36 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		connect.WithSchema(previewServiceMethods.ByName("ClearMail")),
 		connect.WithHandlerOptions(opts...),
 	)
+	previewServiceDeleteMailHandler := connect.NewUnaryHandler(
+		PreviewServiceDeleteMailProcedure,
+		svc.DeleteMail,
+		connect.WithSchema(previewServiceMethods.ByName("DeleteMail")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceGetServiceUsageHandler := connect.NewUnaryHandler(
+		PreviewServiceGetServiceUsageProcedure,
+		svc.GetServiceUsage,
+		connect.WithSchema(previewServiceMethods.ByName("GetServiceUsage")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceListLogsHandler := connect.NewUnaryHandler(
+		PreviewServiceListLogsProcedure,
+		svc.ListLogs,
+		connect.WithSchema(previewServiceMethods.ByName("ListLogs")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceListTracesHandler := connect.NewUnaryHandler(
+		PreviewServiceListTracesProcedure,
+		svc.ListTraces,
+		connect.WithSchema(previewServiceMethods.ByName("ListTraces")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceGetTraceHandler := connect.NewUnaryHandler(
+		PreviewServiceGetTraceProcedure,
+		svc.GetTrace,
+		connect.WithSchema(previewServiceMethods.ByName("GetTrace")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.PreviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PreviewServiceCreatePreviewProcedure:
@@ -435,6 +578,16 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceGetMailHandler.ServeHTTP(w, r)
 		case PreviewServiceClearMailProcedure:
 			previewServiceClearMailHandler.ServeHTTP(w, r)
+		case PreviewServiceDeleteMailProcedure:
+			previewServiceDeleteMailHandler.ServeHTTP(w, r)
+		case PreviewServiceGetServiceUsageProcedure:
+			previewServiceGetServiceUsageHandler.ServeHTTP(w, r)
+		case PreviewServiceListLogsProcedure:
+			previewServiceListLogsHandler.ServeHTTP(w, r)
+		case PreviewServiceListTracesProcedure:
+			previewServiceListTracesHandler.ServeHTTP(w, r)
+		case PreviewServiceGetTraceProcedure:
+			previewServiceGetTraceHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -494,4 +647,24 @@ func (UnimplementedPreviewServiceHandler) GetMail(context.Context, *connect.Requ
 
 func (UnimplementedPreviewServiceHandler) ClearMail(context.Context, *connect.Request[v1.ClearMailRequest]) (*connect.Response[v1.ClearMailResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ClearMail is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) DeleteMail(context.Context, *connect.Request[v1.DeleteMailRequest]) (*connect.Response[v1.DeleteMailResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.DeleteMail is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) GetServiceUsage(context.Context, *connect.Request[v1.GetServiceUsageRequest]) (*connect.Response[v1.GetServiceUsageResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.GetServiceUsage is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) ListLogs(context.Context, *connect.Request[v1.ListLogsRequest]) (*connect.Response[v1.ListLogsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListLogs is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) ListTraces(context.Context, *connect.Request[v1.ListTracesRequest]) (*connect.Response[v1.ListTracesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListTraces is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) GetTrace(context.Context, *connect.Request[v1.GetTraceRequest]) (*connect.Response[v1.GetTraceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.GetTrace is not implemented"))
 }

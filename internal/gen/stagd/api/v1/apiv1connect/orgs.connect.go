@@ -23,6 +23,8 @@ const _ = connect.IsAtLeastVersion1_13_0
 const (
 	// OrgServiceName is the fully-qualified name of the OrgService service.
 	OrgServiceName = "stagd.api.v1.OrgService"
+	// InviteServiceName is the fully-qualified name of the InviteService service.
+	InviteServiceName = "stagd.api.v1.InviteService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -41,12 +43,40 @@ const (
 	OrgServiceSwitchOrgProcedure = "/stagd.api.v1.OrgService/SwitchOrg"
 	// OrgServiceListMembersProcedure is the fully-qualified name of the OrgService's ListMembers RPC.
 	OrgServiceListMembersProcedure = "/stagd.api.v1.OrgService/ListMembers"
+	// OrgServiceUpdateMemberRoleProcedure is the fully-qualified name of the OrgService's
+	// UpdateMemberRole RPC.
+	OrgServiceUpdateMemberRoleProcedure = "/stagd.api.v1.OrgService/UpdateMemberRole"
+	// OrgServiceRemoveMemberProcedure is the fully-qualified name of the OrgService's RemoveMember RPC.
+	OrgServiceRemoveMemberProcedure = "/stagd.api.v1.OrgService/RemoveMember"
+	// InviteServiceCreateInvitesProcedure is the fully-qualified name of the InviteService's
+	// CreateInvites RPC.
+	InviteServiceCreateInvitesProcedure = "/stagd.api.v1.InviteService/CreateInvites"
+	// InviteServiceListInvitesProcedure is the fully-qualified name of the InviteService's ListInvites
+	// RPC.
+	InviteServiceListInvitesProcedure = "/stagd.api.v1.InviteService/ListInvites"
+	// InviteServiceResendInviteProcedure is the fully-qualified name of the InviteService's
+	// ResendInvite RPC.
+	InviteServiceResendInviteProcedure = "/stagd.api.v1.InviteService/ResendInvite"
+	// InviteServiceRevokeInviteProcedure is the fully-qualified name of the InviteService's
+	// RevokeInvite RPC.
+	InviteServiceRevokeInviteProcedure = "/stagd.api.v1.InviteService/RevokeInvite"
+	// InviteServiceGetInviteLinkProcedure is the fully-qualified name of the InviteService's
+	// GetInviteLink RPC.
+	InviteServiceGetInviteLinkProcedure = "/stagd.api.v1.InviteService/GetInviteLink"
+	// InviteServiceResetInviteLinkProcedure is the fully-qualified name of the InviteService's
+	// ResetInviteLink RPC.
+	InviteServiceResetInviteLinkProcedure = "/stagd.api.v1.InviteService/ResetInviteLink"
+	// InviteServiceDisableInviteLinkProcedure is the fully-qualified name of the InviteService's
+	// DisableInviteLink RPC.
+	InviteServiceDisableInviteLinkProcedure = "/stagd.api.v1.InviteService/DisableInviteLink"
 )
 
 // OrgServiceClient is a client for the stagd.api.v1.OrgService service.
 type OrgServiceClient interface {
 	// CreateOrg creates an org with the caller as its owner and makes it the
-	// session's active org.
+	// session's active org. Refused with FAILED_PRECONDITION when the server
+	// runs one org that exists already, or lets each person create only one
+	// and the caller has.
 	CreateOrg(context.Context, *connect.Request[v1.CreateOrgRequest]) (*connect.Response[v1.CreateOrgResponse], error)
 	// ListOrgs lists the orgs the caller belongs to.
 	ListOrgs(context.Context, *connect.Request[v1.ListOrgsRequest]) (*connect.Response[v1.ListOrgsResponse], error)
@@ -55,6 +85,12 @@ type OrgServiceClient interface {
 	SwitchOrg(context.Context, *connect.Request[v1.SwitchOrgRequest]) (*connect.Response[v1.SwitchOrgResponse], error)
 	// ListMembers lists the people in the active org.
 	ListMembers(context.Context, *connect.Request[v1.ListMembersRequest]) (*connect.Response[v1.ListMembersResponse], error)
+	// UpdateMemberRole changes someone's role. The last admin can't be
+	// demoted: make someone else an admin first.
+	UpdateMemberRole(context.Context, *connect.Request[v1.UpdateMemberRoleRequest]) (*connect.Response[v1.UpdateMemberRoleResponse], error)
+	// RemoveMember takes someone out of the active org and ends their sessions
+	// in it. The last admin can't be removed.
+	RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error)
 }
 
 // NewOrgServiceClient constructs a client for the stagd.api.v1.OrgService service. By default, it
@@ -92,15 +128,29 @@ func NewOrgServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(orgServiceMethods.ByName("ListMembers")),
 			connect.WithClientOptions(opts...),
 		),
+		updateMemberRole: connect.NewClient[v1.UpdateMemberRoleRequest, v1.UpdateMemberRoleResponse](
+			httpClient,
+			baseURL+OrgServiceUpdateMemberRoleProcedure,
+			connect.WithSchema(orgServiceMethods.ByName("UpdateMemberRole")),
+			connect.WithClientOptions(opts...),
+		),
+		removeMember: connect.NewClient[v1.RemoveMemberRequest, v1.RemoveMemberResponse](
+			httpClient,
+			baseURL+OrgServiceRemoveMemberProcedure,
+			connect.WithSchema(orgServiceMethods.ByName("RemoveMember")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // orgServiceClient implements OrgServiceClient.
 type orgServiceClient struct {
-	createOrg   *connect.Client[v1.CreateOrgRequest, v1.CreateOrgResponse]
-	listOrgs    *connect.Client[v1.ListOrgsRequest, v1.ListOrgsResponse]
-	switchOrg   *connect.Client[v1.SwitchOrgRequest, v1.SwitchOrgResponse]
-	listMembers *connect.Client[v1.ListMembersRequest, v1.ListMembersResponse]
+	createOrg        *connect.Client[v1.CreateOrgRequest, v1.CreateOrgResponse]
+	listOrgs         *connect.Client[v1.ListOrgsRequest, v1.ListOrgsResponse]
+	switchOrg        *connect.Client[v1.SwitchOrgRequest, v1.SwitchOrgResponse]
+	listMembers      *connect.Client[v1.ListMembersRequest, v1.ListMembersResponse]
+	updateMemberRole *connect.Client[v1.UpdateMemberRoleRequest, v1.UpdateMemberRoleResponse]
+	removeMember     *connect.Client[v1.RemoveMemberRequest, v1.RemoveMemberResponse]
 }
 
 // CreateOrg calls stagd.api.v1.OrgService.CreateOrg.
@@ -123,10 +173,22 @@ func (c *orgServiceClient) ListMembers(ctx context.Context, req *connect.Request
 	return c.listMembers.CallUnary(ctx, req)
 }
 
+// UpdateMemberRole calls stagd.api.v1.OrgService.UpdateMemberRole.
+func (c *orgServiceClient) UpdateMemberRole(ctx context.Context, req *connect.Request[v1.UpdateMemberRoleRequest]) (*connect.Response[v1.UpdateMemberRoleResponse], error) {
+	return c.updateMemberRole.CallUnary(ctx, req)
+}
+
+// RemoveMember calls stagd.api.v1.OrgService.RemoveMember.
+func (c *orgServiceClient) RemoveMember(ctx context.Context, req *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error) {
+	return c.removeMember.CallUnary(ctx, req)
+}
+
 // OrgServiceHandler is an implementation of the stagd.api.v1.OrgService service.
 type OrgServiceHandler interface {
 	// CreateOrg creates an org with the caller as its owner and makes it the
-	// session's active org.
+	// session's active org. Refused with FAILED_PRECONDITION when the server
+	// runs one org that exists already, or lets each person create only one
+	// and the caller has.
 	CreateOrg(context.Context, *connect.Request[v1.CreateOrgRequest]) (*connect.Response[v1.CreateOrgResponse], error)
 	// ListOrgs lists the orgs the caller belongs to.
 	ListOrgs(context.Context, *connect.Request[v1.ListOrgsRequest]) (*connect.Response[v1.ListOrgsResponse], error)
@@ -135,6 +197,12 @@ type OrgServiceHandler interface {
 	SwitchOrg(context.Context, *connect.Request[v1.SwitchOrgRequest]) (*connect.Response[v1.SwitchOrgResponse], error)
 	// ListMembers lists the people in the active org.
 	ListMembers(context.Context, *connect.Request[v1.ListMembersRequest]) (*connect.Response[v1.ListMembersResponse], error)
+	// UpdateMemberRole changes someone's role. The last admin can't be
+	// demoted: make someone else an admin first.
+	UpdateMemberRole(context.Context, *connect.Request[v1.UpdateMemberRoleRequest]) (*connect.Response[v1.UpdateMemberRoleResponse], error)
+	// RemoveMember takes someone out of the active org and ends their sessions
+	// in it. The last admin can't be removed.
+	RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error)
 }
 
 // NewOrgServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -168,6 +236,18 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(orgServiceMethods.ByName("ListMembers")),
 		connect.WithHandlerOptions(opts...),
 	)
+	orgServiceUpdateMemberRoleHandler := connect.NewUnaryHandler(
+		OrgServiceUpdateMemberRoleProcedure,
+		svc.UpdateMemberRole,
+		connect.WithSchema(orgServiceMethods.ByName("UpdateMemberRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	orgServiceRemoveMemberHandler := connect.NewUnaryHandler(
+		OrgServiceRemoveMemberProcedure,
+		svc.RemoveMember,
+		connect.WithSchema(orgServiceMethods.ByName("RemoveMember")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.OrgService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case OrgServiceCreateOrgProcedure:
@@ -178,6 +258,10 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 			orgServiceSwitchOrgHandler.ServeHTTP(w, r)
 		case OrgServiceListMembersProcedure:
 			orgServiceListMembersHandler.ServeHTTP(w, r)
+		case OrgServiceUpdateMemberRoleProcedure:
+			orgServiceUpdateMemberRoleHandler.ServeHTTP(w, r)
+		case OrgServiceRemoveMemberProcedure:
+			orgServiceRemoveMemberHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -201,4 +285,258 @@ func (UnimplementedOrgServiceHandler) SwitchOrg(context.Context, *connect.Reques
 
 func (UnimplementedOrgServiceHandler) ListMembers(context.Context, *connect.Request[v1.ListMembersRequest]) (*connect.Response[v1.ListMembersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.ListMembers is not implemented"))
+}
+
+func (UnimplementedOrgServiceHandler) UpdateMemberRole(context.Context, *connect.Request[v1.UpdateMemberRoleRequest]) (*connect.Response[v1.UpdateMemberRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.UpdateMemberRole is not implemented"))
+}
+
+func (UnimplementedOrgServiceHandler) RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.RemoveMember is not implemented"))
+}
+
+// InviteServiceClient is a client for the stagd.api.v1.InviteService service.
+type InviteServiceClient interface {
+	// CreateInvites invites people with a role. Emails get a message with a
+	// link; usernames join when they next sign in with that account.
+	CreateInvites(context.Context, *connect.Request[v1.CreateInvitesRequest]) (*connect.Response[v1.CreateInvitesResponse], error)
+	// ListInvites lists the invites not yet accepted, revoked or expired.
+	ListInvites(context.Context, *connect.Request[v1.ListInvitesRequest]) (*connect.Response[v1.ListInvitesResponse], error)
+	// ResendInvite sends the invite again with a new link and a new expiry.
+	ResendInvite(context.Context, *connect.Request[v1.ResendInviteRequest]) (*connect.Response[v1.ResendInviteResponse], error)
+	// RevokeInvite cancels an invite; its link stops working.
+	RevokeInvite(context.Context, *connect.Request[v1.RevokeInviteRequest]) (*connect.Response[v1.RevokeInviteResponse], error)
+	// GetInviteLink returns the org's invite link; none while it's off (the
+	// default) or expired. The link is only shown to admins.
+	GetInviteLink(context.Context, *connect.Request[v1.GetInviteLinkRequest]) (*connect.Response[v1.GetInviteLinkResponse], error)
+	// ResetInviteLink turns the invite link on, or replaces it, optionally with
+	// another role; an old one stops working.
+	ResetInviteLink(context.Context, *connect.Request[v1.ResetInviteLinkRequest]) (*connect.Response[v1.ResetInviteLinkResponse], error)
+	// DisableInviteLink turns the invite link off; it stops working.
+	DisableInviteLink(context.Context, *connect.Request[v1.DisableInviteLinkRequest]) (*connect.Response[v1.DisableInviteLinkResponse], error)
+}
+
+// NewInviteServiceClient constructs a client for the stagd.api.v1.InviteService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewInviteServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) InviteServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	inviteServiceMethods := v1.File_stagd_api_v1_orgs_proto.Services().ByName("InviteService").Methods()
+	return &inviteServiceClient{
+		createInvites: connect.NewClient[v1.CreateInvitesRequest, v1.CreateInvitesResponse](
+			httpClient,
+			baseURL+InviteServiceCreateInvitesProcedure,
+			connect.WithSchema(inviteServiceMethods.ByName("CreateInvites")),
+			connect.WithClientOptions(opts...),
+		),
+		listInvites: connect.NewClient[v1.ListInvitesRequest, v1.ListInvitesResponse](
+			httpClient,
+			baseURL+InviteServiceListInvitesProcedure,
+			connect.WithSchema(inviteServiceMethods.ByName("ListInvites")),
+			connect.WithClientOptions(opts...),
+		),
+		resendInvite: connect.NewClient[v1.ResendInviteRequest, v1.ResendInviteResponse](
+			httpClient,
+			baseURL+InviteServiceResendInviteProcedure,
+			connect.WithSchema(inviteServiceMethods.ByName("ResendInvite")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeInvite: connect.NewClient[v1.RevokeInviteRequest, v1.RevokeInviteResponse](
+			httpClient,
+			baseURL+InviteServiceRevokeInviteProcedure,
+			connect.WithSchema(inviteServiceMethods.ByName("RevokeInvite")),
+			connect.WithClientOptions(opts...),
+		),
+		getInviteLink: connect.NewClient[v1.GetInviteLinkRequest, v1.GetInviteLinkResponse](
+			httpClient,
+			baseURL+InviteServiceGetInviteLinkProcedure,
+			connect.WithSchema(inviteServiceMethods.ByName("GetInviteLink")),
+			connect.WithClientOptions(opts...),
+		),
+		resetInviteLink: connect.NewClient[v1.ResetInviteLinkRequest, v1.ResetInviteLinkResponse](
+			httpClient,
+			baseURL+InviteServiceResetInviteLinkProcedure,
+			connect.WithSchema(inviteServiceMethods.ByName("ResetInviteLink")),
+			connect.WithClientOptions(opts...),
+		),
+		disableInviteLink: connect.NewClient[v1.DisableInviteLinkRequest, v1.DisableInviteLinkResponse](
+			httpClient,
+			baseURL+InviteServiceDisableInviteLinkProcedure,
+			connect.WithSchema(inviteServiceMethods.ByName("DisableInviteLink")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// inviteServiceClient implements InviteServiceClient.
+type inviteServiceClient struct {
+	createInvites     *connect.Client[v1.CreateInvitesRequest, v1.CreateInvitesResponse]
+	listInvites       *connect.Client[v1.ListInvitesRequest, v1.ListInvitesResponse]
+	resendInvite      *connect.Client[v1.ResendInviteRequest, v1.ResendInviteResponse]
+	revokeInvite      *connect.Client[v1.RevokeInviteRequest, v1.RevokeInviteResponse]
+	getInviteLink     *connect.Client[v1.GetInviteLinkRequest, v1.GetInviteLinkResponse]
+	resetInviteLink   *connect.Client[v1.ResetInviteLinkRequest, v1.ResetInviteLinkResponse]
+	disableInviteLink *connect.Client[v1.DisableInviteLinkRequest, v1.DisableInviteLinkResponse]
+}
+
+// CreateInvites calls stagd.api.v1.InviteService.CreateInvites.
+func (c *inviteServiceClient) CreateInvites(ctx context.Context, req *connect.Request[v1.CreateInvitesRequest]) (*connect.Response[v1.CreateInvitesResponse], error) {
+	return c.createInvites.CallUnary(ctx, req)
+}
+
+// ListInvites calls stagd.api.v1.InviteService.ListInvites.
+func (c *inviteServiceClient) ListInvites(ctx context.Context, req *connect.Request[v1.ListInvitesRequest]) (*connect.Response[v1.ListInvitesResponse], error) {
+	return c.listInvites.CallUnary(ctx, req)
+}
+
+// ResendInvite calls stagd.api.v1.InviteService.ResendInvite.
+func (c *inviteServiceClient) ResendInvite(ctx context.Context, req *connect.Request[v1.ResendInviteRequest]) (*connect.Response[v1.ResendInviteResponse], error) {
+	return c.resendInvite.CallUnary(ctx, req)
+}
+
+// RevokeInvite calls stagd.api.v1.InviteService.RevokeInvite.
+func (c *inviteServiceClient) RevokeInvite(ctx context.Context, req *connect.Request[v1.RevokeInviteRequest]) (*connect.Response[v1.RevokeInviteResponse], error) {
+	return c.revokeInvite.CallUnary(ctx, req)
+}
+
+// GetInviteLink calls stagd.api.v1.InviteService.GetInviteLink.
+func (c *inviteServiceClient) GetInviteLink(ctx context.Context, req *connect.Request[v1.GetInviteLinkRequest]) (*connect.Response[v1.GetInviteLinkResponse], error) {
+	return c.getInviteLink.CallUnary(ctx, req)
+}
+
+// ResetInviteLink calls stagd.api.v1.InviteService.ResetInviteLink.
+func (c *inviteServiceClient) ResetInviteLink(ctx context.Context, req *connect.Request[v1.ResetInviteLinkRequest]) (*connect.Response[v1.ResetInviteLinkResponse], error) {
+	return c.resetInviteLink.CallUnary(ctx, req)
+}
+
+// DisableInviteLink calls stagd.api.v1.InviteService.DisableInviteLink.
+func (c *inviteServiceClient) DisableInviteLink(ctx context.Context, req *connect.Request[v1.DisableInviteLinkRequest]) (*connect.Response[v1.DisableInviteLinkResponse], error) {
+	return c.disableInviteLink.CallUnary(ctx, req)
+}
+
+// InviteServiceHandler is an implementation of the stagd.api.v1.InviteService service.
+type InviteServiceHandler interface {
+	// CreateInvites invites people with a role. Emails get a message with a
+	// link; usernames join when they next sign in with that account.
+	CreateInvites(context.Context, *connect.Request[v1.CreateInvitesRequest]) (*connect.Response[v1.CreateInvitesResponse], error)
+	// ListInvites lists the invites not yet accepted, revoked or expired.
+	ListInvites(context.Context, *connect.Request[v1.ListInvitesRequest]) (*connect.Response[v1.ListInvitesResponse], error)
+	// ResendInvite sends the invite again with a new link and a new expiry.
+	ResendInvite(context.Context, *connect.Request[v1.ResendInviteRequest]) (*connect.Response[v1.ResendInviteResponse], error)
+	// RevokeInvite cancels an invite; its link stops working.
+	RevokeInvite(context.Context, *connect.Request[v1.RevokeInviteRequest]) (*connect.Response[v1.RevokeInviteResponse], error)
+	// GetInviteLink returns the org's invite link; none while it's off (the
+	// default) or expired. The link is only shown to admins.
+	GetInviteLink(context.Context, *connect.Request[v1.GetInviteLinkRequest]) (*connect.Response[v1.GetInviteLinkResponse], error)
+	// ResetInviteLink turns the invite link on, or replaces it, optionally with
+	// another role; an old one stops working.
+	ResetInviteLink(context.Context, *connect.Request[v1.ResetInviteLinkRequest]) (*connect.Response[v1.ResetInviteLinkResponse], error)
+	// DisableInviteLink turns the invite link off; it stops working.
+	DisableInviteLink(context.Context, *connect.Request[v1.DisableInviteLinkRequest]) (*connect.Response[v1.DisableInviteLinkResponse], error)
+}
+
+// NewInviteServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewInviteServiceHandler(svc InviteServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	inviteServiceMethods := v1.File_stagd_api_v1_orgs_proto.Services().ByName("InviteService").Methods()
+	inviteServiceCreateInvitesHandler := connect.NewUnaryHandler(
+		InviteServiceCreateInvitesProcedure,
+		svc.CreateInvites,
+		connect.WithSchema(inviteServiceMethods.ByName("CreateInvites")),
+		connect.WithHandlerOptions(opts...),
+	)
+	inviteServiceListInvitesHandler := connect.NewUnaryHandler(
+		InviteServiceListInvitesProcedure,
+		svc.ListInvites,
+		connect.WithSchema(inviteServiceMethods.ByName("ListInvites")),
+		connect.WithHandlerOptions(opts...),
+	)
+	inviteServiceResendInviteHandler := connect.NewUnaryHandler(
+		InviteServiceResendInviteProcedure,
+		svc.ResendInvite,
+		connect.WithSchema(inviteServiceMethods.ByName("ResendInvite")),
+		connect.WithHandlerOptions(opts...),
+	)
+	inviteServiceRevokeInviteHandler := connect.NewUnaryHandler(
+		InviteServiceRevokeInviteProcedure,
+		svc.RevokeInvite,
+		connect.WithSchema(inviteServiceMethods.ByName("RevokeInvite")),
+		connect.WithHandlerOptions(opts...),
+	)
+	inviteServiceGetInviteLinkHandler := connect.NewUnaryHandler(
+		InviteServiceGetInviteLinkProcedure,
+		svc.GetInviteLink,
+		connect.WithSchema(inviteServiceMethods.ByName("GetInviteLink")),
+		connect.WithHandlerOptions(opts...),
+	)
+	inviteServiceResetInviteLinkHandler := connect.NewUnaryHandler(
+		InviteServiceResetInviteLinkProcedure,
+		svc.ResetInviteLink,
+		connect.WithSchema(inviteServiceMethods.ByName("ResetInviteLink")),
+		connect.WithHandlerOptions(opts...),
+	)
+	inviteServiceDisableInviteLinkHandler := connect.NewUnaryHandler(
+		InviteServiceDisableInviteLinkProcedure,
+		svc.DisableInviteLink,
+		connect.WithSchema(inviteServiceMethods.ByName("DisableInviteLink")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/stagd.api.v1.InviteService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case InviteServiceCreateInvitesProcedure:
+			inviteServiceCreateInvitesHandler.ServeHTTP(w, r)
+		case InviteServiceListInvitesProcedure:
+			inviteServiceListInvitesHandler.ServeHTTP(w, r)
+		case InviteServiceResendInviteProcedure:
+			inviteServiceResendInviteHandler.ServeHTTP(w, r)
+		case InviteServiceRevokeInviteProcedure:
+			inviteServiceRevokeInviteHandler.ServeHTTP(w, r)
+		case InviteServiceGetInviteLinkProcedure:
+			inviteServiceGetInviteLinkHandler.ServeHTTP(w, r)
+		case InviteServiceResetInviteLinkProcedure:
+			inviteServiceResetInviteLinkHandler.ServeHTTP(w, r)
+		case InviteServiceDisableInviteLinkProcedure:
+			inviteServiceDisableInviteLinkHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedInviteServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedInviteServiceHandler struct{}
+
+func (UnimplementedInviteServiceHandler) CreateInvites(context.Context, *connect.Request[v1.CreateInvitesRequest]) (*connect.Response[v1.CreateInvitesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.InviteService.CreateInvites is not implemented"))
+}
+
+func (UnimplementedInviteServiceHandler) ListInvites(context.Context, *connect.Request[v1.ListInvitesRequest]) (*connect.Response[v1.ListInvitesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.InviteService.ListInvites is not implemented"))
+}
+
+func (UnimplementedInviteServiceHandler) ResendInvite(context.Context, *connect.Request[v1.ResendInviteRequest]) (*connect.Response[v1.ResendInviteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.InviteService.ResendInvite is not implemented"))
+}
+
+func (UnimplementedInviteServiceHandler) RevokeInvite(context.Context, *connect.Request[v1.RevokeInviteRequest]) (*connect.Response[v1.RevokeInviteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.InviteService.RevokeInvite is not implemented"))
+}
+
+func (UnimplementedInviteServiceHandler) GetInviteLink(context.Context, *connect.Request[v1.GetInviteLinkRequest]) (*connect.Response[v1.GetInviteLinkResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.InviteService.GetInviteLink is not implemented"))
+}
+
+func (UnimplementedInviteServiceHandler) ResetInviteLink(context.Context, *connect.Request[v1.ResetInviteLinkRequest]) (*connect.Response[v1.ResetInviteLinkResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.InviteService.ResetInviteLink is not implemented"))
+}
+
+func (UnimplementedInviteServiceHandler) DisableInviteLink(context.Context, *connect.Request[v1.DisableInviteLinkRequest]) (*connect.Response[v1.DisableInviteLinkResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.InviteService.DisableInviteLink is not implemented"))
 }

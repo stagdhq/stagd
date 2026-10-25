@@ -10,6 +10,7 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -264,6 +265,176 @@ func (ComponentPhase) EnumDescriptor() ([]byte, []int) {
 	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{3}
 }
 
+// How bad a line says it is.
+type LogLevel int32
+
+const (
+	// The line doesn't say.
+	LogLevel_LOG_LEVEL_UNSPECIFIED LogLevel = 0
+	LogLevel_LOG_LEVEL_DEBUG       LogLevel = 1
+	LogLevel_LOG_LEVEL_INFO        LogLevel = 2
+	LogLevel_LOG_LEVEL_WARN        LogLevel = 3
+	// Errors, and worse: fatal, panic, critical.
+	LogLevel_LOG_LEVEL_ERROR LogLevel = 4
+)
+
+// Enum value maps for LogLevel.
+var (
+	LogLevel_name = map[int32]string{
+		0: "LOG_LEVEL_UNSPECIFIED",
+		1: "LOG_LEVEL_DEBUG",
+		2: "LOG_LEVEL_INFO",
+		3: "LOG_LEVEL_WARN",
+		4: "LOG_LEVEL_ERROR",
+	}
+	LogLevel_value = map[string]int32{
+		"LOG_LEVEL_UNSPECIFIED": 0,
+		"LOG_LEVEL_DEBUG":       1,
+		"LOG_LEVEL_INFO":        2,
+		"LOG_LEVEL_WARN":        3,
+		"LOG_LEVEL_ERROR":       4,
+	}
+)
+
+func (x LogLevel) Enum() *LogLevel {
+	p := new(LogLevel)
+	*p = x
+	return p
+}
+
+func (x LogLevel) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LogLevel) Descriptor() protoreflect.EnumDescriptor {
+	return file_stagd_api_v1_previews_proto_enumTypes[4].Descriptor()
+}
+
+func (LogLevel) Type() protoreflect.EnumType {
+	return &file_stagd_api_v1_previews_proto_enumTypes[4]
+}
+
+func (x LogLevel) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LogLevel.Descriptor instead.
+func (LogLevel) EnumDescriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{4}
+}
+
+// How a line was written.
+type LogFormat int32
+
+const (
+	// Plain text.
+	LogFormat_LOG_FORMAT_UNSPECIFIED LogFormat = 0
+	LogFormat_LOG_FORMAT_JSON        LogFormat = 1
+	LogFormat_LOG_FORMAT_LOGFMT      LogFormat = 2
+)
+
+// Enum value maps for LogFormat.
+var (
+	LogFormat_name = map[int32]string{
+		0: "LOG_FORMAT_UNSPECIFIED",
+		1: "LOG_FORMAT_JSON",
+		2: "LOG_FORMAT_LOGFMT",
+	}
+	LogFormat_value = map[string]int32{
+		"LOG_FORMAT_UNSPECIFIED": 0,
+		"LOG_FORMAT_JSON":        1,
+		"LOG_FORMAT_LOGFMT":      2,
+	}
+)
+
+func (x LogFormat) Enum() *LogFormat {
+	p := new(LogFormat)
+	*p = x
+	return p
+}
+
+func (x LogFormat) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LogFormat) Descriptor() protoreflect.EnumDescriptor {
+	return file_stagd_api_v1_previews_proto_enumTypes[5].Descriptor()
+}
+
+func (LogFormat) Type() protoreflect.EnumType {
+	return &file_stagd_api_v1_previews_proto_enumTypes[5]
+}
+
+func (x LogFormat) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LogFormat.Descriptor instead.
+func (LogFormat) EnumDescriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{5}
+}
+
+// What a span did.
+type SpanKind int32
+
+const (
+	SpanKind_SPAN_KIND_UNSPECIFIED SpanKind = 0
+	SpanKind_SPAN_KIND_INTERNAL    SpanKind = 1
+	// Handled a request.
+	SpanKind_SPAN_KIND_SERVER SpanKind = 2
+	// Made a request: another service, a database.
+	SpanKind_SPAN_KIND_CLIENT   SpanKind = 3
+	SpanKind_SPAN_KIND_PRODUCER SpanKind = 4
+	SpanKind_SPAN_KIND_CONSUMER SpanKind = 5
+)
+
+// Enum value maps for SpanKind.
+var (
+	SpanKind_name = map[int32]string{
+		0: "SPAN_KIND_UNSPECIFIED",
+		1: "SPAN_KIND_INTERNAL",
+		2: "SPAN_KIND_SERVER",
+		3: "SPAN_KIND_CLIENT",
+		4: "SPAN_KIND_PRODUCER",
+		5: "SPAN_KIND_CONSUMER",
+	}
+	SpanKind_value = map[string]int32{
+		"SPAN_KIND_UNSPECIFIED": 0,
+		"SPAN_KIND_INTERNAL":    1,
+		"SPAN_KIND_SERVER":      2,
+		"SPAN_KIND_CLIENT":      3,
+		"SPAN_KIND_PRODUCER":    4,
+		"SPAN_KIND_CONSUMER":    5,
+	}
+)
+
+func (x SpanKind) Enum() *SpanKind {
+	p := new(SpanKind)
+	*p = x
+	return p
+}
+
+func (x SpanKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SpanKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_stagd_api_v1_previews_proto_enumTypes[6].Descriptor()
+}
+
+func (SpanKind) Type() protoreflect.EnumType {
+	return &file_stagd_api_v1_previews_proto_enumTypes[6]
+}
+
+func (x SpanKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SpanKind.Descriptor instead.
+func (SpanKind) EnumDescriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{6}
+}
+
 // PreviewPolicy is who may open previews and how their URLs look.
 type PreviewPolicy struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -277,8 +448,11 @@ type PreviewPolicy struct {
 	// pr-42-web-acme-k3x9q2m7wd. Makes URLs hard to guess; it doesn't replace
 	// access control, since links get shared.
 	UnguessableUrls bool `protobuf:"varint,4,opt,name=unguessable_urls,json=unguessableUrls,proto3" json:"unguessable_urls,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Viewers don't see the previews' captured mail. They see it by default:
+	// a sign-up or reset email is often what they're checking.
+	HideMailFromViewers bool `protobuf:"varint,5,opt,name=hide_mail_from_viewers,json=hideMailFromViewers,proto3" json:"hide_mail_from_viewers,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *PreviewPolicy) Reset() {
@@ -335,6 +509,13 @@ func (x *PreviewPolicy) GetPublicIngresses() []string {
 func (x *PreviewPolicy) GetUnguessableUrls() bool {
 	if x != nil {
 		return x.UnguessableUrls
+	}
+	return false
+}
+
+func (x *PreviewPolicy) GetHideMailFromViewers() bool {
+	if x != nil {
+		return x.HideMailFromViewers
 	}
 	return false
 }
@@ -628,7 +809,14 @@ type Preview struct {
 	// The app's parts and what each is doing.
 	Components []*PreviewComponent `protobuf:"bytes,15,rep,name=components,proto3" json:"components,omitempty"`
 	// Who may open it; individual ingresses may be public (see ingresses).
-	Access        PreviewAccess `protobuf:"varint,16,opt,name=access,proto3,enum=stagd.api.v1.PreviewAccess" json:"access,omitempty"`
+	Access PreviewAccess `protobuf:"varint,16,opt,name=access,proto3,enum=stagd.api.v1.PreviewAccess" json:"access,omitempty"`
+	// stagd.yaml's comment: what someone opening the preview needs to know,
+	// e.g. "Sign in with code 123456". Also on the pull request comment.
+	Note string `protobuf:"bytes,17,opt,name=note,proto3" json:"note,omitempty"`
+	// What a queued preview waits for before it deploys, from stagd.yaml's
+	// wait: the commit's checks and how they stand, e.g. "build-images
+	// (running)". Empty when it isn't waiting.
+	Waiting       string `protobuf:"bytes,18,opt,name=waiting,proto3" json:"waiting,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -773,6 +961,20 @@ func (x *Preview) GetAccess() PreviewAccess {
 		return x.Access
 	}
 	return PreviewAccess_PREVIEW_ACCESS_UNSPECIFIED
+}
+
+func (x *Preview) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *Preview) GetWaiting() string {
+	if x != nil {
+		return x.Waiting
+	}
+	return ""
 }
 
 type CreatePreviewRequest struct {
@@ -1775,8 +1977,13 @@ func (x *ValidateAppResponse) GetIngresses() []*PreviewIngress {
 }
 
 type ListPreviewEventsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// With a page size, events come newest first, a page at a time; without
+	// one, all of them, oldest first.
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// The next_page_token of the page before: the events older than it.
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1814,6 +2021,20 @@ func (*ListPreviewEventsRequest) Descriptor() ([]byte, []int) {
 func (x *ListPreviewEventsRequest) GetId() string {
 	if x != nil {
 		return x.Id
+	}
+	return ""
+}
+
+func (x *ListPreviewEventsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListPreviewEventsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
 	}
 	return ""
 }
@@ -1888,8 +2109,10 @@ func (x *PreviewEvent) GetMessage() string {
 }
 
 type ListPreviewEventsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Events        []*PreviewEvent        `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Events []*PreviewEvent        `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	// Set when there are older events; empty on the last page and without a page size.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1929,6 +2152,13 @@ func (x *ListPreviewEventsResponse) GetEvents() []*PreviewEvent {
 		return x.Events
 	}
 	return nil
+}
+
+func (x *ListPreviewEventsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type ListMailRequest struct {
@@ -2488,18 +2718,1220 @@ func (*ClearMailResponse) Descriptor() ([]byte, []int) {
 	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{36}
 }
 
+type DeleteMailRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PreviewId string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
+	// The message's id, from ListMail.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteMailRequest) Reset() {
+	*x = DeleteMailRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteMailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteMailRequest) ProtoMessage() {}
+
+func (x *DeleteMailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteMailRequest.ProtoReflect.Descriptor instead.
+func (*DeleteMailRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *DeleteMailRequest) GetPreviewId() string {
+	if x != nil {
+		return x.PreviewId
+	}
+	return ""
+}
+
+func (x *DeleteMailRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeleteMailResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteMailResponse) Reset() {
+	*x = DeleteMailResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteMailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteMailResponse) ProtoMessage() {}
+
+func (x *DeleteMailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteMailResponse.ProtoReflect.Descriptor instead.
+func (*DeleteMailResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{38}
+}
+
+type GetServiceUsageRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PreviewId string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
+	// How far back: up to 24 hours. Points are averaged into about 120 buckets.
+	Window        *durationpb.Duration `protobuf:"bytes,2,opt,name=window,proto3" json:"window,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetServiceUsageRequest) Reset() {
+	*x = GetServiceUsageRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetServiceUsageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServiceUsageRequest) ProtoMessage() {}
+
+func (x *GetServiceUsageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServiceUsageRequest.ProtoReflect.Descriptor instead.
+func (*GetServiceUsageRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *GetServiceUsageRequest) GetPreviewId() string {
+	if x != nil {
+		return x.PreviewId
+	}
+	return ""
+}
+
+func (x *GetServiceUsageRequest) GetWindow() *durationpb.Duration {
+	if x != nil {
+		return x.Window
+	}
+	return nil
+}
+
+type GetServiceUsageResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// By service name; services never sampled aren't here.
+	Services      []*ServiceUsage `protobuf:"bytes,1,rep,name=services,proto3" json:"services,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetServiceUsageResponse) Reset() {
+	*x = GetServiceUsageResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetServiceUsageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServiceUsageResponse) ProtoMessage() {}
+
+func (x *GetServiceUsageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServiceUsageResponse.ProtoReflect.Descriptor instead.
+func (*GetServiceUsageResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *GetServiceUsageResponse) GetServices() []*ServiceUsage {
+	if x != nil {
+		return x.Services
+	}
+	return nil
+}
+
+// One service's CPU and memory over the window, and how it runs now.
+type ServiceUsage struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Service string                 `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty"`
+	// Oldest first, one per bucket that has samples.
+	Points []*UsagePoint `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`
+	// From the latest sample.
+	SampledAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=sampled_at,json=sampledAt,proto3" json:"sampled_at,omitempty"`
+	// Of one CPU: 150 is one and a half.
+	CpuPercent  float64 `protobuf:"fixed64,4,opt,name=cpu_percent,json=cpuPercent,proto3" json:"cpu_percent,omitempty"`
+	MemoryBytes int64   `protobuf:"varint,5,opt,name=memory_bytes,json=memoryBytes,proto3" json:"memory_bytes,omitempty"`
+	// What the service may use; without a limit of its own, the machine's memory.
+	MemoryLimitBytes int64                  `protobuf:"varint,6,opt,name=memory_limit_bytes,json=memoryLimitBytes,proto3" json:"memory_limit_bytes,omitempty"`
+	Restarts         int32                  `protobuf:"varint,7,opt,name=restarts,proto3" json:"restarts,omitempty"`
+	StartedAt        *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	Image            string                 `protobuf:"bytes,9,opt,name=image,proto3" json:"image,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ServiceUsage) Reset() {
+	*x = ServiceUsage{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServiceUsage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServiceUsage) ProtoMessage() {}
+
+func (x *ServiceUsage) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServiceUsage.ProtoReflect.Descriptor instead.
+func (*ServiceUsage) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *ServiceUsage) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *ServiceUsage) GetPoints() []*UsagePoint {
+	if x != nil {
+		return x.Points
+	}
+	return nil
+}
+
+func (x *ServiceUsage) GetSampledAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SampledAt
+	}
+	return nil
+}
+
+func (x *ServiceUsage) GetCpuPercent() float64 {
+	if x != nil {
+		return x.CpuPercent
+	}
+	return 0
+}
+
+func (x *ServiceUsage) GetMemoryBytes() int64 {
+	if x != nil {
+		return x.MemoryBytes
+	}
+	return 0
+}
+
+func (x *ServiceUsage) GetMemoryLimitBytes() int64 {
+	if x != nil {
+		return x.MemoryLimitBytes
+	}
+	return 0
+}
+
+func (x *ServiceUsage) GetRestarts() int32 {
+	if x != nil {
+		return x.Restarts
+	}
+	return 0
+}
+
+func (x *ServiceUsage) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *ServiceUsage) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+// Average CPU and peak memory over one bucket of time.
+type UsagePoint struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Time          *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=time,proto3" json:"time,omitempty"`
+	CpuPercent    float64                `protobuf:"fixed64,2,opt,name=cpu_percent,json=cpuPercent,proto3" json:"cpu_percent,omitempty"`
+	MemoryBytes   int64                  `protobuf:"varint,3,opt,name=memory_bytes,json=memoryBytes,proto3" json:"memory_bytes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UsagePoint) Reset() {
+	*x = UsagePoint{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UsagePoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UsagePoint) ProtoMessage() {}
+
+func (x *UsagePoint) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UsagePoint.ProtoReflect.Descriptor instead.
+func (*UsagePoint) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *UsagePoint) GetTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Time
+	}
+	return nil
+}
+
+func (x *UsagePoint) GetCpuPercent() float64 {
+	if x != nil {
+		return x.CpuPercent
+	}
+	return 0
+}
+
+func (x *UsagePoint) GetMemoryBytes() int64 {
+	if x != nil {
+		return x.MemoryBytes
+	}
+	return 0
+}
+
+type ListLogsRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PreviewId string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
+	// Only these services; all when empty.
+	Services []string `protobuf:"bytes,2,rep,name=services,proto3" json:"services,omitempty"`
+	// Lines at or after this time; as far back as kept when unset. To follow
+	// a preview's logs, ask again with the last line's time.
+	Since *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=since,proto3" json:"since,omitempty"`
+	// At most this many of the latest lines; 500 when unset.
+	Limit         int32 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListLogsRequest) Reset() {
+	*x = ListLogsRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListLogsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListLogsRequest) ProtoMessage() {}
+
+func (x *ListLogsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListLogsRequest.ProtoReflect.Descriptor instead.
+func (*ListLogsRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *ListLogsRequest) GetPreviewId() string {
+	if x != nil {
+		return x.PreviewId
+	}
+	return ""
+}
+
+func (x *ListLogsRequest) GetServices() []string {
+	if x != nil {
+		return x.Services
+	}
+	return nil
+}
+
+func (x *ListLogsRequest) GetSince() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Since
+	}
+	return nil
+}
+
+func (x *ListLogsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListLogsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Oldest first.
+	Lines []*LogLine `protobuf:"bytes,1,rep,name=lines,proto3" json:"lines,omitempty"`
+	// There were more lines than the limit; older ones were left out.
+	Truncated     bool `protobuf:"varint,2,opt,name=truncated,proto3" json:"truncated,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListLogsResponse) Reset() {
+	*x = ListLogsResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListLogsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListLogsResponse) ProtoMessage() {}
+
+func (x *ListLogsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListLogsResponse.ProtoReflect.Descriptor instead.
+func (*ListLogsResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *ListLogsResponse) GetLines() []*LogLine {
+	if x != nil {
+		return x.Lines
+	}
+	return nil
+}
+
+func (x *ListLogsResponse) GetTruncated() bool {
+	if x != nil {
+		return x.Truncated
+	}
+	return false
+}
+
+// One line a service wrote.
+type LogLine struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// When the engine got it.
+	Time    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=time,proto3" json:"time,omitempty"`
+	Service string                 `protobuf:"bytes,2,opt,name=service,proto3" json:"service,omitempty"`
+	Level   LogLevel               `protobuf:"varint,3,opt,name=level,proto3,enum=stagd.api.v1.LogLevel" json:"level,omitempty"`
+	// The message: a structured line's msg or message, a plain line whole.
+	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	// A structured line's other keys, in the order written; nested objects
+	// are dotted keys (user.id). Its time, level and message aren't here.
+	Fields []*LogField `protobuf:"bytes,5,rep,name=fields,proto3" json:"fields,omitempty"`
+	Format LogFormat   `protobuf:"varint,6,opt,name=format,proto3,enum=stagd.api.v1.LogFormat" json:"format,omitempty"`
+	// The line as written, secrets hidden.
+	Text          string `protobuf:"bytes,7,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogLine) Reset() {
+	*x = LogLine{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogLine) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogLine) ProtoMessage() {}
+
+func (x *LogLine) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogLine.ProtoReflect.Descriptor instead.
+func (*LogLine) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *LogLine) GetTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Time
+	}
+	return nil
+}
+
+func (x *LogLine) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *LogLine) GetLevel() LogLevel {
+	if x != nil {
+		return x.Level
+	}
+	return LogLevel_LOG_LEVEL_UNSPECIFIED
+}
+
+func (x *LogLine) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *LogLine) GetFields() []*LogField {
+	if x != nil {
+		return x.Fields
+	}
+	return nil
+}
+
+func (x *LogLine) GetFormat() LogFormat {
+	if x != nil {
+		return x.Format
+	}
+	return LogFormat_LOG_FORMAT_UNSPECIFIED
+}
+
+func (x *LogLine) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type LogField struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Key   string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// Strings as they are, other JSON values as JSON: 1540, false, ["a"].
+	Value         string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogField) Reset() {
+	*x = LogField{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogField) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogField) ProtoMessage() {}
+
+func (x *LogField) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogField.ProtoReflect.Descriptor instead.
+func (*LogField) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *LogField) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *LogField) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type ListTracesRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PreviewId string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
+	// Only traces with spans from this service; all when empty.
+	Service string `protobuf:"bytes,2,opt,name=service,proto3" json:"service,omitempty"`
+	// Traces started at or after this time; the last 15 minutes when unset.
+	Since *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=since,proto3" json:"since,omitempty"`
+	// Traces started before this time; now when unset.
+	Until *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=until,proto3" json:"until,omitempty"`
+	// Only traces where a span failed, or the root answered 5xx.
+	ErrorsOnly bool `protobuf:"varint,5,opt,name=errors_only,json=errorsOnly,proto3" json:"errors_only,omitempty"`
+	// Only traces that took at least this long.
+	MinDuration *durationpb.Duration `protobuf:"bytes,6,opt,name=min_duration,json=minDuration,proto3" json:"min_duration,omitempty"`
+	// At most this many of the newest; 100 when unset.
+	Limit         int32 `protobuf:"varint,7,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTracesRequest) Reset() {
+	*x = ListTracesRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTracesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTracesRequest) ProtoMessage() {}
+
+func (x *ListTracesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTracesRequest.ProtoReflect.Descriptor instead.
+func (*ListTracesRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *ListTracesRequest) GetPreviewId() string {
+	if x != nil {
+		return x.PreviewId
+	}
+	return ""
+}
+
+func (x *ListTracesRequest) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *ListTracesRequest) GetSince() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Since
+	}
+	return nil
+}
+
+func (x *ListTracesRequest) GetUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Until
+	}
+	return nil
+}
+
+func (x *ListTracesRequest) GetErrorsOnly() bool {
+	if x != nil {
+		return x.ErrorsOnly
+	}
+	return false
+}
+
+func (x *ListTracesRequest) GetMinDuration() *durationpb.Duration {
+	if x != nil {
+		return x.MinDuration
+	}
+	return nil
+}
+
+func (x *ListTracesRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListTracesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Newest first.
+	Traces []*TraceSummary `protobuf:"bytes,1,rep,name=traces,proto3" json:"traces,omitempty"`
+	// The services that sent traces, by name.
+	Services      []string `protobuf:"bytes,2,rep,name=services,proto3" json:"services,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTracesResponse) Reset() {
+	*x = ListTracesResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTracesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTracesResponse) ProtoMessage() {}
+
+func (x *ListTracesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTracesResponse.ProtoReflect.Descriptor instead.
+func (*ListTracesResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *ListTracesResponse) GetTraces() []*TraceSummary {
+	if x != nil {
+		return x.Traces
+	}
+	return nil
+}
+
+func (x *ListTracesResponse) GetServices() []string {
+	if x != nil {
+		return x.Services
+	}
+	return nil
+}
+
+// A trace for a list: its root span, how long it all took, whether anything failed.
+type TraceSummary struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	TraceId string                 `protobuf:"bytes,1,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	// The root span's name and service.
+	Name      string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Service   string                 `protobuf:"bytes,3,opt,name=service,proto3" json:"service,omitempty"`
+	StartTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	Duration  *durationpb.Duration   `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
+	SpanCount int32                  `protobuf:"varint,6,opt,name=span_count,json=spanCount,proto3" json:"span_count,omitempty"`
+	Services  []string               `protobuf:"bytes,7,rep,name=services,proto3" json:"services,omitempty"`
+	Error     bool                   `protobuf:"varint,8,opt,name=error,proto3" json:"error,omitempty"`
+	// From the root span's HTTP attributes, when it has them.
+	HttpMethod     string `protobuf:"bytes,9,opt,name=http_method,json=httpMethod,proto3" json:"http_method,omitempty"`
+	HttpStatusCode int32  `protobuf:"varint,10,opt,name=http_status_code,json=httpStatusCode,proto3" json:"http_status_code,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *TraceSummary) Reset() {
+	*x = TraceSummary{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TraceSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TraceSummary) ProtoMessage() {}
+
+func (x *TraceSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TraceSummary.ProtoReflect.Descriptor instead.
+func (*TraceSummary) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *TraceSummary) GetTraceId() string {
+	if x != nil {
+		return x.TraceId
+	}
+	return ""
+}
+
+func (x *TraceSummary) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TraceSummary) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *TraceSummary) GetStartTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartTime
+	}
+	return nil
+}
+
+func (x *TraceSummary) GetDuration() *durationpb.Duration {
+	if x != nil {
+		return x.Duration
+	}
+	return nil
+}
+
+func (x *TraceSummary) GetSpanCount() int32 {
+	if x != nil {
+		return x.SpanCount
+	}
+	return 0
+}
+
+func (x *TraceSummary) GetServices() []string {
+	if x != nil {
+		return x.Services
+	}
+	return nil
+}
+
+func (x *TraceSummary) GetError() bool {
+	if x != nil {
+		return x.Error
+	}
+	return false
+}
+
+func (x *TraceSummary) GetHttpMethod() string {
+	if x != nil {
+		return x.HttpMethod
+	}
+	return ""
+}
+
+func (x *TraceSummary) GetHttpStatusCode() int32 {
+	if x != nil {
+		return x.HttpStatusCode
+	}
+	return 0
+}
+
+type GetTraceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PreviewId     string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
+	TraceId       string                 `protobuf:"bytes,2,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTraceRequest) Reset() {
+	*x = GetTraceRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTraceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTraceRequest) ProtoMessage() {}
+
+func (x *GetTraceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[50]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTraceRequest.ProtoReflect.Descriptor instead.
+func (*GetTraceRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{50}
+}
+
+func (x *GetTraceRequest) GetPreviewId() string {
+	if x != nil {
+		return x.PreviewId
+	}
+	return ""
+}
+
+func (x *GetTraceRequest) GetTraceId() string {
+	if x != nil {
+		return x.TraceId
+	}
+	return ""
+}
+
+type GetTraceResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	TraceId string                 `protobuf:"bytes,1,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	// Oldest first.
+	Spans         []*Span `protobuf:"bytes,2,rep,name=spans,proto3" json:"spans,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTraceResponse) Reset() {
+	*x = GetTraceResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[51]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTraceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTraceResponse) ProtoMessage() {}
+
+func (x *GetTraceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[51]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTraceResponse.ProtoReflect.Descriptor instead.
+func (*GetTraceResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{51}
+}
+
+func (x *GetTraceResponse) GetTraceId() string {
+	if x != nil {
+		return x.TraceId
+	}
+	return ""
+}
+
+func (x *GetTraceResponse) GetSpans() []*Span {
+	if x != nil {
+		return x.Spans
+	}
+	return nil
+}
+
+type Span struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	SpanId string                 `protobuf:"bytes,1,opt,name=span_id,json=spanId,proto3" json:"span_id,omitempty"`
+	// Empty for the root; or the caller's span outside this trace's spans.
+	ParentSpanId  string                 `protobuf:"bytes,2,opt,name=parent_span_id,json=parentSpanId,proto3" json:"parent_span_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Service       string                 `protobuf:"bytes,4,opt,name=service,proto3" json:"service,omitempty"`
+	Kind          SpanKind               `protobuf:"varint,5,opt,name=kind,proto3,enum=stagd.api.v1.SpanKind" json:"kind,omitempty"`
+	StartTime     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	Duration      *durationpb.Duration   `protobuf:"bytes,7,opt,name=duration,proto3" json:"duration,omitempty"`
+	Error         bool                   `protobuf:"varint,8,opt,name=error,proto3" json:"error,omitempty"`
+	StatusMessage string                 `protobuf:"bytes,9,opt,name=status_message,json=statusMessage,proto3" json:"status_message,omitempty"`
+	// Keys and values, as in a log line's fields.
+	Attributes    []*LogField  `protobuf:"bytes,10,rep,name=attributes,proto3" json:"attributes,omitempty"`
+	Events        []*SpanEvent `protobuf:"bytes,11,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Span) Reset() {
+	*x = Span{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Span) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Span) ProtoMessage() {}
+
+func (x *Span) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Span.ProtoReflect.Descriptor instead.
+func (*Span) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{52}
+}
+
+func (x *Span) GetSpanId() string {
+	if x != nil {
+		return x.SpanId
+	}
+	return ""
+}
+
+func (x *Span) GetParentSpanId() string {
+	if x != nil {
+		return x.ParentSpanId
+	}
+	return ""
+}
+
+func (x *Span) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Span) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *Span) GetKind() SpanKind {
+	if x != nil {
+		return x.Kind
+	}
+	return SpanKind_SPAN_KIND_UNSPECIFIED
+}
+
+func (x *Span) GetStartTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartTime
+	}
+	return nil
+}
+
+func (x *Span) GetDuration() *durationpb.Duration {
+	if x != nil {
+		return x.Duration
+	}
+	return nil
+}
+
+func (x *Span) GetError() bool {
+	if x != nil {
+		return x.Error
+	}
+	return false
+}
+
+func (x *Span) GetStatusMessage() string {
+	if x != nil {
+		return x.StatusMessage
+	}
+	return ""
+}
+
+func (x *Span) GetAttributes() []*LogField {
+	if x != nil {
+		return x.Attributes
+	}
+	return nil
+}
+
+func (x *Span) GetEvents() []*SpanEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+// Something a span recorded as it happened, e.g. an exception.
+type SpanEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Time          *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
+	Attributes    []*LogField            `protobuf:"bytes,3,rep,name=attributes,proto3" json:"attributes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SpanEvent) Reset() {
+	*x = SpanEvent{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SpanEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SpanEvent) ProtoMessage() {}
+
+func (x *SpanEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[53]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SpanEvent.ProtoReflect.Descriptor instead.
+func (*SpanEvent) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *SpanEvent) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SpanEvent) GetTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Time
+	}
+	return nil
+}
+
+func (x *SpanEvent) GetAttributes() []*LogField {
+	if x != nil {
+		return x.Attributes
+	}
+	return nil
+}
+
 var File_stagd_api_v1_previews_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\n" +
-	"\x1bstagd/api/v1/previews.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\xba\x01\n" +
+	"\x1bstagd/api/v1/previews.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\xef\x01\n" +
 	"\rPreviewPolicy\x12\x1e\n" +
 	"\n" +
 	"repository\x18\x01 \x01(\tR\n" +
 	"repository\x123\n" +
 	"\x06access\x18\x02 \x01(\x0e2\x1b.stagd.api.v1.PreviewAccessR\x06access\x12)\n" +
 	"\x10public_ingresses\x18\x03 \x03(\tR\x0fpublicIngresses\x12)\n" +
-	"\x10unguessable_urls\x18\x04 \x01(\bR\x0funguessableUrls\"t\n" +
+	"\x10unguessable_urls\x18\x04 \x01(\bR\x0funguessableUrls\x123\n" +
+	"\x16hide_mail_from_viewers\x18\x05 \x01(\bR\x13hideMailFromViewers\"t\n" +
 	"\x10PreviewComponent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x122\n" +
 	"\x05phase\x18\x02 \x01(\x0e2\x1c.stagd.api.v1.ComponentPhaseR\x05phase\x12\x18\n" +
@@ -2516,7 +3948,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\rchange_number\x18\x01 \x01(\x03B\a\xbaH\x04\"\x02 \x00H\x00R\fchangeNumber\x12!\n" +
 	"\x06branch\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x06branch\x12,\n" +
 	"\x03sha\x18\x03 \x01(\tB\x1a\xbaH\x17r\x152\x13^([0-9a-f]{7,40})?$R\x03shaB\r\n" +
-	"\x04kind\x12\x05\xbaH\x02\b\x01\"\xce\x05\n" +
+	"\x04kind\x12\x05\xbaH\x02\b\x01\"\xfc\x05\n" +
 	"\aPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x128\n" +
 	"\n" +
@@ -2542,7 +3974,9 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\n" +
 	"components\x18\x0f \x03(\v2\x1e.stagd.api.v1.PreviewComponentR\n" +
 	"components\x123\n" +
-	"\x06access\x18\x10 \x01(\x0e2\x1b.stagd.api.v1.PreviewAccessR\x06access\"|\n" +
+	"\x06access\x18\x10 \x01(\x0e2\x1b.stagd.api.v1.PreviewAccessR\x06access\x12\x12\n" +
+	"\x04note\x18\x11 \x01(\tR\x04note\x12\x18\n" +
+	"\awaiting\x18\x12 \x01(\tR\awaiting\"|\n" +
 	"\x14CreatePreviewRequest\x12'\n" +
 	"\n" +
 	"repository\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
@@ -2613,16 +4047,21 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\n" +
 	"components\x18\x05 \x03(\v2\x1a.stagd.api.v1.AppComponentR\n" +
 	"components\x12:\n" +
-	"\tingresses\x18\x06 \x03(\v2\x1c.stagd.api.v1.PreviewIngressR\tingresses\"3\n" +
+	"\tingresses\x18\x06 \x03(\v2\x1c.stagd.api.v1.PreviewIngressR\tingresses\"{\n" +
 	"\x18ListPreviewEventsRequest\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"\xab\x01\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12'\n" +
+	"\tpage_size\x18\x02 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\xc8\x01(\x00R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"\xab\x01\n" +
 	"\fPreviewEvent\x12.\n" +
 	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x123\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1b.stagd.api.v1.PreviewStatusR\x06status\x12\x1c\n" +
 	"\tcomponent\x18\x03 \x01(\tR\tcomponent\x12\x18\n" +
-	"\amessage\x18\x04 \x01(\tR\amessage\"O\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\"w\n" +
 	"\x19ListPreviewEventsResponse\x122\n" +
-	"\x06events\x18\x01 \x03(\v2\x1a.stagd.api.v1.PreviewEventR\x06events\"[\n" +
+	"\x06events\x18\x01 \x03(\v2\x1a.stagd.api.v1.PreviewEventR\x06events\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"[\n" +
 	"\x0fListMailRequest\x12&\n" +
 	"\n" +
 	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12 \n" +
@@ -2662,7 +4101,117 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x10ClearMailRequest\x12&\n" +
 	"\n" +
 	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\"\x13\n" +
-	"\x11ClearMailResponse*b\n" +
+	"\x11ClearMailResponse\"T\n" +
+	"\x11DeleteMailRequest\x12&\n" +
+	"\n" +
+	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12\x17\n" +
+	"\x02id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"\x14\n" +
+	"\x12DeleteMailResponse\"\x85\x01\n" +
+	"\x16GetServiceUsageRequest\x12&\n" +
+	"\n" +
+	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12C\n" +
+	"\x06window\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x10\xbaH\r\xaa\x01\n" +
+	"\"\x04\b\x80\xa3\x052\x02\b<R\x06window\"Q\n" +
+	"\x17GetServiceUsageResponse\x126\n" +
+	"\bservices\x18\x01 \x03(\v2\x1a.stagd.api.v1.ServiceUsageR\bservices\"\xf4\x02\n" +
+	"\fServiceUsage\x12\x18\n" +
+	"\aservice\x18\x01 \x01(\tR\aservice\x120\n" +
+	"\x06points\x18\x02 \x03(\v2\x18.stagd.api.v1.UsagePointR\x06points\x129\n" +
+	"\n" +
+	"sampled_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tsampledAt\x12\x1f\n" +
+	"\vcpu_percent\x18\x04 \x01(\x01R\n" +
+	"cpuPercent\x12!\n" +
+	"\fmemory_bytes\x18\x05 \x01(\x03R\vmemoryBytes\x12,\n" +
+	"\x12memory_limit_bytes\x18\x06 \x01(\x03R\x10memoryLimitBytes\x12\x1a\n" +
+	"\brestarts\x18\a \x01(\x05R\brestarts\x129\n" +
+	"\n" +
+	"started_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12\x14\n" +
+	"\x05image\x18\t \x01(\tR\x05image\"\x80\x01\n" +
+	"\n" +
+	"UsagePoint\x12.\n" +
+	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12\x1f\n" +
+	"\vcpu_percent\x18\x02 \x01(\x01R\n" +
+	"cpuPercent\x12!\n" +
+	"\fmemory_bytes\x18\x03 \x01(\x03R\vmemoryBytes\"\xa9\x01\n" +
+	"\x0fListLogsRequest\x12&\n" +
+	"\n" +
+	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12\x1a\n" +
+	"\bservices\x18\x02 \x03(\tR\bservices\x120\n" +
+	"\x05since\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\x12 \n" +
+	"\x05limit\x18\x04 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\x88'(\x00R\x05limit\"]\n" +
+	"\x10ListLogsResponse\x12+\n" +
+	"\x05lines\x18\x01 \x03(\v2\x15.stagd.api.v1.LogLineR\x05lines\x12\x1c\n" +
+	"\ttruncated\x18\x02 \x01(\bR\ttruncated\"\x90\x02\n" +
+	"\aLogLine\x12.\n" +
+	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12\x18\n" +
+	"\aservice\x18\x02 \x01(\tR\aservice\x12,\n" +
+	"\x05level\x18\x03 \x01(\x0e2\x16.stagd.api.v1.LogLevelR\x05level\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\x12.\n" +
+	"\x06fields\x18\x05 \x03(\v2\x16.stagd.api.v1.LogFieldR\x06fields\x12/\n" +
+	"\x06format\x18\x06 \x01(\x0e2\x17.stagd.api.v1.LogFormatR\x06format\x12\x12\n" +
+	"\x04text\x18\a \x01(\tR\x04text\"2\n" +
+	"\bLogField\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\xba\x02\n" +
+	"\x11ListTracesRequest\x12&\n" +
+	"\n" +
+	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12\x18\n" +
+	"\aservice\x18\x02 \x01(\tR\aservice\x120\n" +
+	"\x05since\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\x120\n" +
+	"\x05until\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05until\x12\x1f\n" +
+	"\verrors_only\x18\x05 \x01(\bR\n" +
+	"errorsOnly\x12<\n" +
+	"\fmin_duration\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\vminDuration\x12 \n" +
+	"\x05limit\x18\a \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\xf4\x03(\x00R\x05limit\"d\n" +
+	"\x12ListTracesResponse\x122\n" +
+	"\x06traces\x18\x01 \x03(\v2\x1a.stagd.api.v1.TraceSummaryR\x06traces\x12\x1a\n" +
+	"\bservices\x18\x02 \x03(\tR\bservices\"\xe5\x02\n" +
+	"\fTraceSummary\x12\x19\n" +
+	"\btrace_id\x18\x01 \x01(\tR\atraceId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\aservice\x18\x03 \x01(\tR\aservice\x129\n" +
+	"\n" +
+	"start_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
+	"\bduration\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\bduration\x12\x1d\n" +
+	"\n" +
+	"span_count\x18\x06 \x01(\x05R\tspanCount\x12\x1a\n" +
+	"\bservices\x18\a \x03(\tR\bservices\x12\x14\n" +
+	"\x05error\x18\b \x01(\bR\x05error\x12\x1f\n" +
+	"\vhttp_method\x18\t \x01(\tR\n" +
+	"httpMethod\x12(\n" +
+	"\x10http_status_code\x18\n" +
+	" \x01(\x05R\x0ehttpStatusCode\"k\n" +
+	"\x0fGetTraceRequest\x12&\n" +
+	"\n" +
+	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x120\n" +
+	"\btrace_id\x18\x02 \x01(\tB\x15\xbaH\x12r\x102\x0e^[0-9a-f]{32}$R\atraceId\"W\n" +
+	"\x10GetTraceResponse\x12\x19\n" +
+	"\btrace_id\x18\x01 \x01(\tR\atraceId\x12(\n" +
+	"\x05spans\x18\x02 \x03(\v2\x12.stagd.api.v1.SpanR\x05spans\"\xb7\x03\n" +
+	"\x04Span\x12\x17\n" +
+	"\aspan_id\x18\x01 \x01(\tR\x06spanId\x12$\n" +
+	"\x0eparent_span_id\x18\x02 \x01(\tR\fparentSpanId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x18\n" +
+	"\aservice\x18\x04 \x01(\tR\aservice\x12*\n" +
+	"\x04kind\x18\x05 \x01(\x0e2\x16.stagd.api.v1.SpanKindR\x04kind\x129\n" +
+	"\n" +
+	"start_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x125\n" +
+	"\bduration\x18\a \x01(\v2\x19.google.protobuf.DurationR\bduration\x12\x14\n" +
+	"\x05error\x18\b \x01(\bR\x05error\x12%\n" +
+	"\x0estatus_message\x18\t \x01(\tR\rstatusMessage\x126\n" +
+	"\n" +
+	"attributes\x18\n" +
+	" \x03(\v2\x16.stagd.api.v1.LogFieldR\n" +
+	"attributes\x12/\n" +
+	"\x06events\x18\v \x03(\v2\x17.stagd.api.v1.SpanEventR\x06events\"\x87\x01\n" +
+	"\tSpanEvent\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12.\n" +
+	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x126\n" +
+	"\n" +
+	"attributes\x18\x03 \x03(\v2\x16.stagd.api.v1.LogFieldR\n" +
+	"attributes*b\n" +
 	"\rPreviewAccess\x12\x1e\n" +
 	"\x1aPREVIEW_ACCESS_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12PREVIEW_ACCESS_ORG\x10\x01\x12\x19\n" +
@@ -2689,7 +4238,24 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x15COMPONENT_PHASE_BUILT\x10\x03\x12\x1c\n" +
 	"\x18COMPONENT_PHASE_STARTING\x10\x04\x12\x1b\n" +
 	"\x17COMPONENT_PHASE_RUNNING\x10\x05\x12\x1a\n" +
-	"\x16COMPONENT_PHASE_FAILED\x10\x062\x86\t\n" +
+	"\x16COMPONENT_PHASE_FAILED\x10\x06*w\n" +
+	"\bLogLevel\x12\x19\n" +
+	"\x15LOG_LEVEL_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fLOG_LEVEL_DEBUG\x10\x01\x12\x12\n" +
+	"\x0eLOG_LEVEL_INFO\x10\x02\x12\x12\n" +
+	"\x0eLOG_LEVEL_WARN\x10\x03\x12\x13\n" +
+	"\x0fLOG_LEVEL_ERROR\x10\x04*S\n" +
+	"\tLogFormat\x12\x1a\n" +
+	"\x16LOG_FORMAT_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fLOG_FORMAT_JSON\x10\x01\x12\x15\n" +
+	"\x11LOG_FORMAT_LOGFMT\x10\x02*\x99\x01\n" +
+	"\bSpanKind\x12\x19\n" +
+	"\x15SPAN_KIND_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12SPAN_KIND_INTERNAL\x10\x01\x12\x14\n" +
+	"\x10SPAN_KIND_SERVER\x10\x02\x12\x14\n" +
+	"\x10SPAN_KIND_CLIENT\x10\x03\x12\x16\n" +
+	"\x12SPAN_KIND_PRODUCER\x10\x04\x12\x16\n" +
+	"\x12SPAN_KIND_CONSUMER\x10\x052\x9e\f\n" +
 	"\x0ePreviewService\x12X\n" +
 	"\rCreatePreview\x12\".stagd.api.v1.CreatePreviewRequest\x1a#.stagd.api.v1.CreatePreviewResponse\x12O\n" +
 	"\n" +
@@ -2704,7 +4270,14 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\vValidateApp\x12 .stagd.api.v1.ValidateAppRequest\x1a!.stagd.api.v1.ValidateAppResponse\x12I\n" +
 	"\bListMail\x12\x1d.stagd.api.v1.ListMailRequest\x1a\x1e.stagd.api.v1.ListMailResponse\x12F\n" +
 	"\aGetMail\x12\x1c.stagd.api.v1.GetMailRequest\x1a\x1d.stagd.api.v1.GetMailResponse\x12L\n" +
-	"\tClearMail\x12\x1e.stagd.api.v1.ClearMailRequest\x1a\x1f.stagd.api.v1.ClearMailResponseB\xa4\x01\n" +
+	"\tClearMail\x12\x1e.stagd.api.v1.ClearMailRequest\x1a\x1f.stagd.api.v1.ClearMailResponse\x12O\n" +
+	"\n" +
+	"DeleteMail\x12\x1f.stagd.api.v1.DeleteMailRequest\x1a .stagd.api.v1.DeleteMailResponse\x12^\n" +
+	"\x0fGetServiceUsage\x12$.stagd.api.v1.GetServiceUsageRequest\x1a%.stagd.api.v1.GetServiceUsageResponse\x12I\n" +
+	"\bListLogs\x12\x1d.stagd.api.v1.ListLogsRequest\x1a\x1e.stagd.api.v1.ListLogsResponse\x12O\n" +
+	"\n" +
+	"ListTraces\x12\x1f.stagd.api.v1.ListTracesRequest\x1a .stagd.api.v1.ListTracesResponse\x12I\n" +
+	"\bGetTrace\x12\x1d.stagd.api.v1.GetTraceRequest\x1a\x1e.stagd.api.v1.GetTraceResponseB\xa4\x01\n" +
 	"\x10com.stagd.api.v1B\rPreviewsProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -2719,124 +4292,181 @@ func file_stagd_api_v1_previews_proto_rawDescGZIP() []byte {
 	return file_stagd_api_v1_previews_proto_rawDescData
 }
 
-var file_stagd_api_v1_previews_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_stagd_api_v1_previews_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_stagd_api_v1_previews_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_stagd_api_v1_previews_proto_msgTypes = make([]protoimpl.MessageInfo, 55)
 var file_stagd_api_v1_previews_proto_goTypes = []any{
 	(PreviewAccess)(0),                  // 0: stagd.api.v1.PreviewAccess
 	(PreviewStatus)(0),                  // 1: stagd.api.v1.PreviewStatus
 	(PreviewTrigger)(0),                 // 2: stagd.api.v1.PreviewTrigger
 	(ComponentPhase)(0),                 // 3: stagd.api.v1.ComponentPhase
-	(*PreviewPolicy)(nil),               // 4: stagd.api.v1.PreviewPolicy
-	(*PreviewComponent)(nil),            // 5: stagd.api.v1.PreviewComponent
-	(*PreviewIngress)(nil),              // 6: stagd.api.v1.PreviewIngress
-	(*PreviewSource)(nil),               // 7: stagd.api.v1.PreviewSource
-	(*Preview)(nil),                     // 8: stagd.api.v1.Preview
-	(*CreatePreviewRequest)(nil),        // 9: stagd.api.v1.CreatePreviewRequest
-	(*CreatePreviewResponse)(nil),       // 10: stagd.api.v1.CreatePreviewResponse
-	(*GetPreviewRequest)(nil),           // 11: stagd.api.v1.GetPreviewRequest
-	(*GetPreviewResponse)(nil),          // 12: stagd.api.v1.GetPreviewResponse
-	(*ListPreviewsRequest)(nil),         // 13: stagd.api.v1.ListPreviewsRequest
-	(*ListPreviewsResponse)(nil),        // 14: stagd.api.v1.ListPreviewsResponse
-	(*WatchPreviewRequest)(nil),         // 15: stagd.api.v1.WatchPreviewRequest
-	(*WatchPreviewResponse)(nil),        // 16: stagd.api.v1.WatchPreviewResponse
-	(*WakePreviewRequest)(nil),          // 17: stagd.api.v1.WakePreviewRequest
-	(*WakePreviewResponse)(nil),         // 18: stagd.api.v1.WakePreviewResponse
-	(*DestroyPreviewRequest)(nil),       // 19: stagd.api.v1.DestroyPreviewRequest
-	(*DestroyPreviewResponse)(nil),      // 20: stagd.api.v1.DestroyPreviewResponse
-	(*GetPreviewPolicyRequest)(nil),     // 21: stagd.api.v1.GetPreviewPolicyRequest
-	(*GetPreviewPolicyResponse)(nil),    // 22: stagd.api.v1.GetPreviewPolicyResponse
-	(*UpdatePreviewPolicyRequest)(nil),  // 23: stagd.api.v1.UpdatePreviewPolicyRequest
-	(*UpdatePreviewPolicyResponse)(nil), // 24: stagd.api.v1.UpdatePreviewPolicyResponse
-	(*ValidateAppRequest)(nil),          // 25: stagd.api.v1.ValidateAppRequest
-	(*AppComponent)(nil),                // 26: stagd.api.v1.AppComponent
-	(*ValidateAppResponse)(nil),         // 27: stagd.api.v1.ValidateAppResponse
-	(*ListPreviewEventsRequest)(nil),    // 28: stagd.api.v1.ListPreviewEventsRequest
-	(*PreviewEvent)(nil),                // 29: stagd.api.v1.PreviewEvent
-	(*ListPreviewEventsResponse)(nil),   // 30: stagd.api.v1.ListPreviewEventsResponse
-	(*ListMailRequest)(nil),             // 31: stagd.api.v1.ListMailRequest
-	(*MailAddress)(nil),                 // 32: stagd.api.v1.MailAddress
-	(*MailSummary)(nil),                 // 33: stagd.api.v1.MailSummary
-	(*ListMailResponse)(nil),            // 34: stagd.api.v1.ListMailResponse
-	(*GetMailRequest)(nil),              // 35: stagd.api.v1.GetMailRequest
-	(*MailHeader)(nil),                  // 36: stagd.api.v1.MailHeader
-	(*MailMessage)(nil),                 // 37: stagd.api.v1.MailMessage
-	(*GetMailResponse)(nil),             // 38: stagd.api.v1.GetMailResponse
-	(*ClearMailRequest)(nil),            // 39: stagd.api.v1.ClearMailRequest
-	(*ClearMailResponse)(nil),           // 40: stagd.api.v1.ClearMailResponse
-	nil,                                 // 41: stagd.api.v1.ValidateAppRequest.FilesEntry
-	(*Repository)(nil),                  // 42: stagd.api.v1.Repository
-	(*ChangeRequest)(nil),               // 43: stagd.api.v1.ChangeRequest
-	(*timestamppb.Timestamp)(nil),       // 44: google.protobuf.Timestamp
+	(LogLevel)(0),                       // 4: stagd.api.v1.LogLevel
+	(LogFormat)(0),                      // 5: stagd.api.v1.LogFormat
+	(SpanKind)(0),                       // 6: stagd.api.v1.SpanKind
+	(*PreviewPolicy)(nil),               // 7: stagd.api.v1.PreviewPolicy
+	(*PreviewComponent)(nil),            // 8: stagd.api.v1.PreviewComponent
+	(*PreviewIngress)(nil),              // 9: stagd.api.v1.PreviewIngress
+	(*PreviewSource)(nil),               // 10: stagd.api.v1.PreviewSource
+	(*Preview)(nil),                     // 11: stagd.api.v1.Preview
+	(*CreatePreviewRequest)(nil),        // 12: stagd.api.v1.CreatePreviewRequest
+	(*CreatePreviewResponse)(nil),       // 13: stagd.api.v1.CreatePreviewResponse
+	(*GetPreviewRequest)(nil),           // 14: stagd.api.v1.GetPreviewRequest
+	(*GetPreviewResponse)(nil),          // 15: stagd.api.v1.GetPreviewResponse
+	(*ListPreviewsRequest)(nil),         // 16: stagd.api.v1.ListPreviewsRequest
+	(*ListPreviewsResponse)(nil),        // 17: stagd.api.v1.ListPreviewsResponse
+	(*WatchPreviewRequest)(nil),         // 18: stagd.api.v1.WatchPreviewRequest
+	(*WatchPreviewResponse)(nil),        // 19: stagd.api.v1.WatchPreviewResponse
+	(*WakePreviewRequest)(nil),          // 20: stagd.api.v1.WakePreviewRequest
+	(*WakePreviewResponse)(nil),         // 21: stagd.api.v1.WakePreviewResponse
+	(*DestroyPreviewRequest)(nil),       // 22: stagd.api.v1.DestroyPreviewRequest
+	(*DestroyPreviewResponse)(nil),      // 23: stagd.api.v1.DestroyPreviewResponse
+	(*GetPreviewPolicyRequest)(nil),     // 24: stagd.api.v1.GetPreviewPolicyRequest
+	(*GetPreviewPolicyResponse)(nil),    // 25: stagd.api.v1.GetPreviewPolicyResponse
+	(*UpdatePreviewPolicyRequest)(nil),  // 26: stagd.api.v1.UpdatePreviewPolicyRequest
+	(*UpdatePreviewPolicyResponse)(nil), // 27: stagd.api.v1.UpdatePreviewPolicyResponse
+	(*ValidateAppRequest)(nil),          // 28: stagd.api.v1.ValidateAppRequest
+	(*AppComponent)(nil),                // 29: stagd.api.v1.AppComponent
+	(*ValidateAppResponse)(nil),         // 30: stagd.api.v1.ValidateAppResponse
+	(*ListPreviewEventsRequest)(nil),    // 31: stagd.api.v1.ListPreviewEventsRequest
+	(*PreviewEvent)(nil),                // 32: stagd.api.v1.PreviewEvent
+	(*ListPreviewEventsResponse)(nil),   // 33: stagd.api.v1.ListPreviewEventsResponse
+	(*ListMailRequest)(nil),             // 34: stagd.api.v1.ListMailRequest
+	(*MailAddress)(nil),                 // 35: stagd.api.v1.MailAddress
+	(*MailSummary)(nil),                 // 36: stagd.api.v1.MailSummary
+	(*ListMailResponse)(nil),            // 37: stagd.api.v1.ListMailResponse
+	(*GetMailRequest)(nil),              // 38: stagd.api.v1.GetMailRequest
+	(*MailHeader)(nil),                  // 39: stagd.api.v1.MailHeader
+	(*MailMessage)(nil),                 // 40: stagd.api.v1.MailMessage
+	(*GetMailResponse)(nil),             // 41: stagd.api.v1.GetMailResponse
+	(*ClearMailRequest)(nil),            // 42: stagd.api.v1.ClearMailRequest
+	(*ClearMailResponse)(nil),           // 43: stagd.api.v1.ClearMailResponse
+	(*DeleteMailRequest)(nil),           // 44: stagd.api.v1.DeleteMailRequest
+	(*DeleteMailResponse)(nil),          // 45: stagd.api.v1.DeleteMailResponse
+	(*GetServiceUsageRequest)(nil),      // 46: stagd.api.v1.GetServiceUsageRequest
+	(*GetServiceUsageResponse)(nil),     // 47: stagd.api.v1.GetServiceUsageResponse
+	(*ServiceUsage)(nil),                // 48: stagd.api.v1.ServiceUsage
+	(*UsagePoint)(nil),                  // 49: stagd.api.v1.UsagePoint
+	(*ListLogsRequest)(nil),             // 50: stagd.api.v1.ListLogsRequest
+	(*ListLogsResponse)(nil),            // 51: stagd.api.v1.ListLogsResponse
+	(*LogLine)(nil),                     // 52: stagd.api.v1.LogLine
+	(*LogField)(nil),                    // 53: stagd.api.v1.LogField
+	(*ListTracesRequest)(nil),           // 54: stagd.api.v1.ListTracesRequest
+	(*ListTracesResponse)(nil),          // 55: stagd.api.v1.ListTracesResponse
+	(*TraceSummary)(nil),                // 56: stagd.api.v1.TraceSummary
+	(*GetTraceRequest)(nil),             // 57: stagd.api.v1.GetTraceRequest
+	(*GetTraceResponse)(nil),            // 58: stagd.api.v1.GetTraceResponse
+	(*Span)(nil),                        // 59: stagd.api.v1.Span
+	(*SpanEvent)(nil),                   // 60: stagd.api.v1.SpanEvent
+	nil,                                 // 61: stagd.api.v1.ValidateAppRequest.FilesEntry
+	(*Repository)(nil),                  // 62: stagd.api.v1.Repository
+	(*ChangeRequest)(nil),               // 63: stagd.api.v1.ChangeRequest
+	(*timestamppb.Timestamp)(nil),       // 64: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),         // 65: google.protobuf.Duration
 }
 var file_stagd_api_v1_previews_proto_depIdxs = []int32{
 	0,  // 0: stagd.api.v1.PreviewPolicy.access:type_name -> stagd.api.v1.PreviewAccess
 	3,  // 1: stagd.api.v1.PreviewComponent.phase:type_name -> stagd.api.v1.ComponentPhase
-	42, // 2: stagd.api.v1.Preview.repository:type_name -> stagd.api.v1.Repository
-	43, // 3: stagd.api.v1.Preview.change:type_name -> stagd.api.v1.ChangeRequest
+	62, // 2: stagd.api.v1.Preview.repository:type_name -> stagd.api.v1.Repository
+	63, // 3: stagd.api.v1.Preview.change:type_name -> stagd.api.v1.ChangeRequest
 	1,  // 4: stagd.api.v1.Preview.status:type_name -> stagd.api.v1.PreviewStatus
 	2,  // 5: stagd.api.v1.Preview.trigger:type_name -> stagd.api.v1.PreviewTrigger
-	44, // 6: stagd.api.v1.Preview.create_time:type_name -> google.protobuf.Timestamp
-	44, // 7: stagd.api.v1.Preview.update_time:type_name -> google.protobuf.Timestamp
-	44, // 8: stagd.api.v1.Preview.expire_time:type_name -> google.protobuf.Timestamp
-	6,  // 9: stagd.api.v1.Preview.ingresses:type_name -> stagd.api.v1.PreviewIngress
-	5,  // 10: stagd.api.v1.Preview.components:type_name -> stagd.api.v1.PreviewComponent
+	64, // 6: stagd.api.v1.Preview.create_time:type_name -> google.protobuf.Timestamp
+	64, // 7: stagd.api.v1.Preview.update_time:type_name -> google.protobuf.Timestamp
+	64, // 8: stagd.api.v1.Preview.expire_time:type_name -> google.protobuf.Timestamp
+	9,  // 9: stagd.api.v1.Preview.ingresses:type_name -> stagd.api.v1.PreviewIngress
+	8,  // 10: stagd.api.v1.Preview.components:type_name -> stagd.api.v1.PreviewComponent
 	0,  // 11: stagd.api.v1.Preview.access:type_name -> stagd.api.v1.PreviewAccess
-	7,  // 12: stagd.api.v1.CreatePreviewRequest.source:type_name -> stagd.api.v1.PreviewSource
-	8,  // 13: stagd.api.v1.CreatePreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	8,  // 14: stagd.api.v1.GetPreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	10, // 12: stagd.api.v1.CreatePreviewRequest.source:type_name -> stagd.api.v1.PreviewSource
+	11, // 13: stagd.api.v1.CreatePreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	11, // 14: stagd.api.v1.GetPreviewResponse.preview:type_name -> stagd.api.v1.Preview
 	1,  // 15: stagd.api.v1.ListPreviewsRequest.statuses:type_name -> stagd.api.v1.PreviewStatus
-	8,  // 16: stagd.api.v1.ListPreviewsResponse.previews:type_name -> stagd.api.v1.Preview
-	8,  // 17: stagd.api.v1.WatchPreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	8,  // 18: stagd.api.v1.WakePreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	8,  // 19: stagd.api.v1.DestroyPreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	4,  // 20: stagd.api.v1.GetPreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
-	4,  // 21: stagd.api.v1.UpdatePreviewPolicyRequest.policy:type_name -> stagd.api.v1.PreviewPolicy
-	4,  // 22: stagd.api.v1.UpdatePreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
-	41, // 23: stagd.api.v1.ValidateAppRequest.files:type_name -> stagd.api.v1.ValidateAppRequest.FilesEntry
-	26, // 24: stagd.api.v1.ValidateAppResponse.components:type_name -> stagd.api.v1.AppComponent
-	6,  // 25: stagd.api.v1.ValidateAppResponse.ingresses:type_name -> stagd.api.v1.PreviewIngress
-	44, // 26: stagd.api.v1.PreviewEvent.time:type_name -> google.protobuf.Timestamp
+	11, // 16: stagd.api.v1.ListPreviewsResponse.previews:type_name -> stagd.api.v1.Preview
+	11, // 17: stagd.api.v1.WatchPreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	11, // 18: stagd.api.v1.WakePreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	11, // 19: stagd.api.v1.DestroyPreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	7,  // 20: stagd.api.v1.GetPreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
+	7,  // 21: stagd.api.v1.UpdatePreviewPolicyRequest.policy:type_name -> stagd.api.v1.PreviewPolicy
+	7,  // 22: stagd.api.v1.UpdatePreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
+	61, // 23: stagd.api.v1.ValidateAppRequest.files:type_name -> stagd.api.v1.ValidateAppRequest.FilesEntry
+	29, // 24: stagd.api.v1.ValidateAppResponse.components:type_name -> stagd.api.v1.AppComponent
+	9,  // 25: stagd.api.v1.ValidateAppResponse.ingresses:type_name -> stagd.api.v1.PreviewIngress
+	64, // 26: stagd.api.v1.PreviewEvent.time:type_name -> google.protobuf.Timestamp
 	1,  // 27: stagd.api.v1.PreviewEvent.status:type_name -> stagd.api.v1.PreviewStatus
-	29, // 28: stagd.api.v1.ListPreviewEventsResponse.events:type_name -> stagd.api.v1.PreviewEvent
-	32, // 29: stagd.api.v1.MailSummary.from:type_name -> stagd.api.v1.MailAddress
-	32, // 30: stagd.api.v1.MailSummary.to:type_name -> stagd.api.v1.MailAddress
-	44, // 31: stagd.api.v1.MailSummary.receive_time:type_name -> google.protobuf.Timestamp
-	33, // 32: stagd.api.v1.ListMailResponse.messages:type_name -> stagd.api.v1.MailSummary
-	33, // 33: stagd.api.v1.MailMessage.summary:type_name -> stagd.api.v1.MailSummary
-	32, // 34: stagd.api.v1.MailMessage.cc:type_name -> stagd.api.v1.MailAddress
-	36, // 35: stagd.api.v1.MailMessage.headers:type_name -> stagd.api.v1.MailHeader
-	37, // 36: stagd.api.v1.GetMailResponse.message:type_name -> stagd.api.v1.MailMessage
-	9,  // 37: stagd.api.v1.PreviewService.CreatePreview:input_type -> stagd.api.v1.CreatePreviewRequest
-	11, // 38: stagd.api.v1.PreviewService.GetPreview:input_type -> stagd.api.v1.GetPreviewRequest
-	13, // 39: stagd.api.v1.PreviewService.ListPreviews:input_type -> stagd.api.v1.ListPreviewsRequest
-	15, // 40: stagd.api.v1.PreviewService.WatchPreview:input_type -> stagd.api.v1.WatchPreviewRequest
-	28, // 41: stagd.api.v1.PreviewService.ListPreviewEvents:input_type -> stagd.api.v1.ListPreviewEventsRequest
-	17, // 42: stagd.api.v1.PreviewService.WakePreview:input_type -> stagd.api.v1.WakePreviewRequest
-	19, // 43: stagd.api.v1.PreviewService.DestroyPreview:input_type -> stagd.api.v1.DestroyPreviewRequest
-	21, // 44: stagd.api.v1.PreviewService.GetPreviewPolicy:input_type -> stagd.api.v1.GetPreviewPolicyRequest
-	23, // 45: stagd.api.v1.PreviewService.UpdatePreviewPolicy:input_type -> stagd.api.v1.UpdatePreviewPolicyRequest
-	25, // 46: stagd.api.v1.PreviewService.ValidateApp:input_type -> stagd.api.v1.ValidateAppRequest
-	31, // 47: stagd.api.v1.PreviewService.ListMail:input_type -> stagd.api.v1.ListMailRequest
-	35, // 48: stagd.api.v1.PreviewService.GetMail:input_type -> stagd.api.v1.GetMailRequest
-	39, // 49: stagd.api.v1.PreviewService.ClearMail:input_type -> stagd.api.v1.ClearMailRequest
-	10, // 50: stagd.api.v1.PreviewService.CreatePreview:output_type -> stagd.api.v1.CreatePreviewResponse
-	12, // 51: stagd.api.v1.PreviewService.GetPreview:output_type -> stagd.api.v1.GetPreviewResponse
-	14, // 52: stagd.api.v1.PreviewService.ListPreviews:output_type -> stagd.api.v1.ListPreviewsResponse
-	16, // 53: stagd.api.v1.PreviewService.WatchPreview:output_type -> stagd.api.v1.WatchPreviewResponse
-	30, // 54: stagd.api.v1.PreviewService.ListPreviewEvents:output_type -> stagd.api.v1.ListPreviewEventsResponse
-	18, // 55: stagd.api.v1.PreviewService.WakePreview:output_type -> stagd.api.v1.WakePreviewResponse
-	20, // 56: stagd.api.v1.PreviewService.DestroyPreview:output_type -> stagd.api.v1.DestroyPreviewResponse
-	22, // 57: stagd.api.v1.PreviewService.GetPreviewPolicy:output_type -> stagd.api.v1.GetPreviewPolicyResponse
-	24, // 58: stagd.api.v1.PreviewService.UpdatePreviewPolicy:output_type -> stagd.api.v1.UpdatePreviewPolicyResponse
-	27, // 59: stagd.api.v1.PreviewService.ValidateApp:output_type -> stagd.api.v1.ValidateAppResponse
-	34, // 60: stagd.api.v1.PreviewService.ListMail:output_type -> stagd.api.v1.ListMailResponse
-	38, // 61: stagd.api.v1.PreviewService.GetMail:output_type -> stagd.api.v1.GetMailResponse
-	40, // 62: stagd.api.v1.PreviewService.ClearMail:output_type -> stagd.api.v1.ClearMailResponse
-	50, // [50:63] is the sub-list for method output_type
-	37, // [37:50] is the sub-list for method input_type
-	37, // [37:37] is the sub-list for extension type_name
-	37, // [37:37] is the sub-list for extension extendee
-	0,  // [0:37] is the sub-list for field type_name
+	32, // 28: stagd.api.v1.ListPreviewEventsResponse.events:type_name -> stagd.api.v1.PreviewEvent
+	35, // 29: stagd.api.v1.MailSummary.from:type_name -> stagd.api.v1.MailAddress
+	35, // 30: stagd.api.v1.MailSummary.to:type_name -> stagd.api.v1.MailAddress
+	64, // 31: stagd.api.v1.MailSummary.receive_time:type_name -> google.protobuf.Timestamp
+	36, // 32: stagd.api.v1.ListMailResponse.messages:type_name -> stagd.api.v1.MailSummary
+	36, // 33: stagd.api.v1.MailMessage.summary:type_name -> stagd.api.v1.MailSummary
+	35, // 34: stagd.api.v1.MailMessage.cc:type_name -> stagd.api.v1.MailAddress
+	39, // 35: stagd.api.v1.MailMessage.headers:type_name -> stagd.api.v1.MailHeader
+	40, // 36: stagd.api.v1.GetMailResponse.message:type_name -> stagd.api.v1.MailMessage
+	65, // 37: stagd.api.v1.GetServiceUsageRequest.window:type_name -> google.protobuf.Duration
+	48, // 38: stagd.api.v1.GetServiceUsageResponse.services:type_name -> stagd.api.v1.ServiceUsage
+	49, // 39: stagd.api.v1.ServiceUsage.points:type_name -> stagd.api.v1.UsagePoint
+	64, // 40: stagd.api.v1.ServiceUsage.sampled_at:type_name -> google.protobuf.Timestamp
+	64, // 41: stagd.api.v1.ServiceUsage.started_at:type_name -> google.protobuf.Timestamp
+	64, // 42: stagd.api.v1.UsagePoint.time:type_name -> google.protobuf.Timestamp
+	64, // 43: stagd.api.v1.ListLogsRequest.since:type_name -> google.protobuf.Timestamp
+	52, // 44: stagd.api.v1.ListLogsResponse.lines:type_name -> stagd.api.v1.LogLine
+	64, // 45: stagd.api.v1.LogLine.time:type_name -> google.protobuf.Timestamp
+	4,  // 46: stagd.api.v1.LogLine.level:type_name -> stagd.api.v1.LogLevel
+	53, // 47: stagd.api.v1.LogLine.fields:type_name -> stagd.api.v1.LogField
+	5,  // 48: stagd.api.v1.LogLine.format:type_name -> stagd.api.v1.LogFormat
+	64, // 49: stagd.api.v1.ListTracesRequest.since:type_name -> google.protobuf.Timestamp
+	64, // 50: stagd.api.v1.ListTracesRequest.until:type_name -> google.protobuf.Timestamp
+	65, // 51: stagd.api.v1.ListTracesRequest.min_duration:type_name -> google.protobuf.Duration
+	56, // 52: stagd.api.v1.ListTracesResponse.traces:type_name -> stagd.api.v1.TraceSummary
+	64, // 53: stagd.api.v1.TraceSummary.start_time:type_name -> google.protobuf.Timestamp
+	65, // 54: stagd.api.v1.TraceSummary.duration:type_name -> google.protobuf.Duration
+	59, // 55: stagd.api.v1.GetTraceResponse.spans:type_name -> stagd.api.v1.Span
+	6,  // 56: stagd.api.v1.Span.kind:type_name -> stagd.api.v1.SpanKind
+	64, // 57: stagd.api.v1.Span.start_time:type_name -> google.protobuf.Timestamp
+	65, // 58: stagd.api.v1.Span.duration:type_name -> google.protobuf.Duration
+	53, // 59: stagd.api.v1.Span.attributes:type_name -> stagd.api.v1.LogField
+	60, // 60: stagd.api.v1.Span.events:type_name -> stagd.api.v1.SpanEvent
+	64, // 61: stagd.api.v1.SpanEvent.time:type_name -> google.protobuf.Timestamp
+	53, // 62: stagd.api.v1.SpanEvent.attributes:type_name -> stagd.api.v1.LogField
+	12, // 63: stagd.api.v1.PreviewService.CreatePreview:input_type -> stagd.api.v1.CreatePreviewRequest
+	14, // 64: stagd.api.v1.PreviewService.GetPreview:input_type -> stagd.api.v1.GetPreviewRequest
+	16, // 65: stagd.api.v1.PreviewService.ListPreviews:input_type -> stagd.api.v1.ListPreviewsRequest
+	18, // 66: stagd.api.v1.PreviewService.WatchPreview:input_type -> stagd.api.v1.WatchPreviewRequest
+	31, // 67: stagd.api.v1.PreviewService.ListPreviewEvents:input_type -> stagd.api.v1.ListPreviewEventsRequest
+	20, // 68: stagd.api.v1.PreviewService.WakePreview:input_type -> stagd.api.v1.WakePreviewRequest
+	22, // 69: stagd.api.v1.PreviewService.DestroyPreview:input_type -> stagd.api.v1.DestroyPreviewRequest
+	24, // 70: stagd.api.v1.PreviewService.GetPreviewPolicy:input_type -> stagd.api.v1.GetPreviewPolicyRequest
+	26, // 71: stagd.api.v1.PreviewService.UpdatePreviewPolicy:input_type -> stagd.api.v1.UpdatePreviewPolicyRequest
+	28, // 72: stagd.api.v1.PreviewService.ValidateApp:input_type -> stagd.api.v1.ValidateAppRequest
+	34, // 73: stagd.api.v1.PreviewService.ListMail:input_type -> stagd.api.v1.ListMailRequest
+	38, // 74: stagd.api.v1.PreviewService.GetMail:input_type -> stagd.api.v1.GetMailRequest
+	42, // 75: stagd.api.v1.PreviewService.ClearMail:input_type -> stagd.api.v1.ClearMailRequest
+	44, // 76: stagd.api.v1.PreviewService.DeleteMail:input_type -> stagd.api.v1.DeleteMailRequest
+	46, // 77: stagd.api.v1.PreviewService.GetServiceUsage:input_type -> stagd.api.v1.GetServiceUsageRequest
+	50, // 78: stagd.api.v1.PreviewService.ListLogs:input_type -> stagd.api.v1.ListLogsRequest
+	54, // 79: stagd.api.v1.PreviewService.ListTraces:input_type -> stagd.api.v1.ListTracesRequest
+	57, // 80: stagd.api.v1.PreviewService.GetTrace:input_type -> stagd.api.v1.GetTraceRequest
+	13, // 81: stagd.api.v1.PreviewService.CreatePreview:output_type -> stagd.api.v1.CreatePreviewResponse
+	15, // 82: stagd.api.v1.PreviewService.GetPreview:output_type -> stagd.api.v1.GetPreviewResponse
+	17, // 83: stagd.api.v1.PreviewService.ListPreviews:output_type -> stagd.api.v1.ListPreviewsResponse
+	19, // 84: stagd.api.v1.PreviewService.WatchPreview:output_type -> stagd.api.v1.WatchPreviewResponse
+	33, // 85: stagd.api.v1.PreviewService.ListPreviewEvents:output_type -> stagd.api.v1.ListPreviewEventsResponse
+	21, // 86: stagd.api.v1.PreviewService.WakePreview:output_type -> stagd.api.v1.WakePreviewResponse
+	23, // 87: stagd.api.v1.PreviewService.DestroyPreview:output_type -> stagd.api.v1.DestroyPreviewResponse
+	25, // 88: stagd.api.v1.PreviewService.GetPreviewPolicy:output_type -> stagd.api.v1.GetPreviewPolicyResponse
+	27, // 89: stagd.api.v1.PreviewService.UpdatePreviewPolicy:output_type -> stagd.api.v1.UpdatePreviewPolicyResponse
+	30, // 90: stagd.api.v1.PreviewService.ValidateApp:output_type -> stagd.api.v1.ValidateAppResponse
+	37, // 91: stagd.api.v1.PreviewService.ListMail:output_type -> stagd.api.v1.ListMailResponse
+	41, // 92: stagd.api.v1.PreviewService.GetMail:output_type -> stagd.api.v1.GetMailResponse
+	43, // 93: stagd.api.v1.PreviewService.ClearMail:output_type -> stagd.api.v1.ClearMailResponse
+	45, // 94: stagd.api.v1.PreviewService.DeleteMail:output_type -> stagd.api.v1.DeleteMailResponse
+	47, // 95: stagd.api.v1.PreviewService.GetServiceUsage:output_type -> stagd.api.v1.GetServiceUsageResponse
+	51, // 96: stagd.api.v1.PreviewService.ListLogs:output_type -> stagd.api.v1.ListLogsResponse
+	55, // 97: stagd.api.v1.PreviewService.ListTraces:output_type -> stagd.api.v1.ListTracesResponse
+	58, // 98: stagd.api.v1.PreviewService.GetTrace:output_type -> stagd.api.v1.GetTraceResponse
+	81, // [81:99] is the sub-list for method output_type
+	63, // [63:81] is the sub-list for method input_type
+	63, // [63:63] is the sub-list for extension type_name
+	63, // [63:63] is the sub-list for extension extendee
+	0,  // [0:63] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_previews_proto_init() }
@@ -2854,8 +4484,8 @@ func file_stagd_api_v1_previews_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_previews_proto_rawDesc), len(file_stagd_api_v1_previews_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   38,
+			NumEnums:      7,
+			NumMessages:   55,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

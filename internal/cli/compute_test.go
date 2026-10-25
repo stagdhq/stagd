@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -155,5 +156,108 @@ func TestComputeUpdateSendsOnlyWhatChanged(t *testing.T) {
 
 	if _, err := run(t, srv, "--token", "tok-1", "compute", "update", "fake"); err == nil {
 		t.Error("update without values: no error")
+	}
+}
+
+// fakeRelayed is a Kubernetes connection through the relay: made with an
+// install link, and given a new token by install, whose relay then connects.
+type fakeRelayed struct {
+	fakeCompute
+	installed string
+	looks     int
+}
+
+var relayConn = &apiv1.ComputeConnection{
+	Id:            "cc-k8s",
+	Provider:      apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES,
+	Name:          "cluster",
+	Status:        apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_FAILING,
+	StatusMessage: "waiting for the relay to connect",
+}
+
+func (f *fakeRelayed) ListProviders(context.Context, *connect.Request[apiv1.ListProvidersRequest]) (*connect.Response[apiv1.ListProvidersResponse], error) {
+	return connect.NewResponse(&apiv1.ListProvidersResponse{Providers: []*apiv1.ProviderInfo{{Provider: apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES, Name: "Kubernetes"}}}), nil
+}
+
+func (f *fakeRelayed) CreateComputeConnection(_ context.Context, req *connect.Request[apiv1.CreateComputeConnectionRequest]) (*connect.Response[apiv1.CreateComputeConnectionResponse], error) {
+	f.created = req.Msg
+
+	return connect.NewResponse(&apiv1.CreateComputeConnectionResponse{Connection: relayConn, RelayToken: "stagd_relay.secret", RelayInstallUrl: "https://app.stagd.dev/relay/kubernetes/abc"}), nil
+}
+
+func (f *fakeRelayed) CreateRelayInstall(_ context.Context, req *connect.Request[apiv1.CreateRelayInstallRequest]) (*connect.Response[apiv1.CreateRelayInstallResponse], error) {
+	f.installed = req.Msg.GetId()
+
+	return connect.NewResponse(&apiv1.CreateRelayInstallResponse{RelayToken: "stagd_relay.new", RelayInstallUrl: "https://app.stagd.dev/relay/kubernetes/def"}), nil
+}
+
+// The relay connects on the third look.
+func (f *fakeRelayed) ListComputeConnections(context.Context, *connect.Request[apiv1.ListComputeConnectionsRequest]) (*connect.Response[apiv1.ListComputeConnectionsResponse], error) {
+	f.looks++
+
+	conn := relayConn
+	if f.looks >= 3 {
+		conn = &apiv1.ComputeConnection{Id: relayConn.Id, Provider: relayConn.Provider, Name: relayConn.Name, Account: "v1.31.2 · 3 nodes", Status: apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE}
+	}
+
+	return connect.NewResponse(&apiv1.ListComputeConnectionsResponse{Connections: []*apiv1.ComputeConnection{conn}}), nil
+}
+
+func relayedServer(t *testing.T, f *fakeRelayed) *httptest.Server {
+	t.Helper()
+	mux := http.NewServeMux()
+	path, handler := apiv1connect.NewComputeServiceHandler(f)
+	mux.Handle(path, handler)
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	return srv
+}
+
+// Connecting Kubernetes prints one kubectl apply, with the link and not the
+// token, and --wait waits until the relay has connected.
+func TestComputeConnectKubernetesPrintsTheInstall(t *testing.T) {
+	relayPoll = 10 * time.Millisecond
+	t.Cleanup(func() { relayPoll = 2 * time.Second })
+
+	f := &fakeRelayed{}
+	srv := relayedServer(t, f)
+
+	out, err := run(t, srv, "--token", "tok-1", "compute", "connect", "kubernetes", "--name", "cluster", "--wait")
+	if err != nil {
+		t.Fatalf("connect: %v\n%s", err, out)
+	}
+
+	if !strings.Contains(out, "kubectl apply -f https://app.stagd.dev/relay/kubernetes/abc") || strings.Contains(out, "stagd_relay.secret") {
+		t.Errorf("want the install link, not the token:\n%s", out)
+	}
+
+	if !strings.Contains(out, "Connected: v1.31.2 · 3 nodes") {
+		t.Errorf("--wait didn't wait for the relay:\n%s", out)
+	}
+}
+
+// install makes a new token and command for a connection; a waiting one
+// needs no confirmation.
+func TestComputeInstallAgain(t *testing.T) {
+	f := &fakeRelayed{}
+	srv := relayedServer(t, f)
+
+	out, err := run(t, srv, "--token", "tok-1", "compute", "install", "cluster")
+	if err != nil {
+		t.Fatalf("install: %v\n%s", err, out)
+	}
+
+	if f.installed != "cc-k8s" || !strings.Contains(out, "kubectl apply -f https://app.stagd.dev/relay/kubernetes/def") || !strings.Contains(out, "the old one no longer works") {
+		t.Errorf("installed %q:\n%s", f.installed, out)
+	}
+}
+
+// The Docker relay's command names this CLI's release, or the latest one.
+func TestRelayImage(t *testing.T) {
+	for version, want := range map[string]string{"v0.1.0": "ghcr.io/stagdhq/stagd:0.1.0", "0.2.3": "ghcr.io/stagdhq/stagd:0.2.3", "dev": "ghcr.io/stagdhq/stagd:latest", "v0.1.0-5-gabc": "ghcr.io/stagdhq/stagd:latest"} {
+		if got := relayImage(version); got != want {
+			t.Errorf("relayImage(%q) = %q, want %q", version, got, want)
+		}
 	}
 }
