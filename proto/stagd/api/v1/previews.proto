@@ -94,6 +94,9 @@ message PreviewPolicy {
   // pr-42-web-acme-k3x9q2m7wd. Makes URLs hard to guess; it doesn't replace
   // access control, since links get shared.
   bool unguessable_urls = 4;
+  // Viewers don't see the previews' captured mail. They see it by default:
+  // a sign-up or reset email is often what they're checking.
+  bool hide_mail_from_viewers = 5;
 }
 
 // PreviewStatus follows the environment's state machine:

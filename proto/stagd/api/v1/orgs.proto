@@ -56,8 +56,10 @@ enum Role {
   ROLE_ADMIN = 1;
   // Previews: deploy, tear down, read; no settings.
   ROLE_MEMBER = 2;
-  // Read-only: open and wake previews, read their logs, traces and mail.
-  // For people who review rather than build; no code-host account needed.
+  // Opens the workspace's previews, and reads their captured mail unless the
+  // preview access policy hides it; no dashboard beyond the list of
+  // previews. For people who review rather than build: product, design,
+  // QA. They sign in with a code by email; no code-host account needed.
   ROLE_VIEWER = 3;
 }
 
