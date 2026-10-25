@@ -60,14 +60,14 @@ func previewCommand() *cli.Command {
 				Description: "Without flags, shows the policy. --repo picks one repository (its own override, or the org's default\n" +
 					"it follows); without --repo it's the org's default. Access applies to existing previews on their\n" +
 					"next deploy; URL style only to new previews, so links already shared keep working. A repository's\n" +
-					"stagd.yaml can set its own sleep and expiry (lifecycle: { sleep_after: 2h, expire_after: 7d }), which win.",
+					"stagd.yaml can set its own sleep and expiry (lifecycle: { sleep_after: 2h, expire_after: 36h }), which win.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "repo", Usage: "a repository, owner/name; the org's default when left out"},
 					&cli.StringFlag{Name: "access", Usage: "org (members signed in to Stagd) or public (anyone with the link)"},
 					&cli.StringSliceFlag{Name: "public-ingress", Usage: "an ingress anyone can reach even when access is org (repeatable)"},
 					&cli.BoolFlag{Name: "unguessable-urls", Usage: "add a random token to new previews' URLs (--unguessable-urls=false to stop)"},
 					&cli.StringFlag{Name: "sleep-after", Usage: "how long a preview nobody opens stays awake, 5m to 24h, e.g. 2h; default for Stagd's (45m)"},
-					&cli.StringFlag{Name: "expire-after", Usage: "how long a preview lives without a new commit, 1h to 30d, e.g. 7d; default for Stagd's (24h)"},
+					&cli.StringFlag{Name: "expire-after", Usage: "how long a preview lives without a new commit, 1h to 48h, e.g. 36h; default for Stagd's (24h)"},
 					&cli.BoolFlag{Name: "reset", Usage: "drop the repository's override; it follows the org's default again"},
 				},
 				Action: previewPolicy,

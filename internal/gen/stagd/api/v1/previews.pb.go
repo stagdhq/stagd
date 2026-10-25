@@ -458,7 +458,7 @@ type PreviewPolicy struct {
 	SleepAfter *durationpb.Duration `protobuf:"bytes,6,opt,name=sleep_after,json=sleepAfter,proto3" json:"sleep_after,omitempty"`
 	// How long a preview lives without a new commit before it's torn down; a
 	// new commit starts it over. Unset for Stagd's default, 24 hours; from 1
-	// hour to 30 days. stagd.yaml can set its own (lifecycle: { expire_after: 7d }).
+	// to 48 hours. stagd.yaml can set its own (lifecycle: { expire_after: 36h }).
 	ExpireAfter   *durationpb.Duration `protobuf:"bytes,7,opt,name=expire_after,json=expireAfter,proto3" json:"expire_after,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3946,7 +3946,7 @@ var File_stagd_api_v1_previews_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\n" +
-	"\x1bstagd/api/v1/previews.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\x90\x03\n" +
+	"\x1bstagd/api/v1/previews.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\x8f\x03\n" +
 	"\rPreviewPolicy\x12\x1e\n" +
 	"\n" +
 	"repository\x18\x01 \x01(\tR\n" +
@@ -3956,8 +3956,9 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x10unguessable_urls\x18\x04 \x01(\bR\x0funguessableUrls\x123\n" +
 	"\x16hide_mail_from_viewers\x18\x05 \x01(\bR\x13hideMailFromViewers\x12M\n" +
 	"\vsleep_after\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\x11\xbaH\x0e\xaa\x01\v\"\x04\b\x80\xa3\x052\x03\b\xac\x02R\n" +
-	"sleepAfter\x12P\n" +
-	"\fexpire_after\x18\a \x01(\v2\x19.google.protobuf.DurationB\x12\xbaH\x0f\xaa\x01\f\"\x05\b\x80\x9a\x9e\x012\x03\b\x90\x1cR\vexpireAfter\"t\n" +
+	"sleepAfter\x12O\n" +
+	"\fexpire_after\x18\a \x01(\v2\x19.google.protobuf.DurationB\x11\xbaH\x0e\xaa\x01\v\"\x04\b\x80\xc6\n" +
+	"2\x03\b\x90\x1cR\vexpireAfter\"t\n" +
 	"\x10PreviewComponent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x122\n" +
 	"\x05phase\x18\x02 \x01(\x0e2\x1c.stagd.api.v1.ComponentPhaseR\x05phase\x12\x18\n" +

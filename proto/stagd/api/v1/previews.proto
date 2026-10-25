@@ -107,10 +107,10 @@ message PreviewPolicy {
   }];
   // How long a preview lives without a new commit before it's torn down; a
   // new commit starts it over. Unset for Stagd's default, 24 hours; from 1
-  // hour to 30 days. stagd.yaml can set its own (lifecycle: { expire_after: 7d }).
+  // to 48 hours. stagd.yaml can set its own (lifecycle: { expire_after: 36h }).
   google.protobuf.Duration expire_after = 7 [(buf.validate.field).duration = {
     gte: {seconds: 3600}
-    lte: {seconds: 2592000}
+    lte: {seconds: 172800}
   }];
 }
 
