@@ -22,6 +22,30 @@ message User {
   string image_url = 4;
 }
 
+// Preferences are how Stagd looks and behaves for one person, in every org.
+message Preferences {
+  Theme theme = 1;
+  // An IANA time zone, e.g. "Europe/Oslo"; empty follows the browser.
+  string time_zone = 2;
+  // What opens after signing in.
+  StartPage start_page = 3;
+  // No animated build bars or live pulses.
+  bool reduce_motion = 4;
+}
+
+enum Theme {
+  // Follows the operating system.
+  THEME_UNSPECIFIED = 0;
+  THEME_LIGHT = 1;
+  THEME_DARK = 2;
+}
+
+enum StartPage {
+  // The previews.
+  START_PAGE_UNSPECIFIED = 0;
+  START_PAGE_REPOSITORIES = 1;
+}
+
 // Org is one customer account. It belongs to Stagd and is not the same thing
 // as a GitHub organization: one Stagd org can connect several GitHub
 // accounts, and later other code hosts.

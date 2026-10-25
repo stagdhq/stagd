@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/model.proto";
+
+// AccountService is the signed-in person's own account: their profile, how
+// Stagd looks for them, and where they're signed in. It follows them across
+// orgs, and anyone signed in may use it, viewers too.
+service AccountService {
+  // GetAccount returns the caller's profile, the emails they may use, how
+  // they sign in, and their preferences.
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+  // UpdateProfile changes the caller's display name and email. The email must
+  // be one of the account's verified emails.
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  // UpdatePreferences replaces the caller's preferences.
+  rpc UpdatePreferences(UpdatePreferencesRequest) returns (UpdatePreferencesResponse);
+  // ListSessions lists where the caller is signed in: browsers and the CLI.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+  // RevokeSession signs one of the caller's sessions out at once.
+  rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse);
+  // RevokeOtherSessions signs out every session of the caller's but this one.
+  rpc RevokeOtherSessions(RevokeOtherSessionsRequest) returns (RevokeOtherSessionsResponse);
+}
+
+message Account {
+  User user = 1;
+  // The verified emails the account may use as its email, the current one
+  // among them.
+  repeated string emails = 2;
+  // How the person signs in.
+  repeated SignInMethod sign_in_methods = 3;
+  Preferences preferences = 4;
+}
+
+// SignInMethod is one way someone signs in, e.g. GitHub as @ada, or a code
+// sent to an email.
+message SignInMethod {
+  // "github", "email", ...
+  string provider = 1;
+  // The username or email at that provider.
+  string login = 2;
+}
+
+message GetAccountRequest {}
+
+message GetAccountResponse {
+  Account account = 1;
+}
+
+message UpdateProfileRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
+  string email = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message UpdateProfileResponse {
+  Account account = 1;
+}
+
+message UpdatePreferencesRequest {
+  Preferences preferences = 1 [(buf.validate.field).required = true];
+}
+
+message UpdatePreferencesResponse {
+  Preferences preferences = 1;
+}
+
+// Session is one signed-in browser or CLI.
+message Session {
+  string id = 1;
+  SessionKind kind = 2;
+  // The browser's user agent, for a web session.
+  string user_agent = 3;
+  // For a CLI session: what the CLI said about itself when it logged in.
+  string client_version = 4;
+  string client_platform = 5;
+  string device_name = 6;
+  // How it signed in: "github", "email", or "device" for a CLI login
+  // approved in the browser.
+  string sign_in_method = 7;
+  google.protobuf.Timestamp create_time = 8;
+  google.protobuf.Timestamp last_seen_time = 9;
+  google.protobuf.Timestamp expire_time = 10;
+  // The session this call came from.
+  bool current = 11;
+}
+
+enum SessionKind {
+  SESSION_KIND_UNSPECIFIED = 0;
+  SESSION_KIND_WEB = 1;
+  SESSION_KIND_CLI = 2;
+}
+
+message ListSessionsRequest {}
+
+message ListSessionsResponse {
+  // Most recently used first.
+  repeated Session sessions = 1;
+}
+
+message RevokeSessionRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message RevokeSessionResponse {}
+
+message RevokeOtherSessionsRequest {}
+
+message RevokeOtherSessionsResponse {
+  int32 revoked = 1;
+}

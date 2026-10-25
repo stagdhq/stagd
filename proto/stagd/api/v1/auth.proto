@@ -23,4 +23,6 @@ message GetMeResponse {
   // The org this session acts in; unset when the user has no org yet.
   Membership active = 2;
   repeated Membership memberships = 3;
+  // How Stagd looks and behaves for them.
+  Preferences preferences = 4;
 }
