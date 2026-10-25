@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+// EventService tells the dashboard when something in its org changed, so it
+// refetches what it shows instead of polling. It says what changed, never
+// the data itself: the client reads that through the usual calls, with
+// their permission checks.
+service EventService {
+  // Watch streams the active org's changes until the client goes away. A
+  // heartbeat (kind unspecified) comes every 25 seconds, so proxies keep the
+  // connection open. Viewers only hear about previews. A client that
+  // reconnects may have missed changes: it refetches what it shows.
+  rpc Watch(WatchRequest) returns (stream WatchResponse);
+}
+
+message WatchRequest {}
+
+// What kind of thing changed.
+enum ChangeKind {
+  // A heartbeat: nothing changed.
+  CHANGE_KIND_UNSPECIFIED = 0;
+  // A preview: its state, components, events or title.
+  CHANGE_KIND_PREVIEW = 1;
+  // A compute connection.
+  CHANGE_KIND_COMPUTE = 2;
+  // A code host connection, e.g. the GitHub App installation.
+  CHANGE_KIND_CONNECTION = 3;
+  // A repository: shared, unshared, previews on or off.
+  CHANGE_KIND_REPOSITORY = 4;
+  // A secret's name or where it applies; never its value.
+  CHANGE_KIND_SECRET = 5;
+  // A member or an invite.
+  CHANGE_KIND_MEMBER = 6;
+  // An integration, e.g. Neon.
+  CHANGE_KIND_INTEGRATION = 7;
+  // The preview policy: access, sleep and expiry.
+  CHANGE_KIND_POLICY = 8;
+}
+
+message WatchResponse {
+  ChangeKind kind = 1;
+  // The thing's id, e.g. a preview's; empty when the kind is enough.
+  string id = 2;
+}
