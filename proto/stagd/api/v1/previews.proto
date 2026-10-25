@@ -212,6 +212,10 @@ message Preview {
   // stagd.yaml's comment: what someone opening the preview needs to know,
   // e.g. "Sign in with code 123456". Also on the pull request comment.
   string note = 17;
+  // What a queued preview waits for before it deploys, from stagd.yaml's
+  // wait: the commit's checks and how they stand, e.g. "build-images
+  // (running)". Empty when it isn't waiting.
+  string waiting = 18;
 }
 
 message CreatePreviewRequest {
