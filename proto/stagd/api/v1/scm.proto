@@ -56,6 +56,9 @@ message Connection {
   // Who connected it.
   User created_by = 6;
   google.protobuf.Timestamp create_time = 7;
+  // Where to change it on the code host: which repositories it shares, new
+  // permissions to accept. For GitHub, the installation's settings page.
+  string manage_url = 8;
 }
 
 message StartConnectRequest {
