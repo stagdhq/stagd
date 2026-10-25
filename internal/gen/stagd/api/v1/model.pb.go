@@ -408,8 +408,11 @@ type Repository struct {
 	// Previews are opt-in per repository: until they're enabled, Stagd ignores
 	// its pull requests and never reads its code.
 	PreviewsEnabled bool `protobuf:"varint,9,opt,name=previews_enabled,json=previewsEnabled,proto3" json:"previews_enabled,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// How the app is described on the default branch, as previews would read
+	// it; unset until Stagd has looked, and never while previews are off.
+	Setup         *RepositorySetup `protobuf:"bytes,10,opt,name=setup,proto3" json:"setup,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Repository) Reset() {
@@ -505,6 +508,108 @@ func (x *Repository) GetPreviewsEnabled() bool {
 	return false
 }
 
+func (x *Repository) GetSetup() *RepositorySetup {
+	if x != nil {
+		return x.Setup
+	}
+	return nil
+}
+
+// RepositorySetup is what Stagd found on a repository's default branch:
+// whether it has a stagd.yaml, the compose file it reads, and what would
+// stop a preview, the same check as stagd validate.
+type RepositorySetup struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "stagd.yaml" or ".stagd.yaml"; empty when the repository has none and
+	// Stagd reads the compose file alone.
+	ConfigFile string `protobuf:"bytes,1,opt,name=config_file,json=configFile,proto3" json:"config_file,omitempty"`
+	// The compose file, e.g. "compose.yaml" or "deploy/compose.preview.yaml";
+	// empty when none was found.
+	ComposeFile string `protobuf:"bytes,2,opt,name=compose_file,json=composeFile,proto3" json:"compose_file,omitempty"`
+	// The URLs previews get, by ingress name, the primary one first.
+	Ingresses []string `protobuf:"bytes,3,rep,name=ingresses,proto3" json:"ingresses,omitempty"`
+	// What would stop a preview, in words a person can act on; empty when it would deploy.
+	Problems []string `protobuf:"bytes,4,rep,name=problems,proto3" json:"problems,omitempty"`
+	// A stagd.yaml to start from, made from what was found; set when the
+	// repository has none.
+	Starter       string                 `protobuf:"bytes,5,opt,name=starter,proto3" json:"starter,omitempty"`
+	CheckTime     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RepositorySetup) Reset() {
+	*x = RepositorySetup{}
+	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RepositorySetup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RepositorySetup) ProtoMessage() {}
+
+func (x *RepositorySetup) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RepositorySetup.ProtoReflect.Descriptor instead.
+func (*RepositorySetup) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RepositorySetup) GetConfigFile() string {
+	if x != nil {
+		return x.ConfigFile
+	}
+	return ""
+}
+
+func (x *RepositorySetup) GetComposeFile() string {
+	if x != nil {
+		return x.ComposeFile
+	}
+	return ""
+}
+
+func (x *RepositorySetup) GetIngresses() []string {
+	if x != nil {
+		return x.Ingresses
+	}
+	return nil
+}
+
+func (x *RepositorySetup) GetProblems() []string {
+	if x != nil {
+		return x.Problems
+	}
+	return nil
+}
+
+func (x *RepositorySetup) GetStarter() string {
+	if x != nil {
+		return x.Starter
+	}
+	return ""
+}
+
+func (x *RepositorySetup) GetCheckTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CheckTime
+	}
+	return nil
+}
+
 // ChangeRequest is a GitHub pull request or a GitLab merge request.
 type ChangeRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
@@ -524,7 +629,7 @@ type ChangeRequest struct {
 
 func (x *ChangeRequest) Reset() {
 	*x = ChangeRequest{}
-	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -536,7 +641,7 @@ func (x *ChangeRequest) String() string {
 func (*ChangeRequest) ProtoMessage() {}
 
 func (x *ChangeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -549,7 +654,7 @@ func (x *ChangeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeRequest.ProtoReflect.Descriptor instead.
 func (*ChangeRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{5}
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ChangeRequest) GetNumber() int64 {
@@ -624,7 +729,7 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\n" +
 	"Membership\x12#\n" +
 	"\x03org\x18\x01 \x01(\v2\x11.stagd.api.v1.OrgR\x03org\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\"\xb4\x02\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\"\xe9\x02\n" +
 	"\n" +
 	"Repository\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
@@ -636,7 +741,18 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\x0edefault_branch\x18\x06 \x01(\tR\rdefaultBranch\x12\x18\n" +
 	"\aprivate\x18\a \x01(\bR\aprivate\x12\x10\n" +
 	"\x03url\x18\b \x01(\tR\x03url\x12)\n" +
-	"\x10previews_enabled\x18\t \x01(\bR\x0fpreviewsEnabled\"\xb8\x01\n" +
+	"\x10previews_enabled\x18\t \x01(\bR\x0fpreviewsEnabled\x123\n" +
+	"\x05setup\x18\n" +
+	" \x01(\v2\x1d.stagd.api.v1.RepositorySetupR\x05setup\"\xe4\x01\n" +
+	"\x0fRepositorySetup\x12\x1f\n" +
+	"\vconfig_file\x18\x01 \x01(\tR\n" +
+	"configFile\x12!\n" +
+	"\fcompose_file\x18\x02 \x01(\tR\vcomposeFile\x12\x1c\n" +
+	"\tingresses\x18\x03 \x03(\tR\tingresses\x12\x1a\n" +
+	"\bproblems\x18\x04 \x03(\tR\bproblems\x12\x18\n" +
+	"\astarter\x18\x05 \x01(\tR\astarter\x129\n" +
+	"\n" +
+	"check_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\"\xb8\x01\n" +
 	"\rChangeRequest\x12\x16\n" +
 	"\x06number\x18\x01 \x01(\x03R\x06number\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x19\n" +
@@ -672,7 +788,7 @@ func file_stagd_api_v1_model_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_model_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_stagd_api_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_stagd_api_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_stagd_api_v1_model_proto_goTypes = []any{
 	(Theme)(0),                    // 0: stagd.api.v1.Theme
 	(ScmProvider)(0),              // 1: stagd.api.v1.ScmProvider
@@ -681,19 +797,22 @@ var file_stagd_api_v1_model_proto_goTypes = []any{
 	(*Org)(nil),                   // 4: stagd.api.v1.Org
 	(*Membership)(nil),            // 5: stagd.api.v1.Membership
 	(*Repository)(nil),            // 6: stagd.api.v1.Repository
-	(*ChangeRequest)(nil),         // 7: stagd.api.v1.ChangeRequest
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(*RepositorySetup)(nil),       // 7: stagd.api.v1.RepositorySetup
+	(*ChangeRequest)(nil),         // 8: stagd.api.v1.ChangeRequest
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_model_proto_depIdxs = []int32{
 	0, // 0: stagd.api.v1.Preferences.theme:type_name -> stagd.api.v1.Theme
-	8, // 1: stagd.api.v1.Org.create_time:type_name -> google.protobuf.Timestamp
+	9, // 1: stagd.api.v1.Org.create_time:type_name -> google.protobuf.Timestamp
 	4, // 2: stagd.api.v1.Membership.org:type_name -> stagd.api.v1.Org
 	1, // 3: stagd.api.v1.Repository.provider:type_name -> stagd.api.v1.ScmProvider
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	7, // 4: stagd.api.v1.Repository.setup:type_name -> stagd.api.v1.RepositorySetup
+	9, // 5: stagd.api.v1.RepositorySetup.check_time:type_name -> google.protobuf.Timestamp
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_model_proto_init() }
@@ -707,7 +826,7 @@ func file_stagd_api_v1_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_model_proto_rawDesc), len(file_stagd_api_v1_model_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

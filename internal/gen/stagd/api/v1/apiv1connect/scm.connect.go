@@ -50,6 +50,9 @@ const (
 	// ScmServiceSetPreviewsEnabledProcedure is the fully-qualified name of the ScmService's
 	// SetPreviewsEnabled RPC.
 	ScmServiceSetPreviewsEnabledProcedure = "/stagd.api.v1.ScmService/SetPreviewsEnabled"
+	// ScmServiceCheckRepositoryProcedure is the fully-qualified name of the ScmService's
+	// CheckRepository RPC.
+	ScmServiceCheckRepositoryProcedure = "/stagd.api.v1.ScmService/CheckRepository"
 )
 
 // ScmServiceClient is a client for the stagd.api.v1.ScmService service.
@@ -68,6 +71,10 @@ type ScmServiceClient interface {
 	// SetPreviewsEnabled turns previews on or off for a repository. Turning
 	// them off tears down its running previews.
 	SetPreviewsEnabled(context.Context, *connect.Request[v1.SetPreviewsEnabledRequest]) (*connect.Response[v1.SetPreviewsEnabledResponse], error)
+	// CheckRepository looks at how a repository's app is described on its
+	// default branch (its setup), unless it looked in the last few minutes.
+	// Only for repositories with previews on: Stagd never reads the others.
+	CheckRepository(context.Context, *connect.Request[v1.CheckRepositoryRequest]) (*connect.Response[v1.CheckRepositoryResponse], error)
 }
 
 // NewScmServiceClient constructs a client for the stagd.api.v1.ScmService service. By default, it
@@ -117,6 +124,12 @@ func NewScmServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(scmServiceMethods.ByName("SetPreviewsEnabled")),
 			connect.WithClientOptions(opts...),
 		),
+		checkRepository: connect.NewClient[v1.CheckRepositoryRequest, v1.CheckRepositoryResponse](
+			httpClient,
+			baseURL+ScmServiceCheckRepositoryProcedure,
+			connect.WithSchema(scmServiceMethods.ByName("CheckRepository")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -128,6 +141,7 @@ type scmServiceClient struct {
 	deleteConnection   *connect.Client[v1.DeleteConnectionRequest, v1.DeleteConnectionResponse]
 	listRepositories   *connect.Client[v1.ListRepositoriesRequest, v1.ListRepositoriesResponse]
 	setPreviewsEnabled *connect.Client[v1.SetPreviewsEnabledRequest, v1.SetPreviewsEnabledResponse]
+	checkRepository    *connect.Client[v1.CheckRepositoryRequest, v1.CheckRepositoryResponse]
 }
 
 // StartConnect calls stagd.api.v1.ScmService.StartConnect.
@@ -160,6 +174,11 @@ func (c *scmServiceClient) SetPreviewsEnabled(ctx context.Context, req *connect.
 	return c.setPreviewsEnabled.CallUnary(ctx, req)
 }
 
+// CheckRepository calls stagd.api.v1.ScmService.CheckRepository.
+func (c *scmServiceClient) CheckRepository(ctx context.Context, req *connect.Request[v1.CheckRepositoryRequest]) (*connect.Response[v1.CheckRepositoryResponse], error) {
+	return c.checkRepository.CallUnary(ctx, req)
+}
+
 // ScmServiceHandler is an implementation of the stagd.api.v1.ScmService service.
 type ScmServiceHandler interface {
 	// StartConnect begins connecting a code host account to the active org.
@@ -176,6 +195,10 @@ type ScmServiceHandler interface {
 	// SetPreviewsEnabled turns previews on or off for a repository. Turning
 	// them off tears down its running previews.
 	SetPreviewsEnabled(context.Context, *connect.Request[v1.SetPreviewsEnabledRequest]) (*connect.Response[v1.SetPreviewsEnabledResponse], error)
+	// CheckRepository looks at how a repository's app is described on its
+	// default branch (its setup), unless it looked in the last few minutes.
+	// Only for repositories with previews on: Stagd never reads the others.
+	CheckRepository(context.Context, *connect.Request[v1.CheckRepositoryRequest]) (*connect.Response[v1.CheckRepositoryResponse], error)
 }
 
 // NewScmServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -221,6 +244,12 @@ func NewScmServiceHandler(svc ScmServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(scmServiceMethods.ByName("SetPreviewsEnabled")),
 		connect.WithHandlerOptions(opts...),
 	)
+	scmServiceCheckRepositoryHandler := connect.NewUnaryHandler(
+		ScmServiceCheckRepositoryProcedure,
+		svc.CheckRepository,
+		connect.WithSchema(scmServiceMethods.ByName("CheckRepository")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.ScmService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ScmServiceStartConnectProcedure:
@@ -235,6 +264,8 @@ func NewScmServiceHandler(svc ScmServiceHandler, opts ...connect.HandlerOption) 
 			scmServiceListRepositoriesHandler.ServeHTTP(w, r)
 		case ScmServiceSetPreviewsEnabledProcedure:
 			scmServiceSetPreviewsEnabledHandler.ServeHTTP(w, r)
+		case ScmServiceCheckRepositoryProcedure:
+			scmServiceCheckRepositoryHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -266,4 +297,8 @@ func (UnimplementedScmServiceHandler) ListRepositories(context.Context, *connect
 
 func (UnimplementedScmServiceHandler) SetPreviewsEnabled(context.Context, *connect.Request[v1.SetPreviewsEnabledRequest]) (*connect.Response[v1.SetPreviewsEnabledResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ScmService.SetPreviewsEnabled is not implemented"))
+}
+
+func (UnimplementedScmServiceHandler) CheckRepository(context.Context, *connect.Request[v1.CheckRepositoryRequest]) (*connect.Response[v1.CheckRepositoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ScmService.CheckRepository is not implemented"))
 }

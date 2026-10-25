@@ -32,6 +32,10 @@ service ScmService {
   // SetPreviewsEnabled turns previews on or off for a repository. Turning
   // them off tears down its running previews.
   rpc SetPreviewsEnabled(SetPreviewsEnabledRequest) returns (SetPreviewsEnabledResponse);
+  // CheckRepository looks at how a repository's app is described on its
+  // default branch (its setup), unless it looked in the last few minutes.
+  // Only for repositories with previews on: Stagd never reads the others.
+  rpc CheckRepository(CheckRepositoryRequest) returns (CheckRepositoryResponse);
 }
 
 enum ConnectionStatus {
@@ -115,6 +119,17 @@ message ListRepositoriesRequest {
 
 message ListRepositoriesResponse {
   repeated Repository repositories = 1;
+}
+
+message CheckRepositoryRequest {
+  // A repository id or "owner/name".
+  string repository = 1 [(buf.validate.field).string.min_len = 1];
+  // Look again even if it looked lately, e.g. right after a push.
+  bool force = 2;
+}
+
+message CheckRepositoryResponse {
+  Repository repository = 1;
 }
 
 message SetPreviewsEnabledRequest {

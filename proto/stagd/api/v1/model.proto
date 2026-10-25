@@ -86,6 +86,29 @@ message Repository {
   // Previews are opt-in per repository: until they're enabled, Stagd ignores
   // its pull requests and never reads its code.
   bool previews_enabled = 9;
+  // How the app is described on the default branch, as previews would read
+  // it; unset until Stagd has looked, and never while previews are off.
+  RepositorySetup setup = 10;
+}
+
+// RepositorySetup is what Stagd found on a repository's default branch:
+// whether it has a stagd.yaml, the compose file it reads, and what would
+// stop a preview, the same check as stagd validate.
+message RepositorySetup {
+  // "stagd.yaml" or ".stagd.yaml"; empty when the repository has none and
+  // Stagd reads the compose file alone.
+  string config_file = 1;
+  // The compose file, e.g. "compose.yaml" or "deploy/compose.preview.yaml";
+  // empty when none was found.
+  string compose_file = 2;
+  // The URLs previews get, by ingress name, the primary one first.
+  repeated string ingresses = 3;
+  // What would stop a preview, in words a person can act on; empty when it would deploy.
+  repeated string problems = 4;
+  // A stagd.yaml to start from, made from what was found; set when the
+  // repository has none.
+  string starter = 5;
+  google.protobuf.Timestamp check_time = 6;
 }
 
 // ChangeRequest is a GitHub pull request or a GitLab merge request.
