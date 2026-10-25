@@ -452,7 +452,7 @@ type PreviewPolicy struct {
 	// a sign-up or reset email is often what they're checking.
 	HideMailFromViewers bool `protobuf:"varint,5,opt,name=hide_mail_from_viewers,json=hideMailFromViewers,proto3" json:"hide_mail_from_viewers,omitempty"`
 	// How long a preview nobody opens stays awake before it sleeps; opening
-	// it wakes it again. Unset for Stagd's default, 45 minutes; from 5
+	// it wakes it again. Unset for Stagd's default, 45 minutes; from 30
 	// minutes to 24 hours. A repository's stagd.yaml can set its own
 	// (lifecycle: { sleep_after: 2h }), which wins.
 	SleepAfter *durationpb.Duration `protobuf:"bytes,6,opt,name=sleep_after,json=sleepAfter,proto3" json:"sleep_after,omitempty"`
@@ -3955,7 +3955,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x10public_ingresses\x18\x03 \x03(\tR\x0fpublicIngresses\x12)\n" +
 	"\x10unguessable_urls\x18\x04 \x01(\bR\x0funguessableUrls\x123\n" +
 	"\x16hide_mail_from_viewers\x18\x05 \x01(\bR\x13hideMailFromViewers\x12M\n" +
-	"\vsleep_after\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\x11\xbaH\x0e\xaa\x01\v\"\x04\b\x80\xa3\x052\x03\b\xac\x02R\n" +
+	"\vsleep_after\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\x11\xbaH\x0e\xaa\x01\v\"\x04\b\x80\xa3\x052\x03\b\x88\x0eR\n" +
 	"sleepAfter\x12O\n" +
 	"\fexpire_after\x18\a \x01(\v2\x19.google.protobuf.DurationB\x11\xbaH\x0e\xaa\x01\v\"\x04\b\x80\xc6\n" +
 	"2\x03\b\x90\x1cR\vexpireAfter\"t\n" +

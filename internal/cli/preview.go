@@ -66,7 +66,7 @@ func previewCommand() *cli.Command {
 					&cli.StringFlag{Name: "access", Usage: "org (members signed in to Stagd) or public (anyone with the link)"},
 					&cli.StringSliceFlag{Name: "public-ingress", Usage: "an ingress anyone can reach even when access is org (repeatable)"},
 					&cli.BoolFlag{Name: "unguessable-urls", Usage: "add a random token to new previews' URLs (--unguessable-urls=false to stop)"},
-					&cli.StringFlag{Name: "sleep-after", Usage: "how long a preview nobody opens stays awake, 5m to 24h, e.g. 2h; default for Stagd's (45m)"},
+					&cli.StringFlag{Name: "sleep-after", Usage: "how long a preview nobody opens stays awake, 30m to 24h, e.g. 2h; default for Stagd's (45m)"},
 					&cli.StringFlag{Name: "expire-after", Usage: "how long a preview lives without a new commit, 1h to 48h, e.g. 36h; default for Stagd's (24h)"},
 					&cli.BoolFlag{Name: "reset", Usage: "drop the repository's override; it follows the org's default again"},
 				},

@@ -98,11 +98,11 @@ message PreviewPolicy {
   // a sign-up or reset email is often what they're checking.
   bool hide_mail_from_viewers = 5;
   // How long a preview nobody opens stays awake before it sleeps; opening
-  // it wakes it again. Unset for Stagd's default, 45 minutes; from 5
+  // it wakes it again. Unset for Stagd's default, 45 minutes; from 30
   // minutes to 24 hours. A repository's stagd.yaml can set its own
   // (lifecycle: { sleep_after: 2h }), which wins.
   google.protobuf.Duration sleep_after = 6 [(buf.validate.field).duration = {
-    gte: {seconds: 300}
+    gte: {seconds: 1800}
     lte: {seconds: 86400}
   }];
   // How long a preview lives without a new commit before it's torn down; a
