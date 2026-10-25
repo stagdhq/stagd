@@ -32,6 +32,10 @@ service ComputeService {
   rpc SetDefaultComputeConnection(SetDefaultComputeConnectionRequest) returns (SetDefaultComputeConnectionResponse);
   // DeleteConnection forgets a connection and its credentials.
   rpc DeleteComputeConnection(DeleteComputeConnectionRequest) returns (DeleteComputeConnectionResponse);
+  // CreateRelayInstall makes a relay connection's install again: a new
+  // relay token (the old one stops working, and a relay using it is cut off)
+  // and, for Kubernetes, a new one-hour link for `kubectl apply -f`.
+  rpc CreateRelayInstall(CreateRelayInstallRequest) returns (CreateRelayInstallResponse);
 }
 
 enum ComputeProvider {
@@ -186,3 +190,15 @@ message DeleteComputeConnectionRequest {
 }
 
 message DeleteComputeConnectionResponse {}
+
+message CreateRelayInstallRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message CreateRelayInstallResponse {
+  // The new token the relay connects with. Only ever shown here.
+  string relay_token = 1;
+  // For Kubernetes: everything the cluster needs, for `kubectl apply -f <url>`.
+  string relay_install_url = 2;
+  google.protobuf.Timestamp relay_install_expire_time = 3;
+}
