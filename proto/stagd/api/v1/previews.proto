@@ -5,6 +5,7 @@ package stagd.api.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/compute.proto";
 import "stagd/api/v1/model.proto";
 
 // PreviewService starts, watches and tears down preview environments.
@@ -236,6 +237,17 @@ message Preview {
   // wait: the commit's checks and how they stand, e.g. "build-images
   // (running)". Empty when it isn't waiting.
   string waiting = 18;
+  // The compute it runs on: the org's default when it started, or the one
+  // its stagd.yaml names (compute:). Unset once that connection is deleted.
+  PreviewCompute compute = 19;
+}
+
+// PreviewCompute is the compute connection a preview runs on.
+message PreviewCompute {
+  string id = 1;
+  // As on Settings → Compute, e.g. "kind".
+  string name = 2;
+  ComputeProvider provider = 3;
 }
 
 message ListSourcesRequest {
