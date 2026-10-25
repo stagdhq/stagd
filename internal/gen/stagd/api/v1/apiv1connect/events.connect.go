@@ -33,17 +33,18 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// EventServiceWatchProcedure is the fully-qualified name of the EventService's Watch RPC.
-	EventServiceWatchProcedure = "/stagd.api.v1.EventService/Watch"
+	// EventServiceWatchEventsProcedure is the fully-qualified name of the EventService's WatchEvents
+	// RPC.
+	EventServiceWatchEventsProcedure = "/stagd.api.v1.EventService/WatchEvents"
 )
 
 // EventServiceClient is a client for the stagd.api.v1.EventService service.
 type EventServiceClient interface {
-	// Watch streams the active org's changes until the client goes away. A
+	// WatchEvents streams the active org's changes until the client goes away. A
 	// heartbeat (kind unspecified) comes every 25 seconds, so proxies keep the
 	// connection open. Viewers only hear about previews. A client that
 	// reconnects may have missed changes: it refetches what it shows.
-	Watch(context.Context, *connect.Request[v1.WatchRequest]) (*connect.ServerStreamForClient[v1.WatchResponse], error)
+	WatchEvents(context.Context, *connect.Request[v1.WatchEventsRequest]) (*connect.ServerStreamForClient[v1.WatchEventsResponse], error)
 }
 
 // NewEventServiceClient constructs a client for the stagd.api.v1.EventService service. By default,
@@ -57,10 +58,10 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 	baseURL = strings.TrimRight(baseURL, "/")
 	eventServiceMethods := v1.File_stagd_api_v1_events_proto.Services().ByName("EventService").Methods()
 	return &eventServiceClient{
-		watch: connect.NewClient[v1.WatchRequest, v1.WatchResponse](
+		watchEvents: connect.NewClient[v1.WatchEventsRequest, v1.WatchEventsResponse](
 			httpClient,
-			baseURL+EventServiceWatchProcedure,
-			connect.WithSchema(eventServiceMethods.ByName("Watch")),
+			baseURL+EventServiceWatchEventsProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("WatchEvents")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -68,21 +69,21 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // eventServiceClient implements EventServiceClient.
 type eventServiceClient struct {
-	watch *connect.Client[v1.WatchRequest, v1.WatchResponse]
+	watchEvents *connect.Client[v1.WatchEventsRequest, v1.WatchEventsResponse]
 }
 
-// Watch calls stagd.api.v1.EventService.Watch.
-func (c *eventServiceClient) Watch(ctx context.Context, req *connect.Request[v1.WatchRequest]) (*connect.ServerStreamForClient[v1.WatchResponse], error) {
-	return c.watch.CallServerStream(ctx, req)
+// WatchEvents calls stagd.api.v1.EventService.WatchEvents.
+func (c *eventServiceClient) WatchEvents(ctx context.Context, req *connect.Request[v1.WatchEventsRequest]) (*connect.ServerStreamForClient[v1.WatchEventsResponse], error) {
+	return c.watchEvents.CallServerStream(ctx, req)
 }
 
 // EventServiceHandler is an implementation of the stagd.api.v1.EventService service.
 type EventServiceHandler interface {
-	// Watch streams the active org's changes until the client goes away. A
+	// WatchEvents streams the active org's changes until the client goes away. A
 	// heartbeat (kind unspecified) comes every 25 seconds, so proxies keep the
 	// connection open. Viewers only hear about previews. A client that
 	// reconnects may have missed changes: it refetches what it shows.
-	Watch(context.Context, *connect.Request[v1.WatchRequest], *connect.ServerStream[v1.WatchResponse]) error
+	WatchEvents(context.Context, *connect.Request[v1.WatchEventsRequest], *connect.ServerStream[v1.WatchEventsResponse]) error
 }
 
 // NewEventServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -92,16 +93,16 @@ type EventServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	eventServiceMethods := v1.File_stagd_api_v1_events_proto.Services().ByName("EventService").Methods()
-	eventServiceWatchHandler := connect.NewServerStreamHandler(
-		EventServiceWatchProcedure,
-		svc.Watch,
-		connect.WithSchema(eventServiceMethods.ByName("Watch")),
+	eventServiceWatchEventsHandler := connect.NewServerStreamHandler(
+		EventServiceWatchEventsProcedure,
+		svc.WatchEvents,
+		connect.WithSchema(eventServiceMethods.ByName("WatchEvents")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/stagd.api.v1.EventService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case EventServiceWatchProcedure:
-			eventServiceWatchHandler.ServeHTTP(w, r)
+		case EventServiceWatchEventsProcedure:
+			eventServiceWatchEventsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -111,6 +112,6 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 // UnimplementedEventServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedEventServiceHandler struct{}
 
-func (UnimplementedEventServiceHandler) Watch(context.Context, *connect.Request[v1.WatchRequest], *connect.ServerStream[v1.WatchResponse]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.EventService.Watch is not implemented"))
+func (UnimplementedEventServiceHandler) WatchEvents(context.Context, *connect.Request[v1.WatchEventsRequest], *connect.ServerStream[v1.WatchEventsResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.EventService.WatchEvents is not implemented"))
 }

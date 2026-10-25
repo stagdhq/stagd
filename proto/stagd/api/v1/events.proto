@@ -7,14 +7,14 @@ package stagd.api.v1;
 // the data itself: the client reads that through the usual calls, with
 // their permission checks.
 service EventService {
-  // Watch streams the active org's changes until the client goes away. A
+  // WatchEvents streams the active org's changes until the client goes away. A
   // heartbeat (kind unspecified) comes every 25 seconds, so proxies keep the
   // connection open. Viewers only hear about previews. A client that
   // reconnects may have missed changes: it refetches what it shows.
-  rpc Watch(WatchRequest) returns (stream WatchResponse);
+  rpc WatchEvents(WatchEventsRequest) returns (stream WatchEventsResponse);
 }
 
-message WatchRequest {}
+message WatchEventsRequest {}
 
 // What kind of thing changed.
 enum ChangeKind {
@@ -38,7 +38,7 @@ enum ChangeKind {
   CHANGE_KIND_POLICY = 8;
 }
 
-message WatchResponse {
+message WatchEventsResponse {
   ChangeKind kind = 1;
   // The thing's id, e.g. a preview's; empty when the kind is enough.
   string id = 2;

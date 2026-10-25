@@ -98,26 +98,26 @@ func (ChangeKind) EnumDescriptor() ([]byte, []int) {
 	return file_stagd_api_v1_events_proto_rawDescGZIP(), []int{0}
 }
 
-type WatchRequest struct {
+type WatchEventsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WatchRequest) Reset() {
-	*x = WatchRequest{}
+func (x *WatchEventsRequest) Reset() {
+	*x = WatchEventsRequest{}
 	mi := &file_stagd_api_v1_events_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WatchRequest) String() string {
+func (x *WatchEventsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WatchRequest) ProtoMessage() {}
+func (*WatchEventsRequest) ProtoMessage() {}
 
-func (x *WatchRequest) ProtoReflect() protoreflect.Message {
+func (x *WatchEventsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_stagd_api_v1_events_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -129,12 +129,12 @@ func (x *WatchRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WatchRequest.ProtoReflect.Descriptor instead.
-func (*WatchRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use WatchEventsRequest.ProtoReflect.Descriptor instead.
+func (*WatchEventsRequest) Descriptor() ([]byte, []int) {
 	return file_stagd_api_v1_events_proto_rawDescGZIP(), []int{0}
 }
 
-type WatchResponse struct {
+type WatchEventsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Kind  ChangeKind             `protobuf:"varint,1,opt,name=kind,proto3,enum=stagd.api.v1.ChangeKind" json:"kind,omitempty"`
 	// The thing's id, e.g. a preview's; empty when the kind is enough.
@@ -143,20 +143,20 @@ type WatchResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WatchResponse) Reset() {
-	*x = WatchResponse{}
+func (x *WatchEventsResponse) Reset() {
+	*x = WatchEventsResponse{}
 	mi := &file_stagd_api_v1_events_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WatchResponse) String() string {
+func (x *WatchEventsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WatchResponse) ProtoMessage() {}
+func (*WatchEventsResponse) ProtoMessage() {}
 
-func (x *WatchResponse) ProtoReflect() protoreflect.Message {
+func (x *WatchEventsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_stagd_api_v1_events_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -168,19 +168,19 @@ func (x *WatchResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WatchResponse.ProtoReflect.Descriptor instead.
-func (*WatchResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use WatchEventsResponse.ProtoReflect.Descriptor instead.
+func (*WatchEventsResponse) Descriptor() ([]byte, []int) {
 	return file_stagd_api_v1_events_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *WatchResponse) GetKind() ChangeKind {
+func (x *WatchEventsResponse) GetKind() ChangeKind {
 	if x != nil {
 		return x.Kind
 	}
 	return ChangeKind_CHANGE_KIND_UNSPECIFIED
 }
 
-func (x *WatchResponse) GetId() string {
+func (x *WatchEventsResponse) GetId() string {
 	if x != nil {
 		return x.Id
 	}
@@ -191,9 +191,9 @@ var File_stagd_api_v1_events_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x19stagd/api/v1/events.proto\x12\fstagd.api.v1\"\x0e\n" +
-	"\fWatchRequest\"M\n" +
-	"\rWatchResponse\x12,\n" +
+	"\x19stagd/api/v1/events.proto\x12\fstagd.api.v1\"\x14\n" +
+	"\x12WatchEventsRequest\"S\n" +
+	"\x13WatchEventsResponse\x12,\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x18.stagd.api.v1.ChangeKindR\x04kind\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id*\xf8\x01\n" +
 	"\n" +
@@ -206,9 +206,9 @@ const file_stagd_api_v1_events_proto_rawDesc = "" +
 	"\x12CHANGE_KIND_SECRET\x10\x05\x12\x16\n" +
 	"\x12CHANGE_KIND_MEMBER\x10\x06\x12\x1b\n" +
 	"\x17CHANGE_KIND_INTEGRATION\x10\a\x12\x16\n" +
-	"\x12CHANGE_KIND_POLICY\x10\b2R\n" +
-	"\fEventService\x12B\n" +
-	"\x05Watch\x12\x1a.stagd.api.v1.WatchRequest\x1a\x1b.stagd.api.v1.WatchResponse0\x01B\xa2\x01\n" +
+	"\x12CHANGE_KIND_POLICY\x10\b2d\n" +
+	"\fEventService\x12T\n" +
+	"\vWatchEvents\x12 .stagd.api.v1.WatchEventsRequest\x1a!.stagd.api.v1.WatchEventsResponse0\x01B\xa2\x01\n" +
 	"\x10com.stagd.api.v1B\vEventsProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -226,14 +226,14 @@ func file_stagd_api_v1_events_proto_rawDescGZIP() []byte {
 var file_stagd_api_v1_events_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_stagd_api_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_stagd_api_v1_events_proto_goTypes = []any{
-	(ChangeKind)(0),       // 0: stagd.api.v1.ChangeKind
-	(*WatchRequest)(nil),  // 1: stagd.api.v1.WatchRequest
-	(*WatchResponse)(nil), // 2: stagd.api.v1.WatchResponse
+	(ChangeKind)(0),             // 0: stagd.api.v1.ChangeKind
+	(*WatchEventsRequest)(nil),  // 1: stagd.api.v1.WatchEventsRequest
+	(*WatchEventsResponse)(nil), // 2: stagd.api.v1.WatchEventsResponse
 }
 var file_stagd_api_v1_events_proto_depIdxs = []int32{
-	0, // 0: stagd.api.v1.WatchResponse.kind:type_name -> stagd.api.v1.ChangeKind
-	1, // 1: stagd.api.v1.EventService.Watch:input_type -> stagd.api.v1.WatchRequest
-	2, // 2: stagd.api.v1.EventService.Watch:output_type -> stagd.api.v1.WatchResponse
+	0, // 0: stagd.api.v1.WatchEventsResponse.kind:type_name -> stagd.api.v1.ChangeKind
+	1, // 1: stagd.api.v1.EventService.WatchEvents:input_type -> stagd.api.v1.WatchEventsRequest
+	2, // 2: stagd.api.v1.EventService.WatchEvents:output_type -> stagd.api.v1.WatchEventsResponse
 	2, // [2:3] is the sub-list for method output_type
 	1, // [1:2] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
