@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: relay
-          image: ghcr.io/stagdhq/stagd:latest
+          image: ghcr.io/stagdhq/stagd:0.1.0
           args: [relay, --log-format=json]
           env:
             - name: STAGD_URL
