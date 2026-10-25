@@ -141,6 +141,12 @@ message CreateComputeConnectionResponse {
   // For a connection through `stagd relay`: the token the relay connects
   // with. Only ever shown here; Stagd keeps a hash.
   string relay_token = 2;
+  // For a Kubernetes connection through the relay: everything the cluster
+  // needs (Stagd's access, the relay and its token) as one manifest, for
+  // `kubectl apply -f <url>`. The link works for an hour, or until the relay
+  // first connects; the token isn't in the URL.
+  string relay_install_url = 3;
+  google.protobuf.Timestamp relay_install_expire_time = 4;
 }
 
 message ListComputeConnectionsRequest {}
