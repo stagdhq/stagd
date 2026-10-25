@@ -64,6 +64,13 @@ service PreviewService {
   // preview's secrets are hidden. A sleeping preview has to wake first; a
   // torn-down one's logs are gone.
   rpc ListLogs(ListLogsRequest) returns (ListLogsResponse);
+
+  // ListTraces lists a preview's traces, newest first, from its own
+  // OpenTelemetry endpoint (stagd.yaml `services: { otel: {} }`), read when
+  // asked: Stagd keeps no copy. A sleeping preview has to wake first.
+  rpc ListTraces(ListTracesRequest) returns (ListTracesResponse);
+  // GetTrace returns one trace's spans, for a waterfall.
+  rpc GetTrace(GetTraceRequest) returns (GetTraceResponse);
 }
 
 // Who may open a preview.
@@ -515,4 +522,92 @@ message LogField {
   string key = 1;
   // Strings as they are, other JSON values as JSON: 1540, false, ["a"].
   string value = 2;
+}
+
+message ListTracesRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  // Only traces with spans from this service; all when empty.
+  string service = 2;
+  // Traces started at or after this time; the last 15 minutes when unset.
+  google.protobuf.Timestamp since = 3;
+  // Traces started before this time; now when unset.
+  google.protobuf.Timestamp until = 4;
+  // Only traces where a span failed, or the root answered 5xx.
+  bool errors_only = 5;
+  // Only traces that took at least this long.
+  google.protobuf.Duration min_duration = 6;
+  // At most this many of the newest; 100 when unset.
+  int32 limit = 7 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 500
+  }];
+}
+
+message ListTracesResponse {
+  // Newest first.
+  repeated TraceSummary traces = 1;
+  // The services that sent traces, by name.
+  repeated string services = 2;
+}
+
+// A trace for a list: its root span, how long it all took, whether anything failed.
+message TraceSummary {
+  string trace_id = 1;
+  // The root span's name and service.
+  string name = 2;
+  string service = 3;
+  google.protobuf.Timestamp start_time = 4;
+  google.protobuf.Duration duration = 5;
+  int32 span_count = 6;
+  repeated string services = 7;
+  bool error = 8;
+  // From the root span's HTTP attributes, when it has them.
+  string http_method = 9;
+  int32 http_status_code = 10;
+}
+
+message GetTraceRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  string trace_id = 2 [(buf.validate.field).string.pattern = "^[0-9a-f]{32}$"];
+}
+
+message GetTraceResponse {
+  string trace_id = 1;
+  // Oldest first.
+  repeated Span spans = 2;
+}
+
+// What a span did.
+enum SpanKind {
+  SPAN_KIND_UNSPECIFIED = 0;
+  SPAN_KIND_INTERNAL = 1;
+  // Handled a request.
+  SPAN_KIND_SERVER = 2;
+  // Made a request: another service, a database.
+  SPAN_KIND_CLIENT = 3;
+  SPAN_KIND_PRODUCER = 4;
+  SPAN_KIND_CONSUMER = 5;
+}
+
+message Span {
+  string span_id = 1;
+  // Empty for the root; or the caller's span outside this trace's spans.
+  string parent_span_id = 2;
+  string name = 3;
+  string service = 4;
+  SpanKind kind = 5;
+  google.protobuf.Timestamp start_time = 6;
+  google.protobuf.Duration duration = 7;
+  bool error = 8;
+  string status_message = 9;
+  // Keys and values, as in a log line's fields.
+  repeated LogField attributes = 10;
+  repeated SpanEvent events = 11;
+}
+
+// Something a span recorded as it happened, e.g. an exception.
+message SpanEvent {
+  string name = 1;
+  google.protobuf.Timestamp time = 2;
+  repeated LogField attributes = 3;
 }
