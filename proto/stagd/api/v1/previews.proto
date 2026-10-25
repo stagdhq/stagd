@@ -209,6 +209,9 @@ message Preview {
   repeated PreviewComponent components = 15;
   // Who may open it; individual ingresses may be public (see ingresses).
   PreviewAccess access = 16;
+  // stagd.yaml's comment: what someone opening the preview needs to know,
+  // e.g. "Sign in with code 123456". Also on the pull request comment.
+  string note = 17;
 }
 
 message CreatePreviewRequest {
