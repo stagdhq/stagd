@@ -55,7 +55,8 @@ cat <<MD
 ## Install or update
 
 \`\`\`bash
-curl -fsSL https://stagd.dev/install.sh | bash   # or: brew install stagdhq/tap/stagd
+curl -fsSL https://stagd.dev/install.sh | bash   # macOS, Linux; or: brew install stagdhq/tap/stagd
+irm https://stagd.dev/install.ps1 | iex          # Windows, in PowerShell
 stagd update                                      # an install from before
 \`\`\`
 MD
