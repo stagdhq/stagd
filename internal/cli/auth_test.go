@@ -47,6 +47,7 @@ func fakeServer(t *testing.T, auth *fakeAuth) *httptest.Server {
 		if body["client_id"] != "stagd-cli" {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid_client"})
+
 			return
 		}
 
@@ -66,6 +67,7 @@ func fakeServer(t *testing.T, auth *fakeAuth) *httptest.Server {
 		if polls == 1 {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"error": "authorization_pending"})
+
 			return
 		}
 

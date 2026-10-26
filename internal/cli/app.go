@@ -72,6 +72,7 @@ func versionCommand(version string) *cli.Command {
 		Usage: "print the CLI version",
 		Action: func(_ context.Context, cmd *cli.Command) error {
 			_, err := fmt.Fprintf(cmd.Root().Writer, "stagd %s (%s/%s)\n", version, runtime.GOOS, runtime.GOARCH)
+
 			return err
 		},
 	}

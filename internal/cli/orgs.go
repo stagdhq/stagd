@@ -188,7 +188,7 @@ func orgsCreate(ctx context.Context, cmd *cli.Command) error {
 			slug = slugFrom(name)
 		}
 
-		form := huh.NewForm(huh.NewGroup(
+		form := newForm(huh.NewGroup(
 			huh.NewInput().Title("Org name").Placeholder("Acme Inc").Value(&name).
 				Validate(func(s string) error {
 					if strings.TrimSpace(s) == "" {

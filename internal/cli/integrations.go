@@ -194,7 +194,7 @@ func askIntegrationFields(ctx context.Context, kind *apiv1.IntegrationKind, valu
 		fields = append(fields, input)
 	}
 
-	if err := huh.NewForm(huh.NewGroup(fields...)).RunWithContext(ctx); err != nil {
+	if err := newForm(huh.NewGroup(fields...)).RunWithContext(ctx); err != nil {
 		return err
 	}
 
@@ -295,20 +295,8 @@ func integrationDelete(ctx context.Context, cmd *cli.Command) error {
 			return cli.Exit("pass --yes to delete without a prompt", 2)
 		}
 
-		confirmed := false
-		form := huh.NewForm(huh.NewGroup(huh.NewConfirm().
-			Title(fmt.Sprintf("Delete %s?", name)).
-			Description("Stagd forgets its credentials.").
-			Affirmative("Delete").
-			Negative("Cancel").
-			Value(&confirmed)))
-
-		if err := form.RunWithContext(ctx); err != nil {
+		if ok, err := confirm(cmd, fmt.Sprintf("Delete %s?", name), "Stagd forgets its credentials."); err != nil || !ok {
 			return err
-		}
-
-		if !confirmed {
-			return nil
 		}
 	}
 

@@ -250,7 +250,7 @@ func askMissing(ctx context.Context, p *apiv1.ProviderInfo, values map[string]st
 		fields = append(fields, input)
 	}
 
-	if err := huh.NewForm(huh.NewGroup(fields...)).RunWithContext(ctx); err != nil {
+	if err := newForm(huh.NewGroup(fields...)).RunWithContext(ctx); err != nil {
 		return err
 	}
 
@@ -493,20 +493,8 @@ func computeDelete(ctx context.Context, cmd *cli.Command) error {
 			return cli.Exit("pass --yes to delete without a prompt", 2)
 		}
 
-		confirmed := false
-		form := huh.NewForm(huh.NewGroup(huh.NewConfirm().
-			Title(fmt.Sprintf("Delete %s?", conn.GetName())).
-			Description("Stagd forgets it and its credentials; while previews still run on it, it can't be deleted. What it installed on the compute stays, for you to remove.").
-			Affirmative("Delete").
-			Negative("Cancel").
-			Value(&confirmed)))
-
-		if err := form.RunWithContext(ctx); err != nil {
+		if ok, err := confirm(cmd, fmt.Sprintf("Delete %s?", conn.GetName()), "Stagd forgets it and its credentials; while previews still run on it, it can't be deleted. What it installed on the compute stays, for you to remove."); err != nil || !ok {
 			return err
-		}
-
-		if !confirmed {
-			return nil
 		}
 	}
 
@@ -626,20 +614,8 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 			return cli.Exit("its relay is connected: pass --yes to give it a new token anyway", 2)
 		}
 
-		confirmed := false
-		form := huh.NewForm(huh.NewGroup(huh.NewConfirm().
-			Title(fmt.Sprintf("A new relay token for %s?", conn.GetName())).
-			Description("The relay running now is cut off until the new install runs.").
-			Affirmative("New token").
-			Negative("Cancel").
-			Value(&confirmed)))
-
-		if err := form.RunWithContext(ctx); err != nil {
+		if ok, err := confirm(cmd, fmt.Sprintf("A new relay token for %s?", conn.GetName()), "The relay running now is cut off until the new install runs."); err != nil || !ok {
 			return err
-		}
-
-		if !confirmed {
-			return nil
 		}
 	}
 

@@ -12,19 +12,13 @@ import (
 	"text/tabwriter"
 
 	"charm.land/lipgloss/v2"
-	"charm.land/lipgloss/v2/table"
 	"golang.org/x/term"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
-var (
-	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.BrightBlack).PaddingRight(3)
-	cellStyle   = lipgloss.NewStyle().PaddingRight(3)
-	// The first column names the row.
-	firstStyle = cellStyle.Bold(true)
-	ruleStyle  = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
-)
+// headerStyle dims a table's header in a terminal; nothing else is styled.
+var headerStyle = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
 
 // isTerminal reports whether w is a terminal (not a pipe, file or test buffer).
 func isTerminal(w io.Writer) bool {
@@ -49,65 +43,34 @@ func TerminalWidth(w io.Writer) int {
 	return width
 }
 
-// Table prints rows under a header. In a terminal it's a styled table; piped,
-// it's plain aligned columns with an upper-case header, for grep and awk.
+// Table prints rows under a header as aligned columns, upper-case header
+// first, for people and for grep and awk alike; in a terminal the header is
+// dimmed, nothing more.
 func Table(w io.Writer, header []string, rows [][]string) error {
-	if isTerminal(w) {
-		return styledTable(w, header, rows)
-	}
+	var buf bytes.Buffer
 
-	return plainTable(w, header, rows)
-}
-
-func styledTable(w io.Writer, header []string, rows [][]string) error {
-	if len(rows) == 0 {
-		_, err := lipgloss.Fprintln(w, ruleStyle.Render("(none)"))
-
-		return err
-	}
-
-	titles := make([]string, len(header))
-
-	for i, h := range header {
-		if h != "" {
-			titles[i] = strings.ToUpper(h[:1]) + h[1:]
-		}
-	}
-
-	t := table.New().
-		Headers(titles...).
-		Rows(rows...).
-		Border(lipgloss.NormalBorder()).
-		BorderTop(false).
-		BorderBottom(false).
-		BorderLeft(false).
-		BorderRight(false).
-		BorderColumn(false).
-		BorderHeader(true).
-		BorderStyle(ruleStyle).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			switch {
-			case row == table.HeaderRow:
-				return headerStyle
-			case col == 0:
-				return firstStyle
-			default:
-				return cellStyle
-			}
-		})
-
-	_, err := lipgloss.Fprintln(w, t)
-
-	return err
-}
-
-func plainTable(w io.Writer, header []string, rows [][]string) error {
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	tw := tabwriter.NewWriter(&buf, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(tw, strings.ToUpper(strings.Join(header, "\t")))
+
 	for _, r := range rows {
 		fmt.Fprintln(tw, strings.Join(r, "\t"))
 	}
-	return tw.Flush()
+
+	if err := tw.Flush(); err != nil {
+		return err
+	}
+
+	out := buf.String()
+
+	// Dimmed after aligning: escape codes would throw the widths off.
+	if isTerminal(w) {
+		head, rest, _ := strings.Cut(out, "\n")
+		out = headerStyle.Render(head) + "\n" + rest
+	}
+
+	_, err := io.WriteString(w, out)
+
+	return err
 }
 
 // JSON prints a message as protobuf JSON (the same field names the API uses
@@ -118,12 +81,15 @@ func JSON(w io.Writer, m proto.Message) error {
 	if err != nil {
 		return err
 	}
+
 	var out bytes.Buffer
 	if err := json.Indent(&out, b, "", "  "); err != nil {
 		return err
 	}
+
 	out.WriteByte('\n')
 	_, err = out.WriteTo(w)
+
 	return err
 }
 

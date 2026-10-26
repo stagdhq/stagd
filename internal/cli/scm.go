@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"charm.land/huh/v2"
 	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 
@@ -173,20 +172,8 @@ func connectionsDelete(ctx context.Context, cmd *cli.Command) error {
 			return cli.Exit("pass --yes to disconnect without a prompt", 2)
 		}
 
-		confirmed := false
-		prompt := huh.NewForm(huh.NewGroup(huh.NewConfirm().
-			Title("Disconnect this account?").
-			Description("Its repositories stop getting previews.").
-			Affirmative("Disconnect").
-			Negative("Cancel").
-			Value(&confirmed)))
-
-		if err := prompt.RunWithContext(ctx); err != nil {
+		if ok, err := confirm(cmd, "Disconnect this account?", "Its repositories stop getting previews."); err != nil || !ok {
 			return err
-		}
-
-		if !confirmed {
-			return nil
 		}
 	}
 

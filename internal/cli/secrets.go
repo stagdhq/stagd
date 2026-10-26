@@ -89,7 +89,7 @@ func secretValues(ctx context.Context, args []string) (map[string]string, error)
 			}
 
 			input := huh.NewInput().Title(name).EchoMode(huh.EchoModePassword).Value(&value)
-			if err := huh.NewForm(huh.NewGroup(input)).RunWithContext(ctx); err != nil {
+			if err := newForm(huh.NewGroup(input)).RunWithContext(ctx); err != nil {
 				return nil, err
 			}
 		}
@@ -194,20 +194,8 @@ func secretsDelete(ctx context.Context, cmd *cli.Command) error {
 			return cli.Exit("pass --yes to delete without a prompt", 2)
 		}
 
-		confirmed := false
-		form := huh.NewForm(huh.NewGroup(huh.NewConfirm().
-			Title(fmt.Sprintf("Delete %s from %s?", name, scopeWords(cmd.String("repo")))).
-			Description("Previews keep it until their next deploy.").
-			Affirmative("Delete").
-			Negative("Cancel").
-			Value(&confirmed)))
-
-		if err := form.RunWithContext(ctx); err != nil {
+		if ok, err := confirm(cmd, fmt.Sprintf("Delete %s from %s?", name, scopeWords(cmd.String("repo"))), "Previews keep it until their next deploy."); err != nil || !ok {
 			return err
-		}
-
-		if !confirmed {
-			return nil
 		}
 	}
 

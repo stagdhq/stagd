@@ -41,6 +41,7 @@ func New(cfg Config) (*Clients, error) {
 	if cfg.Token == "" {
 		return nil, ErrNoToken
 	}
+
 	httpClient := &http.Client{Timeout: 30 * time.Second}
 	// Previews stream (WatchPreview) for as long as a build takes, so no
 	// overall timeout; connecting and the first response still time out.
@@ -51,6 +52,7 @@ func New(cfg Config) (*Clients, error) {
 		IdleConnTimeout:       90 * time.Second,
 	}}
 	opts := []connect.ClientOption{connect.WithInterceptors(auth(cfg))}
+
 	return &Clients{
 		Auth:     apiv1connect.NewAuthServiceClient(httpClient, cfg.BaseURL, opts...),
 		Orgs:     apiv1connect.NewOrgServiceClient(httpClient, cfg.BaseURL, opts...),
@@ -79,6 +81,7 @@ type headerInterceptor func(http.Header)
 func (f headerInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		f(req.Header())
+
 		return next(ctx, req)
 	}
 }
@@ -87,6 +90,7 @@ func (f headerInterceptor) WrapStreamingClient(next connect.StreamingClientFunc)
 	return func(ctx context.Context, spec connect.Spec) connect.StreamingClientConn {
 		conn := next(ctx, spec)
 		f(conn.RequestHeader())
+
 		return conn
 	}
 }
