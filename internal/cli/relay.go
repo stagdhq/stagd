@@ -2,8 +2,11 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/urfave/cli/v3"
 
@@ -40,6 +43,11 @@ func relayCommand(version string) *cli.Command {
 				Required: true,
 			},
 			&cli.StringFlag{
+				Name:    "http",
+				Usage:   "an address, e.g. :8081, to take preview traffic from a Cloudflare Tunnel next to the relay (deploy/kubernetes/stagd-tunnel.yaml); empty takes none",
+				Sources: cli.EnvVars("STAGD_RELAY_HTTP"),
+			},
+			&cli.StringFlag{
 				Name:    "log-format",
 				Usage:   "text or json",
 				Value:   "text",
@@ -71,6 +79,21 @@ func relayCommand(version string) *cli.Command {
 			}
 
 			r.Log.Info("relay: starting", "kind", r.Kind, "stagd", r.URL, "version", version)
+
+			// Preview traffic from the tunnel, beside the connection to Stagd.
+			if addr := cmd.String("http"); addr != "" {
+				srv := &http.Server{Addr: addr, Handler: r.HTTP(), ReadHeaderTimeout: 30 * time.Second}
+
+				go func() {
+					if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+						r.Log.Error("relay: tunnel traffic", "addr", addr, "err", err)
+					}
+				}()
+
+				defer srv.Close()
+
+				r.Log.Info("relay: taking tunnel traffic", "addr", addr)
+			}
 
 			return r.Run(ctx)
 		},

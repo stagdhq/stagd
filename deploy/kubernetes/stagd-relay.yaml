@@ -35,7 +35,10 @@ spec:
       containers:
         - name: relay
           image: ghcr.io/stagdhq/stagd:0.1.0
-          args: [relay, --log-format=json]
+          # :8081 takes preview traffic from the Cloudflare Tunnel (stagd-tunnel.yaml), when there is one.
+          args: [relay, --log-format=json, --http=:8081]
+          ports:
+            - {name: tunnel, containerPort: 8081}
           env:
             - name: STAGD_URL
               valueFrom:

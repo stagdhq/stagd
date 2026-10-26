@@ -118,25 +118,38 @@ message ComputeConnection {
   User created_by = 10;
   google.protobuf.Timestamp create_time = 11;
   google.protobuf.Timestamp check_time = 12;
-  // Set when the connection's previews are reached through Stagd's own
-  // ingress in the cluster (Kubernetes, settings "previews").
-  StagdIngress ingress = 13;
+  // Set when the connection's previews are reached through a Cloudflare
+  // Tunnel Stagd made for the cluster (Kubernetes, settings "previews").
+  StagdTunnel tunnel = 14;
+  // Never set: Stagd's own ingress in clusters was replaced by the tunnel.
+  StagdIngress ingress = 13 [deprecated = true];
 }
 
-// Stagd's own ingress in a Kubernetes cluster (deploy/kubernetes/stagd-ingress.yaml),
-// as Stagd last found it: Stagd names it in DNS and gives it a certificate.
+// Unused: Stagd's own ingress in clusters, replaced by StagdTunnel.
 message StagdIngress {
-  // Previews are under *.<host>, e.g. "0f3a9c2e81d4.origin.stagd.run".
+  option deprecated = true;
+
   string host = 1;
-  // Its load balancer's IP address or host name; empty until it has one.
   string address = 2;
-  // When its certificate expires; unset before it has one.
   google.protobuf.Timestamp certificate_expire_time = 3;
-  // What stops previews being reached through it, e.g. "waiting for the
-  // ingress's load balancer to get a public address"; empty when they are.
   string problem = 4;
-  // When Stagd last looked; unset before it has.
   google.protobuf.Timestamp check_time = 5;
+}
+
+// The Cloudflare Tunnel Stagd made for a cluster (deploy/kubernetes/stagd-tunnel.yaml),
+// as Stagd last found it.
+message StagdTunnel {
+  // The tunnel's host name, e.g. "tunnel-0f3a9c2e81d4.stagd.run": Stagd's
+  // edge sends preview requests there; visitors never see it.
+  string host = 1;
+  // The Cloudflare locations its connectors are at, e.g. "cph01"; empty
+  // while none is connected.
+  repeated string locations = 2;
+  // What stops previews being reached through it, e.g. "waiting for
+  // cloudflared in the cluster to connect"; empty when they are.
+  string problem = 3;
+  // When Stagd last looked; unset before it has.
+  google.protobuf.Timestamp check_time = 4;
 }
 
 message ListProvidersRequest {}

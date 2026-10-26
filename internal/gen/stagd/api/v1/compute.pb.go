@@ -405,8 +405,12 @@ type ComputeConnection struct {
 	CreatedBy  *User                  `protobuf:"bytes,10,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	CheckTime  *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
-	// Set when the connection's previews are reached through Stagd's own
-	// ingress in the cluster (Kubernetes, settings "previews").
+	// Set when the connection's previews are reached through a Cloudflare
+	// Tunnel Stagd made for the cluster (Kubernetes, settings "previews").
+	Tunnel *StagdTunnel `protobuf:"bytes,14,opt,name=tunnel,proto3" json:"tunnel,omitempty"`
+	// Never set: Stagd's own ingress in clusters was replaced by the tunnel.
+	//
+	// Deprecated: Marked as deprecated in stagd/api/v1/compute.proto.
 	Ingress       *StagdIngress `protobuf:"bytes,13,opt,name=ingress,proto3" json:"ingress,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -526,6 +530,14 @@ func (x *ComputeConnection) GetCheckTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *ComputeConnection) GetTunnel() *StagdTunnel {
+	if x != nil {
+		return x.Tunnel
+	}
+	return nil
+}
+
+// Deprecated: Marked as deprecated in stagd/api/v1/compute.proto.
 func (x *ComputeConnection) GetIngress() *StagdIngress {
 	if x != nil {
 		return x.Ingress
@@ -533,23 +545,18 @@ func (x *ComputeConnection) GetIngress() *StagdIngress {
 	return nil
 }
 
-// Stagd's own ingress in a Kubernetes cluster (deploy/kubernetes/stagd-ingress.yaml),
-// as Stagd last found it: Stagd names it in DNS and gives it a certificate.
+// Unused: Stagd's own ingress in clusters, replaced by StagdTunnel.
+//
+// Deprecated: Marked as deprecated in stagd/api/v1/compute.proto.
 type StagdIngress struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Previews are under *.<host>, e.g. "0f3a9c2e81d4.origin.stagd.run".
-	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	// Its load balancer's IP address or host name; empty until it has one.
-	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-	// When its certificate expires; unset before it has one.
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	Host                  string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Address               string                 `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	CertificateExpireTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=certificate_expire_time,json=certificateExpireTime,proto3" json:"certificate_expire_time,omitempty"`
-	// What stops previews being reached through it, e.g. "waiting for the
-	// ingress's load balancer to get a public address"; empty when they are.
-	Problem string `protobuf:"bytes,4,opt,name=problem,proto3" json:"problem,omitempty"`
-	// When Stagd last looked; unset before it has.
-	CheckTime     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Problem               string                 `protobuf:"bytes,4,opt,name=problem,proto3" json:"problem,omitempty"`
+	CheckTime             *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *StagdIngress) Reset() {
@@ -617,6 +624,83 @@ func (x *StagdIngress) GetCheckTime() *timestamppb.Timestamp {
 	return nil
 }
 
+// The Cloudflare Tunnel Stagd made for a cluster (deploy/kubernetes/stagd-tunnel.yaml),
+// as Stagd last found it.
+type StagdTunnel struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The tunnel's host name, e.g. "tunnel-0f3a9c2e81d4.stagd.run": Stagd's
+	// edge sends preview requests there; visitors never see it.
+	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	// The Cloudflare locations its connectors are at, e.g. "cph01"; empty
+	// while none is connected.
+	Locations []string `protobuf:"bytes,2,rep,name=locations,proto3" json:"locations,omitempty"`
+	// What stops previews being reached through it, e.g. "waiting for
+	// cloudflared in the cluster to connect"; empty when they are.
+	Problem string `protobuf:"bytes,3,opt,name=problem,proto3" json:"problem,omitempty"`
+	// When Stagd last looked; unset before it has.
+	CheckTime     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StagdTunnel) Reset() {
+	*x = StagdTunnel{}
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StagdTunnel) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StagdTunnel) ProtoMessage() {}
+
+func (x *StagdTunnel) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StagdTunnel.ProtoReflect.Descriptor instead.
+func (*StagdTunnel) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *StagdTunnel) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *StagdTunnel) GetLocations() []string {
+	if x != nil {
+		return x.Locations
+	}
+	return nil
+}
+
+func (x *StagdTunnel) GetProblem() string {
+	if x != nil {
+		return x.Problem
+	}
+	return ""
+}
+
+func (x *StagdTunnel) GetCheckTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CheckTime
+	}
+	return nil
+}
+
 type ListProvidersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -625,7 +709,7 @@ type ListProvidersRequest struct {
 
 func (x *ListProvidersRequest) Reset() {
 	*x = ListProvidersRequest{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -637,7 +721,7 @@ func (x *ListProvidersRequest) String() string {
 func (*ListProvidersRequest) ProtoMessage() {}
 
 func (x *ListProvidersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,7 +734,7 @@ func (x *ListProvidersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProvidersRequest.ProtoReflect.Descriptor instead.
 func (*ListProvidersRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{5}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{6}
 }
 
 type ListProvidersResponse struct {
@@ -662,7 +746,7 @@ type ListProvidersResponse struct {
 
 func (x *ListProvidersResponse) Reset() {
 	*x = ListProvidersResponse{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -674,7 +758,7 @@ func (x *ListProvidersResponse) String() string {
 func (*ListProvidersResponse) ProtoMessage() {}
 
 func (x *ListProvidersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -687,7 +771,7 @@ func (x *ListProvidersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProvidersResponse.ProtoReflect.Descriptor instead.
 func (*ListProvidersResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{6}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListProvidersResponse) GetProviders() []*ProviderInfo {
@@ -709,7 +793,7 @@ type CreateComputeConnectionRequest struct {
 
 func (x *CreateComputeConnectionRequest) Reset() {
 	*x = CreateComputeConnectionRequest{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -721,7 +805,7 @@ func (x *CreateComputeConnectionRequest) String() string {
 func (*CreateComputeConnectionRequest) ProtoMessage() {}
 
 func (x *CreateComputeConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -734,7 +818,7 @@ func (x *CreateComputeConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateComputeConnectionRequest.ProtoReflect.Descriptor instead.
 func (*CreateComputeConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{7}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CreateComputeConnectionRequest) GetProvider() ComputeProvider {
@@ -776,7 +860,7 @@ type CreateComputeConnectionResponse struct {
 
 func (x *CreateComputeConnectionResponse) Reset() {
 	*x = CreateComputeConnectionResponse{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -788,7 +872,7 @@ func (x *CreateComputeConnectionResponse) String() string {
 func (*CreateComputeConnectionResponse) ProtoMessage() {}
 
 func (x *CreateComputeConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -801,7 +885,7 @@ func (x *CreateComputeConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateComputeConnectionResponse.ProtoReflect.Descriptor instead.
 func (*CreateComputeConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{8}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreateComputeConnectionResponse) GetConnection() *ComputeConnection {
@@ -840,7 +924,7 @@ type ListComputeConnectionsRequest struct {
 
 func (x *ListComputeConnectionsRequest) Reset() {
 	*x = ListComputeConnectionsRequest{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[9]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -852,7 +936,7 @@ func (x *ListComputeConnectionsRequest) String() string {
 func (*ListComputeConnectionsRequest) ProtoMessage() {}
 
 func (x *ListComputeConnectionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[9]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -865,7 +949,7 @@ func (x *ListComputeConnectionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListComputeConnectionsRequest.ProtoReflect.Descriptor instead.
 func (*ListComputeConnectionsRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{9}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{10}
 }
 
 type ListComputeConnectionsResponse struct {
@@ -877,7 +961,7 @@ type ListComputeConnectionsResponse struct {
 
 func (x *ListComputeConnectionsResponse) Reset() {
 	*x = ListComputeConnectionsResponse{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[10]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -889,7 +973,7 @@ func (x *ListComputeConnectionsResponse) String() string {
 func (*ListComputeConnectionsResponse) ProtoMessage() {}
 
 func (x *ListComputeConnectionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[10]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -902,7 +986,7 @@ func (x *ListComputeConnectionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListComputeConnectionsResponse.ProtoReflect.Descriptor instead.
 func (*ListComputeConnectionsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{10}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListComputeConnectionsResponse) GetConnections() []*ComputeConnection {
@@ -921,7 +1005,7 @@ type TestComputeConnectionRequest struct {
 
 func (x *TestComputeConnectionRequest) Reset() {
 	*x = TestComputeConnectionRequest{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[11]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -933,7 +1017,7 @@ func (x *TestComputeConnectionRequest) String() string {
 func (*TestComputeConnectionRequest) ProtoMessage() {}
 
 func (x *TestComputeConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[11]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -946,7 +1030,7 @@ func (x *TestComputeConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestComputeConnectionRequest.ProtoReflect.Descriptor instead.
 func (*TestComputeConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{11}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TestComputeConnectionRequest) GetId() string {
@@ -965,7 +1049,7 @@ type TestComputeConnectionResponse struct {
 
 func (x *TestComputeConnectionResponse) Reset() {
 	*x = TestComputeConnectionResponse{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[12]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -977,7 +1061,7 @@ func (x *TestComputeConnectionResponse) String() string {
 func (*TestComputeConnectionResponse) ProtoMessage() {}
 
 func (x *TestComputeConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[12]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -990,7 +1074,7 @@ func (x *TestComputeConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestComputeConnectionResponse.ProtoReflect.Descriptor instead.
 func (*TestComputeConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{12}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *TestComputeConnectionResponse) GetConnection() *ComputeConnection {
@@ -1011,7 +1095,7 @@ type UpdateComputeConnectionRequest struct {
 
 func (x *UpdateComputeConnectionRequest) Reset() {
 	*x = UpdateComputeConnectionRequest{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[13]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1023,7 +1107,7 @@ func (x *UpdateComputeConnectionRequest) String() string {
 func (*UpdateComputeConnectionRequest) ProtoMessage() {}
 
 func (x *UpdateComputeConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[13]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1036,7 +1120,7 @@ func (x *UpdateComputeConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateComputeConnectionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateComputeConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{13}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *UpdateComputeConnectionRequest) GetId() string {
@@ -1062,7 +1146,7 @@ type UpdateComputeConnectionResponse struct {
 
 func (x *UpdateComputeConnectionResponse) Reset() {
 	*x = UpdateComputeConnectionResponse{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[14]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1074,7 +1158,7 @@ func (x *UpdateComputeConnectionResponse) String() string {
 func (*UpdateComputeConnectionResponse) ProtoMessage() {}
 
 func (x *UpdateComputeConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[14]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1087,7 +1171,7 @@ func (x *UpdateComputeConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateComputeConnectionResponse.ProtoReflect.Descriptor instead.
 func (*UpdateComputeConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{14}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UpdateComputeConnectionResponse) GetConnection() *ComputeConnection {
@@ -1106,7 +1190,7 @@ type SetDefaultComputeConnectionRequest struct {
 
 func (x *SetDefaultComputeConnectionRequest) Reset() {
 	*x = SetDefaultComputeConnectionRequest{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[15]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1118,7 +1202,7 @@ func (x *SetDefaultComputeConnectionRequest) String() string {
 func (*SetDefaultComputeConnectionRequest) ProtoMessage() {}
 
 func (x *SetDefaultComputeConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[15]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1131,7 +1215,7 @@ func (x *SetDefaultComputeConnectionRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use SetDefaultComputeConnectionRequest.ProtoReflect.Descriptor instead.
 func (*SetDefaultComputeConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{15}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SetDefaultComputeConnectionRequest) GetId() string {
@@ -1150,7 +1234,7 @@ type SetDefaultComputeConnectionResponse struct {
 
 func (x *SetDefaultComputeConnectionResponse) Reset() {
 	*x = SetDefaultComputeConnectionResponse{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[16]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1162,7 +1246,7 @@ func (x *SetDefaultComputeConnectionResponse) String() string {
 func (*SetDefaultComputeConnectionResponse) ProtoMessage() {}
 
 func (x *SetDefaultComputeConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[16]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1175,7 +1259,7 @@ func (x *SetDefaultComputeConnectionResponse) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use SetDefaultComputeConnectionResponse.ProtoReflect.Descriptor instead.
 func (*SetDefaultComputeConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{16}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SetDefaultComputeConnectionResponse) GetConnection() *ComputeConnection {
@@ -1194,7 +1278,7 @@ type DeleteComputeConnectionRequest struct {
 
 func (x *DeleteComputeConnectionRequest) Reset() {
 	*x = DeleteComputeConnectionRequest{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[17]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1206,7 +1290,7 @@ func (x *DeleteComputeConnectionRequest) String() string {
 func (*DeleteComputeConnectionRequest) ProtoMessage() {}
 
 func (x *DeleteComputeConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[17]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1219,7 +1303,7 @@ func (x *DeleteComputeConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteComputeConnectionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteComputeConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{17}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DeleteComputeConnectionRequest) GetId() string {
@@ -1237,7 +1321,7 @@ type DeleteComputeConnectionResponse struct {
 
 func (x *DeleteComputeConnectionResponse) Reset() {
 	*x = DeleteComputeConnectionResponse{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[18]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1249,7 +1333,7 @@ func (x *DeleteComputeConnectionResponse) String() string {
 func (*DeleteComputeConnectionResponse) ProtoMessage() {}
 
 func (x *DeleteComputeConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[18]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1262,7 +1346,7 @@ func (x *DeleteComputeConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteComputeConnectionResponse.ProtoReflect.Descriptor instead.
 func (*DeleteComputeConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{18}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{19}
 }
 
 type CreateRelayInstallRequest struct {
@@ -1274,7 +1358,7 @@ type CreateRelayInstallRequest struct {
 
 func (x *CreateRelayInstallRequest) Reset() {
 	*x = CreateRelayInstallRequest{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[19]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1286,7 +1370,7 @@ func (x *CreateRelayInstallRequest) String() string {
 func (*CreateRelayInstallRequest) ProtoMessage() {}
 
 func (x *CreateRelayInstallRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[19]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1299,7 +1383,7 @@ func (x *CreateRelayInstallRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRelayInstallRequest.ProtoReflect.Descriptor instead.
 func (*CreateRelayInstallRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{19}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CreateRelayInstallRequest) GetId() string {
@@ -1322,7 +1406,7 @@ type CreateRelayInstallResponse struct {
 
 func (x *CreateRelayInstallResponse) Reset() {
 	*x = CreateRelayInstallResponse{}
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[20]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1334,7 +1418,7 @@ func (x *CreateRelayInstallResponse) String() string {
 func (*CreateRelayInstallResponse) ProtoMessage() {}
 
 func (x *CreateRelayInstallResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_compute_proto_msgTypes[20]
+	mi := &file_stagd_api_v1_compute_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1347,7 +1431,7 @@ func (x *CreateRelayInstallResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRelayInstallResponse.ProtoReflect.Descriptor instead.
 func (*CreateRelayInstallResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{20}
+	return file_stagd_api_v1_compute_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreateRelayInstallResponse) GetRelayToken() string {
@@ -1393,7 +1477,7 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x123\n" +
 	"\x06fields\x18\x04 \x03(\v2\x1b.stagd.api.v1.ProviderFieldR\x06fields\x12E\n" +
-	"\fcapabilities\x18\x05 \x01(\v2!.stagd.api.v1.ComputeCapabilitiesR\fcapabilities\"\xbc\x05\n" +
+	"\fcapabilities\x18\x05 \x01(\v2!.stagd.api.v1.ComputeCapabilitiesR\fcapabilities\"\xf3\x05\n" +
 	"\x11ComputeConnection\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x129\n" +
 	"\bprovider\x18\x02 \x01(\x0e2\x1d.stagd.api.v1.ComputeProviderR\bprovider\x12\x12\n" +
@@ -1410,18 +1494,25 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\vcreate_time\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x129\n" +
 	"\n" +
-	"check_time\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\x124\n" +
-	"\aingress\x18\r \x01(\v2\x1a.stagd.api.v1.StagdIngressR\aingress\x1a;\n" +
+	"check_time\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\x121\n" +
+	"\x06tunnel\x18\x0e \x01(\v2\x19.stagd.api.v1.StagdTunnelR\x06tunnel\x128\n" +
+	"\aingress\x18\r \x01(\v2\x1a.stagd.api.v1.StagdIngressB\x02\x18\x01R\aingress\x1a;\n" +
 	"\rSettingsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe5\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe9\x01\n" +
 	"\fStagdIngress\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\x12R\n" +
 	"\x17certificate_expire_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x15certificateExpireTime\x12\x18\n" +
 	"\aproblem\x18\x04 \x01(\tR\aproblem\x129\n" +
 	"\n" +
-	"check_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\"\x16\n" +
+	"check_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime:\x02\x18\x01\"\x94\x01\n" +
+	"\vStagdTunnel\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x1c\n" +
+	"\tlocations\x18\x02 \x03(\tR\tlocations\x12\x18\n" +
+	"\aproblem\x18\x03 \x01(\tR\aproblem\x129\n" +
+	"\n" +
+	"check_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\"\x16\n" +
 	"\x14ListProvidersRequest\"Q\n" +
 	"\x15ListProvidersResponse\x128\n" +
 	"\tproviders\x18\x01 \x03(\v2\x1a.stagd.api.v1.ProviderInfoR\tproviders\"\xb4\x02\n" +
@@ -1513,7 +1604,7 @@ func file_stagd_api_v1_compute_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_compute_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_stagd_api_v1_compute_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_stagd_api_v1_compute_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_stagd_api_v1_compute_proto_goTypes = []any{
 	(ComputeProvider)(0),                        // 0: stagd.api.v1.ComputeProvider
 	(ComputeConnectionStatus)(0),                // 1: stagd.api.v1.ComputeConnectionStatus
@@ -1522,76 +1613,79 @@ var file_stagd_api_v1_compute_proto_goTypes = []any{
 	(*ProviderInfo)(nil),                        // 4: stagd.api.v1.ProviderInfo
 	(*ComputeConnection)(nil),                   // 5: stagd.api.v1.ComputeConnection
 	(*StagdIngress)(nil),                        // 6: stagd.api.v1.StagdIngress
-	(*ListProvidersRequest)(nil),                // 7: stagd.api.v1.ListProvidersRequest
-	(*ListProvidersResponse)(nil),               // 8: stagd.api.v1.ListProvidersResponse
-	(*CreateComputeConnectionRequest)(nil),      // 9: stagd.api.v1.CreateComputeConnectionRequest
-	(*CreateComputeConnectionResponse)(nil),     // 10: stagd.api.v1.CreateComputeConnectionResponse
-	(*ListComputeConnectionsRequest)(nil),       // 11: stagd.api.v1.ListComputeConnectionsRequest
-	(*ListComputeConnectionsResponse)(nil),      // 12: stagd.api.v1.ListComputeConnectionsResponse
-	(*TestComputeConnectionRequest)(nil),        // 13: stagd.api.v1.TestComputeConnectionRequest
-	(*TestComputeConnectionResponse)(nil),       // 14: stagd.api.v1.TestComputeConnectionResponse
-	(*UpdateComputeConnectionRequest)(nil),      // 15: stagd.api.v1.UpdateComputeConnectionRequest
-	(*UpdateComputeConnectionResponse)(nil),     // 16: stagd.api.v1.UpdateComputeConnectionResponse
-	(*SetDefaultComputeConnectionRequest)(nil),  // 17: stagd.api.v1.SetDefaultComputeConnectionRequest
-	(*SetDefaultComputeConnectionResponse)(nil), // 18: stagd.api.v1.SetDefaultComputeConnectionResponse
-	(*DeleteComputeConnectionRequest)(nil),      // 19: stagd.api.v1.DeleteComputeConnectionRequest
-	(*DeleteComputeConnectionResponse)(nil),     // 20: stagd.api.v1.DeleteComputeConnectionResponse
-	(*CreateRelayInstallRequest)(nil),           // 21: stagd.api.v1.CreateRelayInstallRequest
-	(*CreateRelayInstallResponse)(nil),          // 22: stagd.api.v1.CreateRelayInstallResponse
-	nil,                                         // 23: stagd.api.v1.ComputeConnection.SettingsEntry
-	nil,                                         // 24: stagd.api.v1.CreateComputeConnectionRequest.ValuesEntry
-	nil,                                         // 25: stagd.api.v1.UpdateComputeConnectionRequest.ValuesEntry
-	(*durationpb.Duration)(nil),                 // 26: google.protobuf.Duration
-	(*User)(nil),                                // 27: stagd.api.v1.User
-	(*timestamppb.Timestamp)(nil),               // 28: google.protobuf.Timestamp
+	(*StagdTunnel)(nil),                         // 7: stagd.api.v1.StagdTunnel
+	(*ListProvidersRequest)(nil),                // 8: stagd.api.v1.ListProvidersRequest
+	(*ListProvidersResponse)(nil),               // 9: stagd.api.v1.ListProvidersResponse
+	(*CreateComputeConnectionRequest)(nil),      // 10: stagd.api.v1.CreateComputeConnectionRequest
+	(*CreateComputeConnectionResponse)(nil),     // 11: stagd.api.v1.CreateComputeConnectionResponse
+	(*ListComputeConnectionsRequest)(nil),       // 12: stagd.api.v1.ListComputeConnectionsRequest
+	(*ListComputeConnectionsResponse)(nil),      // 13: stagd.api.v1.ListComputeConnectionsResponse
+	(*TestComputeConnectionRequest)(nil),        // 14: stagd.api.v1.TestComputeConnectionRequest
+	(*TestComputeConnectionResponse)(nil),       // 15: stagd.api.v1.TestComputeConnectionResponse
+	(*UpdateComputeConnectionRequest)(nil),      // 16: stagd.api.v1.UpdateComputeConnectionRequest
+	(*UpdateComputeConnectionResponse)(nil),     // 17: stagd.api.v1.UpdateComputeConnectionResponse
+	(*SetDefaultComputeConnectionRequest)(nil),  // 18: stagd.api.v1.SetDefaultComputeConnectionRequest
+	(*SetDefaultComputeConnectionResponse)(nil), // 19: stagd.api.v1.SetDefaultComputeConnectionResponse
+	(*DeleteComputeConnectionRequest)(nil),      // 20: stagd.api.v1.DeleteComputeConnectionRequest
+	(*DeleteComputeConnectionResponse)(nil),     // 21: stagd.api.v1.DeleteComputeConnectionResponse
+	(*CreateRelayInstallRequest)(nil),           // 22: stagd.api.v1.CreateRelayInstallRequest
+	(*CreateRelayInstallResponse)(nil),          // 23: stagd.api.v1.CreateRelayInstallResponse
+	nil,                                         // 24: stagd.api.v1.ComputeConnection.SettingsEntry
+	nil,                                         // 25: stagd.api.v1.CreateComputeConnectionRequest.ValuesEntry
+	nil,                                         // 26: stagd.api.v1.UpdateComputeConnectionRequest.ValuesEntry
+	(*durationpb.Duration)(nil),                 // 27: google.protobuf.Duration
+	(*User)(nil),                                // 28: stagd.api.v1.User
+	(*timestamppb.Timestamp)(nil),               // 29: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_compute_proto_depIdxs = []int32{
-	26, // 0: stagd.api.v1.ComputeCapabilities.max_lifetime:type_name -> google.protobuf.Duration
+	27, // 0: stagd.api.v1.ComputeCapabilities.max_lifetime:type_name -> google.protobuf.Duration
 	0,  // 1: stagd.api.v1.ProviderInfo.provider:type_name -> stagd.api.v1.ComputeProvider
 	3,  // 2: stagd.api.v1.ProviderInfo.fields:type_name -> stagd.api.v1.ProviderField
 	2,  // 3: stagd.api.v1.ProviderInfo.capabilities:type_name -> stagd.api.v1.ComputeCapabilities
 	0,  // 4: stagd.api.v1.ComputeConnection.provider:type_name -> stagd.api.v1.ComputeProvider
-	23, // 5: stagd.api.v1.ComputeConnection.settings:type_name -> stagd.api.v1.ComputeConnection.SettingsEntry
+	24, // 5: stagd.api.v1.ComputeConnection.settings:type_name -> stagd.api.v1.ComputeConnection.SettingsEntry
 	1,  // 6: stagd.api.v1.ComputeConnection.status:type_name -> stagd.api.v1.ComputeConnectionStatus
 	2,  // 7: stagd.api.v1.ComputeConnection.capabilities:type_name -> stagd.api.v1.ComputeCapabilities
-	27, // 8: stagd.api.v1.ComputeConnection.created_by:type_name -> stagd.api.v1.User
-	28, // 9: stagd.api.v1.ComputeConnection.create_time:type_name -> google.protobuf.Timestamp
-	28, // 10: stagd.api.v1.ComputeConnection.check_time:type_name -> google.protobuf.Timestamp
-	6,  // 11: stagd.api.v1.ComputeConnection.ingress:type_name -> stagd.api.v1.StagdIngress
-	28, // 12: stagd.api.v1.StagdIngress.certificate_expire_time:type_name -> google.protobuf.Timestamp
-	28, // 13: stagd.api.v1.StagdIngress.check_time:type_name -> google.protobuf.Timestamp
-	4,  // 14: stagd.api.v1.ListProvidersResponse.providers:type_name -> stagd.api.v1.ProviderInfo
-	0,  // 15: stagd.api.v1.CreateComputeConnectionRequest.provider:type_name -> stagd.api.v1.ComputeProvider
-	24, // 16: stagd.api.v1.CreateComputeConnectionRequest.values:type_name -> stagd.api.v1.CreateComputeConnectionRequest.ValuesEntry
-	5,  // 17: stagd.api.v1.CreateComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
-	28, // 18: stagd.api.v1.CreateComputeConnectionResponse.relay_install_expire_time:type_name -> google.protobuf.Timestamp
-	5,  // 19: stagd.api.v1.ListComputeConnectionsResponse.connections:type_name -> stagd.api.v1.ComputeConnection
-	5,  // 20: stagd.api.v1.TestComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
-	25, // 21: stagd.api.v1.UpdateComputeConnectionRequest.values:type_name -> stagd.api.v1.UpdateComputeConnectionRequest.ValuesEntry
-	5,  // 22: stagd.api.v1.UpdateComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
-	5,  // 23: stagd.api.v1.SetDefaultComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
-	28, // 24: stagd.api.v1.CreateRelayInstallResponse.relay_install_expire_time:type_name -> google.protobuf.Timestamp
-	7,  // 25: stagd.api.v1.ComputeService.ListProviders:input_type -> stagd.api.v1.ListProvidersRequest
-	9,  // 26: stagd.api.v1.ComputeService.CreateComputeConnection:input_type -> stagd.api.v1.CreateComputeConnectionRequest
-	11, // 27: stagd.api.v1.ComputeService.ListComputeConnections:input_type -> stagd.api.v1.ListComputeConnectionsRequest
-	13, // 28: stagd.api.v1.ComputeService.TestComputeConnection:input_type -> stagd.api.v1.TestComputeConnectionRequest
-	15, // 29: stagd.api.v1.ComputeService.UpdateComputeConnection:input_type -> stagd.api.v1.UpdateComputeConnectionRequest
-	17, // 30: stagd.api.v1.ComputeService.SetDefaultComputeConnection:input_type -> stagd.api.v1.SetDefaultComputeConnectionRequest
-	19, // 31: stagd.api.v1.ComputeService.DeleteComputeConnection:input_type -> stagd.api.v1.DeleteComputeConnectionRequest
-	21, // 32: stagd.api.v1.ComputeService.CreateRelayInstall:input_type -> stagd.api.v1.CreateRelayInstallRequest
-	8,  // 33: stagd.api.v1.ComputeService.ListProviders:output_type -> stagd.api.v1.ListProvidersResponse
-	10, // 34: stagd.api.v1.ComputeService.CreateComputeConnection:output_type -> stagd.api.v1.CreateComputeConnectionResponse
-	12, // 35: stagd.api.v1.ComputeService.ListComputeConnections:output_type -> stagd.api.v1.ListComputeConnectionsResponse
-	14, // 36: stagd.api.v1.ComputeService.TestComputeConnection:output_type -> stagd.api.v1.TestComputeConnectionResponse
-	16, // 37: stagd.api.v1.ComputeService.UpdateComputeConnection:output_type -> stagd.api.v1.UpdateComputeConnectionResponse
-	18, // 38: stagd.api.v1.ComputeService.SetDefaultComputeConnection:output_type -> stagd.api.v1.SetDefaultComputeConnectionResponse
-	20, // 39: stagd.api.v1.ComputeService.DeleteComputeConnection:output_type -> stagd.api.v1.DeleteComputeConnectionResponse
-	22, // 40: stagd.api.v1.ComputeService.CreateRelayInstall:output_type -> stagd.api.v1.CreateRelayInstallResponse
-	33, // [33:41] is the sub-list for method output_type
-	25, // [25:33] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	28, // 8: stagd.api.v1.ComputeConnection.created_by:type_name -> stagd.api.v1.User
+	29, // 9: stagd.api.v1.ComputeConnection.create_time:type_name -> google.protobuf.Timestamp
+	29, // 10: stagd.api.v1.ComputeConnection.check_time:type_name -> google.protobuf.Timestamp
+	7,  // 11: stagd.api.v1.ComputeConnection.tunnel:type_name -> stagd.api.v1.StagdTunnel
+	6,  // 12: stagd.api.v1.ComputeConnection.ingress:type_name -> stagd.api.v1.StagdIngress
+	29, // 13: stagd.api.v1.StagdIngress.certificate_expire_time:type_name -> google.protobuf.Timestamp
+	29, // 14: stagd.api.v1.StagdIngress.check_time:type_name -> google.protobuf.Timestamp
+	29, // 15: stagd.api.v1.StagdTunnel.check_time:type_name -> google.protobuf.Timestamp
+	4,  // 16: stagd.api.v1.ListProvidersResponse.providers:type_name -> stagd.api.v1.ProviderInfo
+	0,  // 17: stagd.api.v1.CreateComputeConnectionRequest.provider:type_name -> stagd.api.v1.ComputeProvider
+	25, // 18: stagd.api.v1.CreateComputeConnectionRequest.values:type_name -> stagd.api.v1.CreateComputeConnectionRequest.ValuesEntry
+	5,  // 19: stagd.api.v1.CreateComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
+	29, // 20: stagd.api.v1.CreateComputeConnectionResponse.relay_install_expire_time:type_name -> google.protobuf.Timestamp
+	5,  // 21: stagd.api.v1.ListComputeConnectionsResponse.connections:type_name -> stagd.api.v1.ComputeConnection
+	5,  // 22: stagd.api.v1.TestComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
+	26, // 23: stagd.api.v1.UpdateComputeConnectionRequest.values:type_name -> stagd.api.v1.UpdateComputeConnectionRequest.ValuesEntry
+	5,  // 24: stagd.api.v1.UpdateComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
+	5,  // 25: stagd.api.v1.SetDefaultComputeConnectionResponse.connection:type_name -> stagd.api.v1.ComputeConnection
+	29, // 26: stagd.api.v1.CreateRelayInstallResponse.relay_install_expire_time:type_name -> google.protobuf.Timestamp
+	8,  // 27: stagd.api.v1.ComputeService.ListProviders:input_type -> stagd.api.v1.ListProvidersRequest
+	10, // 28: stagd.api.v1.ComputeService.CreateComputeConnection:input_type -> stagd.api.v1.CreateComputeConnectionRequest
+	12, // 29: stagd.api.v1.ComputeService.ListComputeConnections:input_type -> stagd.api.v1.ListComputeConnectionsRequest
+	14, // 30: stagd.api.v1.ComputeService.TestComputeConnection:input_type -> stagd.api.v1.TestComputeConnectionRequest
+	16, // 31: stagd.api.v1.ComputeService.UpdateComputeConnection:input_type -> stagd.api.v1.UpdateComputeConnectionRequest
+	18, // 32: stagd.api.v1.ComputeService.SetDefaultComputeConnection:input_type -> stagd.api.v1.SetDefaultComputeConnectionRequest
+	20, // 33: stagd.api.v1.ComputeService.DeleteComputeConnection:input_type -> stagd.api.v1.DeleteComputeConnectionRequest
+	22, // 34: stagd.api.v1.ComputeService.CreateRelayInstall:input_type -> stagd.api.v1.CreateRelayInstallRequest
+	9,  // 35: stagd.api.v1.ComputeService.ListProviders:output_type -> stagd.api.v1.ListProvidersResponse
+	11, // 36: stagd.api.v1.ComputeService.CreateComputeConnection:output_type -> stagd.api.v1.CreateComputeConnectionResponse
+	13, // 37: stagd.api.v1.ComputeService.ListComputeConnections:output_type -> stagd.api.v1.ListComputeConnectionsResponse
+	15, // 38: stagd.api.v1.ComputeService.TestComputeConnection:output_type -> stagd.api.v1.TestComputeConnectionResponse
+	17, // 39: stagd.api.v1.ComputeService.UpdateComputeConnection:output_type -> stagd.api.v1.UpdateComputeConnectionResponse
+	19, // 40: stagd.api.v1.ComputeService.SetDefaultComputeConnection:output_type -> stagd.api.v1.SetDefaultComputeConnectionResponse
+	21, // 41: stagd.api.v1.ComputeService.DeleteComputeConnection:output_type -> stagd.api.v1.DeleteComputeConnectionResponse
+	23, // 42: stagd.api.v1.ComputeService.CreateRelayInstall:output_type -> stagd.api.v1.CreateRelayInstallResponse
+	35, // [35:43] is the sub-list for method output_type
+	27, // [27:35] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_compute_proto_init() }
@@ -1606,7 +1700,7 @@ func file_stagd_api_v1_compute_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_compute_proto_rawDesc), len(file_stagd_api_v1_compute_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   24,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

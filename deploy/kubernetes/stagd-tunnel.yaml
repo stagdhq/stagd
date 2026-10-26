@@ -1,0 +1,87 @@
+# Preview traffic through a Cloudflare Tunnel: from Stagd's edge to the
+# cluster on Cloudflare's network, rather than through Stagd's server. Apply
+# after stagd-relay.yaml, with the tunnel's token in the stagd-tunnel secret:
+#
+#   kubectl -n stagd-system create secret generic stagd-tunnel --from-literal=token=...
+#   kubectl apply -f stagd-tunnel.yaml
+#
+# Stagd makes the tunnel, one per cluster, and its install link brings the
+# secret. cloudflared dials out to Cloudflare's nearest locations, as the
+# relay dials Stagd: nothing in the cluster needs to be reachable. Stagd's
+# edge sends each preview request through the tunnel to the relay, naming
+# the service it's for; the relay checks it's in a stagd-* namespace and
+# proxies it there. Stagd's own traffic (the Kubernetes API) stays on the
+# relay's connection to Stagd.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stagd-tunnel
+  namespace: stagd-system
+  labels:
+    app.kubernetes.io/name: stagd-tunnel
+spec:
+  # Two connectors: the tunnel stays up while one restarts.
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stagd-tunnel
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: stagd-tunnel
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:2025.9.1
+          args: [tunnel, --no-autoupdate, --metrics, "0.0.0.0:2000", run]
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef: {name: stagd-tunnel, key: token}
+          readinessProbe:
+            httpGet: {path: /ready, port: 2000}
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {memory: 256Mi}
+---
+# Where the tunnel sends preview traffic: the relay.
+apiVersion: v1
+kind: Service
+metadata:
+  name: stagd-relay
+  namespace: stagd-system
+spec:
+  selector:
+    app.kubernetes.io/name: stagd-relay
+  ports:
+    - {name: tunnel, port: 8081, targetPort: tunnel}
+---
+# Only the tunnel reaches the relay; the relay itself only dials out.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: stagd-relay
+  namespace: stagd-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: stagd-relay
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: stagd-tunnel
+      ports:
+        - {port: 8081}
