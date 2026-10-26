@@ -1,0 +1,283 @@
+# Builds in the cluster, with nothing to set up: a BuildKit daemon whose
+# cache every preview's builds share (warm across previews and pushes), and
+# a registry for what it builds. Apply after stagd-access.yaml:
+#
+#   kubectl apply -f stagd-build.yaml
+#
+# The nodes pull what's built from a small proxy on each of them, at
+# localhost:5000: container runtimes pull from localhost over plain HTTP,
+# so the registry needs no certificate and the nodes no changes. Stagd
+# sees these are here and uses them when the compute connection has no
+# registry of its own. Needs privileged containers (the daemon) and the
+# host's network (the proxy); clusters that forbid either build elsewhere.
+
+# The daemon: privileged, as BuildKit is; its cache on a volume of its own.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stagd-buildkitd
+  namespace: stagd-system
+data:
+  buildkitd.toml: |
+    [worker.oci]
+      gc = true
+
+    # The registry below, inside the cluster, over plain HTTP.
+    [registry."stagd-registry.stagd-system.svc.cluster.local:5000"]
+      http = true
+      insecure = true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: stagd-buildkit-cache
+  namespace: stagd-system
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: {storage: 20Gi}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stagd-buildkitd
+  namespace: stagd-system
+  labels:
+    app.kubernetes.io/name: stagd-buildkitd
+spec:
+  # One daemon: its cache is a volume only one can hold.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stagd-buildkitd
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: stagd-buildkitd
+    spec:
+      containers:
+        - name: buildkitd
+          image: moby/buildkit:v0.24.0
+          args: [--addr, "tcp://0.0.0.0:1234", --config, /etc/buildkit/buildkitd.toml]
+          ports:
+            - {name: buildkit, containerPort: 1234}
+          securityContext:
+            privileged: true
+          readinessProbe:
+            exec:
+              command: [buildctl, --addr, "tcp://127.0.0.1:1234", debug, workers]
+            periodSeconds: 10
+          volumeMounts:
+            - {name: cache, mountPath: /var/lib/buildkit}
+            - {name: config, mountPath: /etc/buildkit}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+      volumes:
+        - name: cache
+          persistentVolumeClaim: {claimName: stagd-buildkit-cache}
+        - name: config
+          configMap: {name: stagd-buildkitd}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stagd-buildkitd
+  namespace: stagd-system
+spec:
+  selector:
+    app.kubernetes.io/name: stagd-buildkitd
+  ports:
+    - {name: buildkit, port: 1234, targetPort: buildkit}
+---
+# Only previews' build jobs reach the daemon: it runs privileged.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: stagd-buildkitd
+  namespace: stagd-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: stagd-buildkitd
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              stagd.dev/managed: "true"
+      ports:
+        - {port: 1234}
+---
+# The registry (Zot): what the daemon builds, kept a week after it was last
+# pushed or pulled, then removed, and its space freed.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stagd-registry
+  namespace: stagd-system
+data:
+  config.json: |
+    {
+      "distSpecVersion": "1.1.0",
+      "storage": {
+        "rootDirectory": "/var/lib/registry",
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "6h",
+        "retention": {
+          "delay": "24h",
+          "policies": [
+            {
+              "repositories": ["**"],
+              "deleteUntagged": true,
+              "keepTags": [
+                {"patterns": [".*"], "pulledWithin": "168h"},
+                {"patterns": [".*"], "pushedWithin": "168h"}
+              ]
+            }
+          ]
+        }
+      },
+      "http": {"address": "0.0.0.0", "port": "5000", "compat": ["docker2s2"]},
+      "log": {"level": "warn"}
+    }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: stagd-registry
+  namespace: stagd-system
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: {storage: 20Gi}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stagd-registry
+  namespace: stagd-system
+  labels:
+    app.kubernetes.io/name: stagd-registry
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stagd-registry
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: stagd-registry
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: registry
+          image: ghcr.io/project-zot/zot:v2.1.2
+          args: [serve, /etc/zot/config.json]
+          ports:
+            - {name: registry, containerPort: 5000}
+          readinessProbe:
+            httpGet: {path: /v2/, port: registry}
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/registry}
+            - {name: config, mountPath: /etc/zot}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {memory: 1Gi}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: stagd-registry}
+        - name: config
+          configMap: {name: stagd-registry}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stagd-registry
+  namespace: stagd-system
+spec:
+  selector:
+    app.kubernetes.io/name: stagd-registry
+  ports:
+    - {name: registry, port: 5000, targetPort: registry}
+---
+# On every node, localhost:5000 to the registry: what the nodes pull from.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: stagd-registry-proxy
+  namespace: stagd-system
+  labels:
+    app.kubernetes.io/name: stagd-registry-proxy
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stagd-registry-proxy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: stagd-registry-proxy
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      tolerations:
+        - operator: Exists
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: proxy
+          image: alpine/socat:1.8.0.1
+          args:
+            - "TCP-LISTEN:5000,bind=127.0.0.1,fork,reuseaddr"
+            - "TCP:stagd-registry.stagd-system.svc.cluster.local:5000"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {memory: 64Mi}
+---
+# Stagd sees whether these are here.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: stagd-build
+  namespace: stagd-system
+rules:
+  - apiGroups: [""]
+    resources: [services]
+    resourceNames: [stagd-buildkitd, stagd-registry]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: stagd-build
+  namespace: stagd-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: stagd-build
+subjects:
+  - kind: ServiceAccount
+    name: stagd
+    namespace: stagd-system
