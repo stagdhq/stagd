@@ -71,6 +71,12 @@ service PreviewService {
   // torn-down one's logs are gone.
   rpc ListLogs(ListLogsRequest) returns (ListLogsResponse);
 
+  // ListBuildLogs returns what each service's build printed, for those its
+  // compute builds, read from the compute when asked: Stagd keeps no copy.
+  // There while it builds, to follow by asking again, and after, until the
+  // preview's instance goes; the preview's secrets are hidden.
+  rpc ListBuildLogs(ListBuildLogsRequest) returns (ListBuildLogsResponse);
+
   // ListTraces lists a preview's traces, newest first, from its own
   // OpenTelemetry endpoint (stagd.yaml `services: { otel: {} }`), read when
   // asked: Stagd keeps no copy. A sleeping preview has to wake first.
@@ -514,6 +520,25 @@ message UsagePoint {
   google.protobuf.Timestamp time = 1;
   double cpu_percent = 2;
   int64 memory_bytes = 3;
+}
+
+message ListBuildLogsRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message ListBuildLogsResponse {
+  // One per service that's built, in the order they build.
+  repeated BuildLog builds = 1;
+}
+
+// BuildLog is one service's build output. Whether it's building, built or
+// failed is the preview's component for the service.
+message BuildLog {
+  string service = 1;
+  // As printed, its last 512 KB; the preview's secrets hidden.
+  string text = 2;
+  // There was more before; the start was left out.
+  bool truncated = 3;
 }
 
 message ListLogsRequest {

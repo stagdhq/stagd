@@ -81,6 +81,9 @@ const (
 	PreviewServiceGetServiceUsageProcedure = "/stagd.api.v1.PreviewService/GetServiceUsage"
 	// PreviewServiceListLogsProcedure is the fully-qualified name of the PreviewService's ListLogs RPC.
 	PreviewServiceListLogsProcedure = "/stagd.api.v1.PreviewService/ListLogs"
+	// PreviewServiceListBuildLogsProcedure is the fully-qualified name of the PreviewService's
+	// ListBuildLogs RPC.
+	PreviewServiceListBuildLogsProcedure = "/stagd.api.v1.PreviewService/ListBuildLogs"
 	// PreviewServiceListTracesProcedure is the fully-qualified name of the PreviewService's ListTraces
 	// RPC.
 	PreviewServiceListTracesProcedure = "/stagd.api.v1.PreviewService/ListTraces"
@@ -143,6 +146,11 @@ type PreviewServiceClient interface {
 	// preview's secrets are hidden. A sleeping preview has to wake first; a
 	// torn-down one's logs are gone.
 	ListLogs(context.Context, *connect.Request[v1.ListLogsRequest]) (*connect.Response[v1.ListLogsResponse], error)
+	// ListBuildLogs returns what each service's build printed, for those its
+	// compute builds, read from the compute when asked: Stagd keeps no copy.
+	// There while it builds, to follow by asking again, and after, until the
+	// preview's instance goes; the preview's secrets are hidden.
+	ListBuildLogs(context.Context, *connect.Request[v1.ListBuildLogsRequest]) (*connect.Response[v1.ListBuildLogsResponse], error)
 	// ListTraces lists a preview's traces, newest first, from its own
 	// OpenTelemetry endpoint (stagd.yaml `services: { otel: {} }`), read when
 	// asked: Stagd keeps no copy. A sleeping preview has to wake first.
@@ -264,6 +272,12 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("ListLogs")),
 			connect.WithClientOptions(opts...),
 		),
+		listBuildLogs: connect.NewClient[v1.ListBuildLogsRequest, v1.ListBuildLogsResponse](
+			httpClient,
+			baseURL+PreviewServiceListBuildLogsProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("ListBuildLogs")),
+			connect.WithClientOptions(opts...),
+		),
 		listTraces: connect.NewClient[v1.ListTracesRequest, v1.ListTracesResponse](
 			httpClient,
 			baseURL+PreviewServiceListTracesProcedure,
@@ -298,6 +312,7 @@ type previewServiceClient struct {
 	deleteMail          *connect.Client[v1.DeleteMailRequest, v1.DeleteMailResponse]
 	getServiceUsage     *connect.Client[v1.GetServiceUsageRequest, v1.GetServiceUsageResponse]
 	listLogs            *connect.Client[v1.ListLogsRequest, v1.ListLogsResponse]
+	listBuildLogs       *connect.Client[v1.ListBuildLogsRequest, v1.ListBuildLogsResponse]
 	listTraces          *connect.Client[v1.ListTracesRequest, v1.ListTracesResponse]
 	getTrace            *connect.Client[v1.GetTraceRequest, v1.GetTraceResponse]
 }
@@ -387,6 +402,11 @@ func (c *previewServiceClient) ListLogs(ctx context.Context, req *connect.Reques
 	return c.listLogs.CallUnary(ctx, req)
 }
 
+// ListBuildLogs calls stagd.api.v1.PreviewService.ListBuildLogs.
+func (c *previewServiceClient) ListBuildLogs(ctx context.Context, req *connect.Request[v1.ListBuildLogsRequest]) (*connect.Response[v1.ListBuildLogsResponse], error) {
+	return c.listBuildLogs.CallUnary(ctx, req)
+}
+
 // ListTraces calls stagd.api.v1.PreviewService.ListTraces.
 func (c *previewServiceClient) ListTraces(ctx context.Context, req *connect.Request[v1.ListTracesRequest]) (*connect.Response[v1.ListTracesResponse], error) {
 	return c.listTraces.CallUnary(ctx, req)
@@ -452,6 +472,11 @@ type PreviewServiceHandler interface {
 	// preview's secrets are hidden. A sleeping preview has to wake first; a
 	// torn-down one's logs are gone.
 	ListLogs(context.Context, *connect.Request[v1.ListLogsRequest]) (*connect.Response[v1.ListLogsResponse], error)
+	// ListBuildLogs returns what each service's build printed, for those its
+	// compute builds, read from the compute when asked: Stagd keeps no copy.
+	// There while it builds, to follow by asking again, and after, until the
+	// preview's instance goes; the preview's secrets are hidden.
+	ListBuildLogs(context.Context, *connect.Request[v1.ListBuildLogsRequest]) (*connect.Response[v1.ListBuildLogsResponse], error)
 	// ListTraces lists a preview's traces, newest first, from its own
 	// OpenTelemetry endpoint (stagd.yaml `services: { otel: {} }`), read when
 	// asked: Stagd keeps no copy. A sleeping preview has to wake first.
@@ -569,6 +594,12 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		connect.WithSchema(previewServiceMethods.ByName("ListLogs")),
 		connect.WithHandlerOptions(opts...),
 	)
+	previewServiceListBuildLogsHandler := connect.NewUnaryHandler(
+		PreviewServiceListBuildLogsProcedure,
+		svc.ListBuildLogs,
+		connect.WithSchema(previewServiceMethods.ByName("ListBuildLogs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	previewServiceListTracesHandler := connect.NewUnaryHandler(
 		PreviewServiceListTracesProcedure,
 		svc.ListTraces,
@@ -617,6 +648,8 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceGetServiceUsageHandler.ServeHTTP(w, r)
 		case PreviewServiceListLogsProcedure:
 			previewServiceListLogsHandler.ServeHTTP(w, r)
+		case PreviewServiceListBuildLogsProcedure:
+			previewServiceListBuildLogsHandler.ServeHTTP(w, r)
 		case PreviewServiceListTracesProcedure:
 			previewServiceListTracesHandler.ServeHTTP(w, r)
 		case PreviewServiceGetTraceProcedure:
@@ -696,6 +729,10 @@ func (UnimplementedPreviewServiceHandler) GetServiceUsage(context.Context, *conn
 
 func (UnimplementedPreviewServiceHandler) ListLogs(context.Context, *connect.Request[v1.ListLogsRequest]) (*connect.Response[v1.ListLogsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListLogs is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) ListBuildLogs(context.Context, *connect.Request[v1.ListBuildLogsRequest]) (*connect.Response[v1.ListBuildLogsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListBuildLogs is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) ListTraces(context.Context, *connect.Request[v1.ListTracesRequest]) (*connect.Response[v1.ListTracesResponse], error) {
