@@ -124,13 +124,15 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("dev build: %q", out)
 	}
 
-	// Homebrew's: brew upgrade.
-	cellar := filepath.Join(t.TempDir(), "Cellar", "stagd", "0.2.0", "bin", "stagd")
-	os.MkdirAll(filepath.Dir(cellar), 0o755)
-	os.WriteFile(cellar, []byte("brew's stagd"), 0o755)
+	// Homebrew's, a cask's or a formula's: brew upgrade.
+	for _, under := range []string{"Caskroom/stagd/0.2.0", "Cellar/stagd/0.2.0/bin"} {
+		brewed := filepath.Join(t.TempDir(), under, "stagd")
+		os.MkdirAll(filepath.Dir(brewed), 0o755)
+		os.WriteFile(brewed, []byte("brew's stagd"), 0o755)
 
-	if _, err := runAs(t, "v0.2.0", cellar, "update"); err == nil || !strings.Contains(err.Error(), "brew upgrade stagd") {
-		t.Errorf("homebrew: %v", err)
+		if _, err := runAs(t, "v0.2.0", brewed, "update"); err == nil || !strings.Contains(err.Error(), "brew upgrade stagd") {
+			t.Errorf("homebrew, %s: %v", under, err)
+		}
 	}
 }
 

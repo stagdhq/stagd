@@ -73,8 +73,8 @@ func update(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	// Homebrew keeps track of its own files.
-	if strings.Contains(exe, "/Cellar/") {
+	// Homebrew keeps track of its own files: a cask's, or a formula's from before.
+	if strings.Contains(exe, "/Caskroom/") || strings.Contains(exe, "/Cellar/") {
 		return cli.Exit("this stagd came from Homebrew: brew upgrade stagd", 1)
 	}
 
