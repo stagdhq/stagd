@@ -1,0 +1,155 @@
+# Stagd's own ingress: previews reached straight from Stagd's edge, not
+# through the relay. Apply after stagd-access.yaml:
+#
+#   kubectl apply -f stagd-ingress.yaml
+#
+# nginx behind one LoadBalancer Service. It only takes connections that
+# present Stagd's client certificate (mTLS), and sends each to its
+# preview's gate, found from the host name alone:
+# web-<instance>.<connection>.origin.stagd.run goes to the gate in the
+# namespace stagd-<instance>, which checks the preview's own token. It has
+# no access to the Kubernetes API.
+#
+# Stagd points a DNS name at the load balancer, gets a certificate for it,
+# and puts it here (stagd-ingress-tls); the pods wait for it. Stagd's
+# install link adds stagd-ingress-ca, the CA of the client certificates it
+# takes. Needs a cluster that gives LoadBalancer Services a public address.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stagd-ingress
+---
+# Stagd writes the certificate here and restarts nginx with it; nothing else.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: stagd
+  namespace: stagd-ingress
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: stagd-preview
+subjects:
+  - kind: ServiceAccount
+    name: stagd
+    namespace: stagd-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stagd-ingress
+  namespace: stagd-ingress
+data:
+  # The image fills in ${NGINX_LOCAL_RESOLVERS} (the cluster's DNS) at start.
+  default.conf.template: |
+    # The preview's namespace, from the host's first label: <ingress>-<instance>.
+    map $host $stagd_namespace {
+      "~^[a-z0-9-]+-(?<instance>[a-z0-9]{12,})\."  stagd-$instance;
+      default                                     "";
+    }
+
+    server {
+      listen 8443 ssl;
+      http2 on;
+      server_name _;
+
+      ssl_certificate        /etc/stagd-ingress/tls/tls.crt;
+      ssl_certificate_key    /etc/stagd-ingress/tls/tls.key;
+      ssl_client_certificate /etc/stagd-ingress/ca/ca.crt;
+      ssl_verify_client      on;
+      ssl_protocols          TLSv1.2 TLSv1.3;
+
+      resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
+      client_max_body_size 0;
+
+      if ($stagd_namespace = "") {
+        return 404;
+      }
+
+      location / {
+        proxy_pass http://stagd-gate.$stagd_namespace.svc.cluster.local:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+        proxy_buffering off;
+        proxy_read_timeout 1h;
+      }
+    }
+
+    server {
+      listen 8081;
+
+      location = /healthz {
+        return 200 "ok\n";
+      }
+
+      location / {
+        return 404;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stagd-ingress
+  namespace: stagd-ingress
+  labels:
+    app.kubernetes.io/name: stagd-ingress
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stagd-ingress
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: stagd-ingress
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          env:
+            - {name: NGINX_ENTRYPOINT_LOCAL_RESOLVERS, value: "1"}
+          ports:
+            - {name: https, containerPort: 8443}
+            - {name: health, containerPort: 8081}
+          readinessProbe:
+            httpGet: {path: /healthz, port: health}
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - {name: templates, mountPath: /etc/nginx/templates}
+            - {name: tls, mountPath: /etc/stagd-ingress/tls, readOnly: true}
+            - {name: ca, mountPath: /etc/stagd-ingress/ca, readOnly: true}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {memory: 256Mi}
+      volumes:
+        - name: templates
+          configMap: {name: stagd-ingress}
+        # Written by Stagd; the pods wait until it's there.
+        - name: tls
+          secret: {secretName: stagd-ingress-tls}
+        - name: ca
+          configMap: {name: stagd-ingress-ca}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stagd-ingress
+  namespace: stagd-ingress
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: stagd-ingress
+  ports:
+    - {name: https, port: 443, targetPort: https}
