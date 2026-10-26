@@ -303,7 +303,8 @@ func follow(ctx context.Context, cmd *cli.Command, c *api.Clients, id string) er
 		msg := stream.Msg()
 		last = msg.GetPreview()
 
-		if cmd.Bool("json") {
+		// No message: Stagd keeping a quiet stream open.
+		if cmd.Bool("json") || msg.GetMessage() == "" {
 			continue
 		}
 
