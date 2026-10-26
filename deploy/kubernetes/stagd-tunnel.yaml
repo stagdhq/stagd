@@ -39,7 +39,7 @@ spec:
       containers:
         - name: cloudflared
           # Cloudflare supports releases from about the last year: keep it current.
-          image: cloudflare/cloudflared:2026.10.0
+          image: cloudflare/cloudflared:2026.10.4
           args: [tunnel, --no-autoupdate, --metrics, "0.0.0.0:2000", run]
           env:
             - name: TUNNEL_TOKEN
