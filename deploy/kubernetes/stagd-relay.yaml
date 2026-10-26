@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: relay
-          image: ghcr.io/stagdhq/stagd:0.1.0
+          image: ghcr.io/stagdhq/stagd:0.2.0
           # :8081 takes preview traffic from the Cloudflare Tunnel (stagd-tunnel.yaml), when there is one.
           args: [relay, --log-format=json, --http=:8081]
           ports:
