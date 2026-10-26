@@ -1,13 +1,11 @@
 # Preview traffic through a Cloudflare Tunnel: from Stagd's edge to the
-# cluster on Cloudflare's network, rather than through Stagd's server. Apply
-# after stagd-relay.yaml, with the tunnel's token in the stagd-tunnel secret:
+# cluster on Cloudflare's network, rather than through Stagd's server. It
+# comes with `stagd compute install <connection> | kubectl apply -f -` when
+# the connection chooses it, with the tunnel's token in the stagd-tunnel
+# secret. Stagd makes the tunnel, one per cluster.
 #
-#   kubectl -n stagd-system create secret generic stagd-tunnel --from-literal=token=...
-#   kubectl apply -f stagd-tunnel.yaml
-#
-# Stagd makes the tunnel, one per cluster, and its install link brings the
-# secret. cloudflared dials out to Cloudflare's nearest locations, as the
-# relay dials Stagd: nothing in the cluster needs to be reachable. Stagd's
+# cloudflared dials out to Cloudflare's nearest locations, as the relay
+# dials Stagd: nothing in the cluster needs to be reachable. Stagd's
 # edge sends each preview request through the tunnel to the relay, naming
 # the service it's for; the relay checks it's in a stagd-* namespace and
 # proxies it there. Stagd's own traffic (the Kubernetes API) stays on the

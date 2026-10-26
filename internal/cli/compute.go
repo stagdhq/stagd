@@ -15,6 +15,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 
+	"stagd.dev/stagd/deploy/kubernetes"
 	"stagd.dev/stagd/internal/client/api"
 	apiv1 "stagd.dev/stagd/internal/gen/stagd/api/v1"
 	"stagd.dev/stagd/internal/output"
@@ -72,15 +73,29 @@ func computeCommand() *cli.Command {
 			},
 			{
 				Name:      "install",
-				Usage:     "install a connection's relay again: a new token, and how to run it",
+				Usage:     "install a connection's relay: a new token, and what to run",
 				ArgsUsage: nameArg,
-				Description: "For a connection through stagd relay whose install command ran out, or a relay to move.\n" +
-					"The old token stops working: a relay still running with it is cut off.",
+				Description: "For Kubernetes, prints everything the cluster needs, for kubectl:\n\n" +
+					"  stagd compute install <name> | kubectl apply -f -\n\n" +
+					"Stagd's access (its own stagd-* namespaces only), the relay with a new token, and what the\n" +
+					"connection chooses (the builder, the Cloudflare Tunnel). Run it again after changing those.\n" +
+					"For a Docker host, prints the docker run command. Either way the old token stops working:\n" +
+					"a relay still running with it is cut off (with its relay connected, pass --yes).",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "don't ask for confirmation when its relay is connected"},
 					&cli.BoolFlag{Name: "wait", Usage: "wait until the relay connects"},
 				},
 				Action: computeInstall,
+			},
+			{
+				Name:  "uninstall",
+				Usage: "print what removes Stagd from a Kubernetes cluster, for kubectl",
+				Description: "Prints every manifest a Stagd install can bring, without its tokens:\n\n" +
+					"  stagd compute uninstall | kubectl delete --ignore-not-found -f -\n\n" +
+					"removes Stagd's account and rights, the relay, cloudflared, the builder and registry. Run it\n" +
+					"as a cluster admin, after deleting the connection in Stagd (which removes the Cloudflare\n" +
+					"Tunnel Stagd made for it). Stagd deletes a connection only when no previews run on it.",
+				Action: computeUninstall,
 			},
 			{
 				Name:      "default",
@@ -307,10 +322,11 @@ func computeConnect(ctx context.Context, cmd *cli.Command) error {
 
 	if token := created.Msg.GetRelayToken(); token != "" {
 		fmt.Fprintf(w, "Created %s as %q; it works once its relay connects.\n\n", provider.GetName(), conn.GetName())
-		fmt.Fprint(w, relayInstructions(provider.GetProvider(), cmd.String("api-url"), token, created.Msg.GetRelayInstallUrl(), relayImage(cmd.Root().Version)))
+		fmt.Fprint(w, relayInstructions(provider.GetProvider(), cmd.String("api-url"), token, conn.GetName(), relayImage(cmd.Root().Version)))
 
-		if cmd.Bool("wait") {
-			if err := waitForRelay(ctx, cmd, c, conn.GetId()); err != nil {
+		// A cluster's install is its own command, which waits itself.
+		if cmd.Bool("wait") && provider.GetProvider() != apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
+			if err := waitForRelay(ctx, w, c, conn.GetId()); err != nil {
 				return err
 			}
 		}
@@ -504,13 +520,7 @@ func computeDelete(ctx context.Context, cmd *cli.Command) error {
 
 // The commands that remove Stagd's install from a cluster, cluster-wide
 // objects included: Stagd can't, its account only manages stagd-* namespaces.
-const kubeCleanup = `  kubectl delete namespaces -l stagd.dev/managed=true
-  kubectl delete namespace stagd-system
-  kubectl delete clusterrolebinding stagd
-  kubectl delete clusterrole stagd stagd-preview
-  kubectl delete validatingadmissionpolicybinding stagd-namespaces
-  kubectl delete validatingadmissionpolicy stagd-namespaces
-`
+const kubeCleanup = "  stagd compute uninstall | kubectl delete --ignore-not-found -f -\n"
 
 // cleanup is what a deleted connection left on its compute, and how to
 // remove it; Stagd has already removed what it made elsewhere (a cluster's
@@ -519,8 +529,7 @@ func cleanup(provider apiv1.ComputeProvider) string {
 	switch provider {
 	case apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES:
 		return "\nStagd's install is still in the cluster: the relay, cloudflared, the builder and registry, and\n" +
-			"Stagd's account and its rights. To remove them, as a cluster admin (the first line takes any\n" +
-			"preview namespaces left behind):\n\n" + kubeCleanup
+			"Stagd's account and its rights. To remove them, as a cluster admin:\n\n" + kubeCleanup
 
 	case apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER:
 		return "\nThe relay still runs on the Docker host. To remove it:\n\n  docker rm -f stagd-relay\n"
@@ -529,11 +538,16 @@ func cleanup(provider apiv1.ComputeProvider) string {
 	return ""
 }
 
-// relayInstructions is how to run a connection's relay next to its compute.
-// installURL is the server's one-command install for Kubernetes; without it
-// (an older server), the steps one by one.
-func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, installURL, image string) string {
-	const manifests = "https://raw.githubusercontent.com/stagdhq/stagd/main/deploy/kubernetes/"
+// relayInstructions is how to run a connection's relay next to its compute:
+// for a cluster, the install command to pipe to kubectl; for a Docker host,
+// docker run with the token.
+func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, name, image string) string {
+	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
+		return "Install it in the cluster, with kubectl's access to it:\n\n" +
+			"  stagd compute install " + name + " | kubectl apply -f -\n\n" +
+			"Stagd's access (its own stagd-* namespaces only), the relay and its token. --wait waits for\n" +
+			"the relay to connect; `stagd compute list` shows it too.\n"
+	}
 
 	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER {
 		return "Run the relay on the Docker host:\n\n" +
@@ -545,20 +559,7 @@ func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, installU
 			"The token is only shown now. `stagd compute list` shows when the relay is connected.\n"
 	}
 
-	if installURL != "" {
-		return "Install it in the cluster: Stagd's access (its own stagd-* namespaces only), the relay and its token:\n\n" +
-			"  kubectl apply -f " + installURL + "\n\n" +
-			"The link works for an hour, or until the relay connects; running it again is fine.\n" +
-			"`stagd compute list` shows when the relay is connected; `stagd compute install` makes a new command.\n"
-	}
-
-	return "Run the relay in the cluster:\n\n" +
-		"  kubectl apply -f " + manifests + "stagd-access.yaml\n" +
-		"  kubectl -n stagd-system create secret generic stagd-relay \\\n" +
-		"    --from-literal=url=" + stagdURL + " \\\n" +
-		"    --from-literal=token=" + token + "\n" +
-		"  kubectl apply -f " + manifests + "stagd-relay.yaml\n\n" +
-		"The token is only shown now. `stagd compute list` shows when the relay is connected.\n"
+	return ""
 }
 
 // relayImage is the relay's image for this CLI's version: a release runs
@@ -576,8 +577,7 @@ var relayWait = 10 * time.Minute
 
 // waitForRelay waits until a relay connection's relay has connected and the
 // connection works.
-func waitForRelay(ctx context.Context, cmd *cli.Command, c *api.Clients, id string) error {
-	w := cmd.Root().Writer
+func waitForRelay(ctx context.Context, w io.Writer, c *api.Clients, id string) error {
 	fmt.Fprintln(w, "\nWaiting for the relay to connect…")
 
 	ctx, cancel := context.WithTimeout(ctx, relayWait)
@@ -642,23 +642,71 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 
+	w := cmd.Root().Writer
+
+	// A cluster: its manifest on stdout, for kubectl; anything else on stderr.
+	if conn.GetProvider() == apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
+		res, err := c.Compute.CreateInstallManifest(ctx, connect.NewRequest(&apiv1.CreateInstallManifestRequest{Id: conn.GetId()}))
+		if err != nil {
+			return err
+		}
+
+		if _, err := io.WriteString(w, res.Msg.GetManifest()); err != nil {
+			return err
+		}
+
+		if !cmd.Bool("wait") {
+			return nil
+		}
+
+		// kubectl applies once its input ends: end it, then wait.
+		if f, ok := w.(*os.File); ok {
+			f.Close()
+		}
+
+		return waitForRelay(ctx, cmd.Root().ErrWriter, c, conn.GetId())
+	}
+
 	res, err := c.Compute.CreateRelayInstall(ctx, connect.NewRequest(&apiv1.CreateRelayInstallRequest{Id: conn.GetId()}))
 	if err != nil {
 		return err
 	}
-
-	w := cmd.Root().Writer
 
 	if cmd.Bool("json") {
 		return output.JSON(w, res.Msg)
 	}
 
 	fmt.Fprintf(w, "A new relay token for %s; the old one no longer works.\n\n", conn.GetName())
-	fmt.Fprint(w, relayInstructions(conn.GetProvider(), cmd.String("api-url"), res.Msg.GetRelayToken(), res.Msg.GetRelayInstallUrl(), relayImage(cmd.Root().Version)))
+	fmt.Fprint(w, relayInstructions(conn.GetProvider(), cmd.String("api-url"), res.Msg.GetRelayToken(), conn.GetName(), relayImage(cmd.Root().Version)))
 
 	if cmd.Bool("wait") {
-		return waitForRelay(ctx, cmd, c, conn.GetId())
+		return waitForRelay(ctx, w, c, conn.GetId())
 	}
+
+	return nil
+}
+
+// computeUninstall prints every manifest an install can bring, for kubectl
+// delete; it needs no connection, so it works after Stagd forgets it.
+func computeUninstall(_ context.Context, cmd *cli.Command) error {
+	w := cmd.Root().Writer
+
+	for i, name := range kubernetes.Uninstall {
+		raw, err := kubernetes.Files.ReadFile(name)
+		if err != nil {
+			return err
+		}
+
+		if i > 0 {
+			io.WriteString(w, "---\n")
+		}
+
+		if _, err := w.Write(raw); err != nil {
+			return err
+		}
+	}
+
+	fmt.Fprintln(cmd.Root().ErrWriter, "Preview namespaces left behind, if any: kubectl delete namespaces -l stagd.dev/managed=true")
 
 	return nil
 }

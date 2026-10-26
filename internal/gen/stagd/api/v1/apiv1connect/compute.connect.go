@@ -57,6 +57,9 @@ const (
 	// ComputeServiceCreateRelayInstallProcedure is the fully-qualified name of the ComputeService's
 	// CreateRelayInstall RPC.
 	ComputeServiceCreateRelayInstallProcedure = "/stagd.api.v1.ComputeService/CreateRelayInstall"
+	// ComputeServiceCreateInstallManifestProcedure is the fully-qualified name of the ComputeService's
+	// CreateInstallManifest RPC.
+	ComputeServiceCreateInstallManifestProcedure = "/stagd.api.v1.ComputeService/CreateInstallManifest"
 )
 
 // ComputeServiceClient is a client for the stagd.api.v1.ComputeService service.
@@ -77,10 +80,16 @@ type ComputeServiceClient interface {
 	SetDefaultComputeConnection(context.Context, *connect.Request[v1.SetDefaultComputeConnectionRequest]) (*connect.Response[v1.SetDefaultComputeConnectionResponse], error)
 	// DeleteConnection forgets a connection and its credentials.
 	DeleteComputeConnection(context.Context, *connect.Request[v1.DeleteComputeConnectionRequest]) (*connect.Response[v1.DeleteComputeConnectionResponse], error)
-	// CreateRelayInstall makes a relay connection's install again: a new
-	// relay token (the old one stops working, and a relay using it is cut off)
-	// and, for Kubernetes, a new one-hour link for `kubectl apply -f`.
+	// CreateRelayInstall gives a relay connection a new relay token: the old
+	// one stops working, and a relay using it is cut off. For a Docker host's
+	// `docker run`; Kubernetes uses CreateInstallManifest.
 	CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error)
+	// CreateInstallManifest is everything a Kubernetes connection's cluster
+	// needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
+	// relay with a new token (the old one stops working), and what the
+	// connection chooses (the builder, the Cloudflare Tunnel with its token).
+	// The tokens are in the manifest and nowhere else.
+	CreateInstallManifest(context.Context, *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error)
 }
 
 // NewComputeServiceClient constructs a client for the stagd.api.v1.ComputeService service. By
@@ -142,6 +151,12 @@ func NewComputeServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(computeServiceMethods.ByName("CreateRelayInstall")),
 			connect.WithClientOptions(opts...),
 		),
+		createInstallManifest: connect.NewClient[v1.CreateInstallManifestRequest, v1.CreateInstallManifestResponse](
+			httpClient,
+			baseURL+ComputeServiceCreateInstallManifestProcedure,
+			connect.WithSchema(computeServiceMethods.ByName("CreateInstallManifest")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -155,6 +170,7 @@ type computeServiceClient struct {
 	setDefaultComputeConnection *connect.Client[v1.SetDefaultComputeConnectionRequest, v1.SetDefaultComputeConnectionResponse]
 	deleteComputeConnection     *connect.Client[v1.DeleteComputeConnectionRequest, v1.DeleteComputeConnectionResponse]
 	createRelayInstall          *connect.Client[v1.CreateRelayInstallRequest, v1.CreateRelayInstallResponse]
+	createInstallManifest       *connect.Client[v1.CreateInstallManifestRequest, v1.CreateInstallManifestResponse]
 }
 
 // ListProviders calls stagd.api.v1.ComputeService.ListProviders.
@@ -197,6 +213,11 @@ func (c *computeServiceClient) CreateRelayInstall(ctx context.Context, req *conn
 	return c.createRelayInstall.CallUnary(ctx, req)
 }
 
+// CreateInstallManifest calls stagd.api.v1.ComputeService.CreateInstallManifest.
+func (c *computeServiceClient) CreateInstallManifest(ctx context.Context, req *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error) {
+	return c.createInstallManifest.CallUnary(ctx, req)
+}
+
 // ComputeServiceHandler is an implementation of the stagd.api.v1.ComputeService service.
 type ComputeServiceHandler interface {
 	// ListProviders lists the compute providers this Stagd server supports.
@@ -215,10 +236,16 @@ type ComputeServiceHandler interface {
 	SetDefaultComputeConnection(context.Context, *connect.Request[v1.SetDefaultComputeConnectionRequest]) (*connect.Response[v1.SetDefaultComputeConnectionResponse], error)
 	// DeleteConnection forgets a connection and its credentials.
 	DeleteComputeConnection(context.Context, *connect.Request[v1.DeleteComputeConnectionRequest]) (*connect.Response[v1.DeleteComputeConnectionResponse], error)
-	// CreateRelayInstall makes a relay connection's install again: a new
-	// relay token (the old one stops working, and a relay using it is cut off)
-	// and, for Kubernetes, a new one-hour link for `kubectl apply -f`.
+	// CreateRelayInstall gives a relay connection a new relay token: the old
+	// one stops working, and a relay using it is cut off. For a Docker host's
+	// `docker run`; Kubernetes uses CreateInstallManifest.
 	CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error)
+	// CreateInstallManifest is everything a Kubernetes connection's cluster
+	// needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
+	// relay with a new token (the old one stops working), and what the
+	// connection chooses (the builder, the Cloudflare Tunnel with its token).
+	// The tokens are in the manifest and nowhere else.
+	CreateInstallManifest(context.Context, *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error)
 }
 
 // NewComputeServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -276,6 +303,12 @@ func NewComputeServiceHandler(svc ComputeServiceHandler, opts ...connect.Handler
 		connect.WithSchema(computeServiceMethods.ByName("CreateRelayInstall")),
 		connect.WithHandlerOptions(opts...),
 	)
+	computeServiceCreateInstallManifestHandler := connect.NewUnaryHandler(
+		ComputeServiceCreateInstallManifestProcedure,
+		svc.CreateInstallManifest,
+		connect.WithSchema(computeServiceMethods.ByName("CreateInstallManifest")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.ComputeService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ComputeServiceListProvidersProcedure:
@@ -294,6 +327,8 @@ func NewComputeServiceHandler(svc ComputeServiceHandler, opts ...connect.Handler
 			computeServiceDeleteComputeConnectionHandler.ServeHTTP(w, r)
 		case ComputeServiceCreateRelayInstallProcedure:
 			computeServiceCreateRelayInstallHandler.ServeHTTP(w, r)
+		case ComputeServiceCreateInstallManifestProcedure:
+			computeServiceCreateInstallManifestHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -333,4 +368,8 @@ func (UnimplementedComputeServiceHandler) DeleteComputeConnection(context.Contex
 
 func (UnimplementedComputeServiceHandler) CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ComputeService.CreateRelayInstall is not implemented"))
+}
+
+func (UnimplementedComputeServiceHandler) CreateInstallManifest(context.Context, *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ComputeService.CreateInstallManifest is not implemented"))
 }

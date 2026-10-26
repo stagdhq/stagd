@@ -38,7 +38,7 @@ stagd activity
 
 `stagd relay` runs next to compute Stagd can't reach, and dials out to it: Stagd manages the compute and sends preview traffic through that one connection, so nothing next to the relay needs to be reachable from outside.
 
-- **Kubernetes:** `deploy/kubernetes/stagd-access.yaml` makes Stagd's service account, kept to `stagd-*` namespaces by an admission policy; `stagd-relay.yaml` runs the relay as it. The relay only connects Stagd to services in `stagd-*` namespaces. `stagd compute connect kubernetes` (or the dashboard) prints one `kubectl apply -f <link>` that installs both with the relay's token; `stagd compute install <name>` makes a new one, and `--wait` waits for the relay to connect. The link also brings, as the connection chooses: `stagd-build.yaml`, a shared BuildKit daemon and a registry for building in the cluster; and `stagd-tunnel.yaml`, a Cloudflare Tunnel Stagd makes for the cluster, so preview traffic goes from Stagd's edge to the relay on Cloudflare's network rather than through Stagd's server (the relay takes it on `--http`).
+- **Kubernetes:** `deploy/kubernetes/stagd-access.yaml` makes Stagd's service account, kept to `stagd-*` namespaces by an admission policy; `stagd-relay.yaml` runs the relay as it. The relay only connects Stagd to services in `stagd-*` namespaces. `stagd compute install <name> | kubectl apply -f -` installs both with a new relay token: the CLI asks Stagd for the cluster's manifest and prints it, so there's no link and the token is only ever in the pipe; `--wait` waits for the relay to connect. The manifest also brings, as the connection chooses: `stagd-build.yaml`, a shared BuildKit daemon and a registry for building in the cluster; and `stagd-tunnel.yaml`, a Cloudflare Tunnel Stagd makes for the cluster, so preview traffic goes from Stagd's edge to the relay on Cloudflare's network rather than through Stagd's server (the relay takes it on `--http`).
 - **Docker:** run it on the host with the Docker socket. Whoever reaches the Docker API controls the host: use a host meant for previews.
 
 ```bash
@@ -50,16 +50,13 @@ docker run -d --name stagd-relay --restart unless-stopped \
 
 ## Removing Stagd from a cluster
 
-Deleting a Kubernetes connection in Stagd removes what Stagd made outside the cluster (its Cloudflare Tunnel and DNS record), and Stagd refuses while previews still run on it. What the install command put in the cluster stays: Stagd's account may only manage `stagd-*` namespaces, so removing its own rights is the cluster's admins' job. `stagd compute delete` prints the same:
+Deleting a Kubernetes connection in Stagd removes what Stagd made outside the cluster (its Cloudflare Tunnel and DNS record), and Stagd refuses while previews still run on it. What the install put in the cluster stays: Stagd's account may only manage `stagd-*` namespaces, so removing its own rights is the cluster's admins' job. As a cluster admin:
 
 ```sh
-kubectl delete namespaces -l stagd.dev/managed=true   # previews left behind, if any
-kubectl delete namespace stagd-system                 # the relay, cloudflared, the builder and registry, their volumes
-kubectl delete clusterrolebinding stagd
-kubectl delete clusterrole stagd stagd-preview
-kubectl delete validatingadmissionpolicybinding stagd-namespaces
-kubectl delete validatingadmissionpolicy stagd-namespaces
+stagd compute uninstall | kubectl delete --ignore-not-found -f -
 ```
+
+It prints every manifest an install can bring (Stagd's account and rights, the relay, cloudflared, the builder and registry), without tokens, and needs no connection. Preview namespaces Stagd left behind, if any: `kubectl delete namespaces -l stagd.dev/managed=true`.
 
 On a Docker host: `docker rm -f stagd-relay`.
 

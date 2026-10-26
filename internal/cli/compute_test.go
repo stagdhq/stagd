@@ -140,7 +140,7 @@ func TestComputeListAndDeleteByName(t *testing.T) {
 func TestComputeCleanup(t *testing.T) {
 	kube := cleanup(apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES)
 
-	for _, want := range []string{"kubectl delete namespaces -l stagd.dev/managed=true", "kubectl delete namespace stagd-system", "kubectl delete clusterrole stagd stagd-preview", "kubectl delete validatingadmissionpolicy stagd-namespaces"} {
+	for _, want := range []string{"stagd compute uninstall | kubectl delete --ignore-not-found -f -"} {
 		if !strings.Contains(kube, want) {
 			t.Errorf("kubernetes: no %q in\n%s", want, kube)
 		}
@@ -179,8 +179,8 @@ func TestComputeUpdateSendsOnlyWhatChanged(t *testing.T) {
 	}
 }
 
-// fakeRelayed is a Kubernetes connection through the relay: made with an
-// install link, and given a new token by install, whose relay then connects.
+// fakeRelayed is a Kubernetes connection through the relay, whose install
+// manifest has a new token, and whose relay then connects.
 type fakeRelayed struct {
 	fakeCompute
 	installed string
@@ -202,13 +202,15 @@ func (f *fakeRelayed) ListProviders(context.Context, *connect.Request[apiv1.List
 func (f *fakeRelayed) CreateComputeConnection(_ context.Context, req *connect.Request[apiv1.CreateComputeConnectionRequest]) (*connect.Response[apiv1.CreateComputeConnectionResponse], error) {
 	f.created = req.Msg
 
-	return connect.NewResponse(&apiv1.CreateComputeConnectionResponse{Connection: relayConn, RelayToken: "stagd_relay.secret", RelayInstallUrl: "https://app.stagd.dev/relay/kubernetes/abc"}), nil
+	return connect.NewResponse(&apiv1.CreateComputeConnectionResponse{Connection: relayConn, RelayToken: "stagd_relay.secret"}), nil
 }
 
-func (f *fakeRelayed) CreateRelayInstall(_ context.Context, req *connect.Request[apiv1.CreateRelayInstallRequest]) (*connect.Response[apiv1.CreateRelayInstallResponse], error) {
+const fakeManifest = "apiVersion: v1\nkind: Secret\nmetadata:\n  name: stagd-relay\nstringData:\n  token: \"stagd_relay.new\"\n"
+
+func (f *fakeRelayed) CreateInstallManifest(_ context.Context, req *connect.Request[apiv1.CreateInstallManifestRequest]) (*connect.Response[apiv1.CreateInstallManifestResponse], error) {
 	f.installed = req.Msg.GetId()
 
-	return connect.NewResponse(&apiv1.CreateRelayInstallResponse{RelayToken: "stagd_relay.new", RelayInstallUrl: "https://app.stagd.dev/relay/kubernetes/def"}), nil
+	return connect.NewResponse(&apiv1.CreateInstallManifestResponse{Manifest: fakeManifest}), nil
 }
 
 // The relay connects on the third look.
@@ -234,42 +236,58 @@ func relayedServer(t *testing.T, f *fakeRelayed) *httptest.Server {
 	return srv
 }
 
-// Connecting Kubernetes prints one kubectl apply, with the link and not the
-// token, and --wait waits until the relay has connected.
+// Connecting Kubernetes says to pipe its install to kubectl; it never
+// prints the token.
 func TestComputeConnectKubernetesPrintsTheInstall(t *testing.T) {
+	f := &fakeRelayed{}
+	srv := relayedServer(t, f)
+
+	out, err := run(t, srv, "--token", "tok-1", "compute", "connect", "kubernetes", "--name", "cluster")
+	if err != nil {
+		t.Fatalf("connect: %v\n%s", err, out)
+	}
+
+	if !strings.Contains(out, "stagd compute install cluster | kubectl apply -f -") || strings.Contains(out, "stagd_relay.secret") {
+		t.Errorf("want the install command, not the token:\n%s", out)
+	}
+}
+
+// install prints the cluster's manifest and nothing else, for kubectl; a
+// waiting connection needs no confirmation; --wait waits on stderr, after
+// stdout ends.
+func TestComputeInstallPrintsTheManifest(t *testing.T) {
 	relayPoll = 10 * time.Millisecond
 	t.Cleanup(func() { relayPoll = 2 * time.Second })
 
 	f := &fakeRelayed{}
 	srv := relayedServer(t, f)
 
-	out, err := run(t, srv, "--token", "tok-1", "compute", "connect", "kubernetes", "--name", "cluster", "--wait")
-	if err != nil {
-		t.Fatalf("connect: %v\n%s", err, out)
+	out, err := run(t, srv, "--token", "tok-1", "compute", "install", "cluster")
+	if err != nil || f.installed != "cc-k8s" || out != fakeManifest {
+		t.Fatalf("install: %v, installed %q:\n%s", err, f.installed, out)
 	}
 
-	if !strings.Contains(out, "kubectl apply -f https://app.stagd.dev/relay/kubernetes/abc") || strings.Contains(out, "stagd_relay.secret") {
-		t.Errorf("want the install link, not the token:\n%s", out)
-	}
-
-	if !strings.Contains(out, "Connected: v1.31.2 · 3 nodes") {
-		t.Errorf("--wait didn't wait for the relay:\n%s", out)
+	if out, err := run(t, srv, "--token", "tok-1", "compute", "install", "cluster", "--wait"); err != nil || out != fakeManifest || f.looks < 3 {
+		t.Fatalf("install --wait: %v, looked %d times:\n%s", err, f.looks, out)
 	}
 }
 
-// install makes a new token and command for a connection; a waiting one
-// needs no confirmation.
-func TestComputeInstallAgain(t *testing.T) {
-	f := &fakeRelayed{}
-	srv := relayedServer(t, f)
-
-	out, err := run(t, srv, "--token", "tok-1", "compute", "install", "cluster")
+// uninstall prints every manifest an install can bring, without tokens,
+// for kubectl delete: Stagd's access and rights included.
+func TestComputeUninstall(t *testing.T) {
+	out, err := run(t, httptest.NewServer(http.NotFoundHandler()), "compute", "uninstall")
 	if err != nil {
-		t.Fatalf("install: %v\n%s", err, out)
+		t.Fatal(err)
 	}
 
-	if f.installed != "cc-k8s" || !strings.Contains(out, "kubectl apply -f https://app.stagd.dev/relay/kubernetes/def") || !strings.Contains(out, "the old one no longer works") {
-		t.Errorf("installed %q:\n%s", f.installed, out)
+	for _, want := range []string{"kind: ValidatingAdmissionPolicy", "name: stagd-namespaces", "kind: ClusterRole", "name: stagd-system", "name: stagd-relay", "name: stagd-tunnel", "name: stagd-buildkitd", "\n---\n"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("no %q", want)
+		}
+	}
+
+	if strings.Contains(out, "stringData") || strings.Contains(out, "stagd_relay.") {
+		t.Errorf("a token in the uninstall:\n%s", out)
 	}
 }
 

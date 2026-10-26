@@ -1,11 +1,9 @@
 # The relay: connects the cluster to Stagd from the inside, so neither the
-# API server nor an ingress needs to be reachable. Apply stagd-access.yaml
-# first (the relay runs as its service account), then make the secret with
-# the URL of your Stagd and the compute connection's relay token:
+# API server nor an ingress needs to be reachable. It runs as Stagd's
+# service account (stagd-access.yaml), with Stagd's URL and the connection's
+# relay token in the stagd-relay secret. All of it comes with
 #
-#   kubectl -n stagd-system create secret generic stagd-relay \
-#     --from-literal=url=https://stagd.example.com --from-literal=token=stagd_relay....
-#   kubectl apply -f stagd-relay.yaml
+#   stagd compute install <connection> | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:

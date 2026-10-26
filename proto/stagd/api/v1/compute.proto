@@ -32,10 +32,16 @@ service ComputeService {
   rpc SetDefaultComputeConnection(SetDefaultComputeConnectionRequest) returns (SetDefaultComputeConnectionResponse);
   // DeleteConnection forgets a connection and its credentials.
   rpc DeleteComputeConnection(DeleteComputeConnectionRequest) returns (DeleteComputeConnectionResponse);
-  // CreateRelayInstall makes a relay connection's install again: a new
-  // relay token (the old one stops working, and a relay using it is cut off)
-  // and, for Kubernetes, a new one-hour link for `kubectl apply -f`.
+  // CreateRelayInstall gives a relay connection a new relay token: the old
+  // one stops working, and a relay using it is cut off. For a Docker host's
+  // `docker run`; Kubernetes uses CreateInstallManifest.
   rpc CreateRelayInstall(CreateRelayInstallRequest) returns (CreateRelayInstallResponse);
+  // CreateInstallManifest is everything a Kubernetes connection's cluster
+  // needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
+  // relay with a new token (the old one stops working), and what the
+  // connection chooses (the builder, the Cloudflare Tunnel with its token).
+  // The tokens are in the manifest and nowhere else.
+  rpc CreateInstallManifest(CreateInstallManifestRequest) returns (CreateInstallManifestResponse);
 }
 
 enum ComputeProvider {
@@ -177,12 +183,10 @@ message CreateComputeConnectionResponse {
   // For a connection through `stagd relay`: the token the relay connects
   // with. Only ever shown here; Stagd keeps a hash.
   string relay_token = 2;
-  // For a Kubernetes connection through the relay: everything the cluster
-  // needs (Stagd's access, the relay and its token) as one manifest, for
-  // `kubectl apply -f <url>`. The link works for an hour, or until the relay
-  // first connects; the token isn't in the URL.
-  string relay_install_url = 3;
-  google.protobuf.Timestamp relay_install_expire_time = 4;
+  // Never set: a Kubernetes cluster's install is CreateInstallManifest's
+  // manifest, piped to kubectl, not a link.
+  string relay_install_url = 3 [deprecated = true];
+  google.protobuf.Timestamp relay_install_expire_time = 4 [deprecated = true];
 }
 
 message ListComputeConnectionsRequest {}
@@ -230,7 +234,17 @@ message CreateRelayInstallRequest {
 message CreateRelayInstallResponse {
   // The new token the relay connects with. Only ever shown here.
   string relay_token = 1;
-  // For Kubernetes: everything the cluster needs, for `kubectl apply -f <url>`.
-  string relay_install_url = 2;
-  google.protobuf.Timestamp relay_install_expire_time = 3;
+  // Never set: Kubernetes uses CreateInstallManifest.
+  string relay_install_url = 2 [deprecated = true];
+  google.protobuf.Timestamp relay_install_expire_time = 3 [deprecated = true];
+}
+
+message CreateInstallManifestRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message CreateInstallManifestResponse {
+  // Multi-document YAML, for `kubectl apply -f -`. It holds the new relay
+  // token (and the tunnel's): print it, pipe it, don't keep it around.
+  string manifest = 1;
 }
