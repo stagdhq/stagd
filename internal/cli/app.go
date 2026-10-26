@@ -54,6 +54,7 @@ func New(version string) *cli.Command {
 			validateCommand(),
 			relayCommand(version),
 			versionCommand(version),
+			updateCommand(),
 		},
 	}
 }

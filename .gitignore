@@ -3,3 +3,4 @@
 /.task/
 /.env.local
 /.claude/settings.local.json
+dist/

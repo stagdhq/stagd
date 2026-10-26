@@ -1,0 +1,63 @@
+# A release, on a v* tag: stagd for macOS and Linux (amd64, arm64),
+# install.sh and checksums.txt, attached to the tag's GitHub release (go
+# tool task dist), then the Homebrew formula in stagdhq/homebrew-tap.
+# curl -fsSL https://stagd.dev/install.sh | bash, brew install
+# stagdhq/tap/stagd and stagd update all install from here.
+#
+# Needs secrets.HOMEBREW_TAP_TOKEN, a fine-grained token with Contents:
+# write on stagdhq/homebrew-tap; without it, the formula isn't updated.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # git describe names the version.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: go tool task dist
+
+      - name: The GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+
+      - name: The Homebrew formula
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::warning::no HOMEBREW_TAP_TOKEN: the formula in stagdhq/homebrew-tap stays as it was"
+            exit 0
+          fi
+
+          git clone "https://x-access-token:$TAP_TOKEN@github.com/stagdhq/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+          scripts/homebrew.sh "$GITHUB_REF_NAME" dist/checksums.txt > tap/Formula/stagd.rb
+
+          cd tap
+          git config user.name "stagd release"
+          git config user.email "release@stagd.dev"
+          git add Formula/stagd.rb
+          git commit -m "stagd $GITHUB_REF_NAME"
+          git push

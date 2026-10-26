@@ -14,10 +14,17 @@ Stagd itself is hosted at [app.stagd.dev](https://app.stagd.dev).
 ## Install
 
 ```bash
+curl -fsSL https://stagd.dev/install.sh | bash
+```
+
+It downloads the latest release for your machine (macOS or Linux, amd64 or arm64), checks it against the release's checksums, and puts `stagd` in `~/.local/bin` (`STAGD_INSTALL_DIR` for elsewhere, `STAGD_VERSION` for another release). Or with Homebrew, or Go:
+
+```bash
+brew install stagdhq/tap/stagd
 go install github.com/stagdhq/stagd/cmd/stagd@latest
 ```
 
-Release binaries come later. The relay runs from the image `ghcr.io/stagdhq/stagd`.
+`stagd update` updates it in place, the same way (Homebrew: `brew upgrade stagd`); `stagd update --check` only says whether there's a newer release. The relay runs from the image `ghcr.io/stagdhq/stagd`.
 
 ## Get started
 
@@ -81,6 +88,7 @@ go tool task build      # bin/stagd
 go tool task check      # what CI runs: protos, formatting, vet, tests
 go tool task generate   # internal/gen from proto/ (needs buf)
 go tool task image      # the image, as stagd:local
+go tool task dist       # release files into dist/, as a v* tag publishes them
 ```
 
 ```
@@ -95,7 +103,7 @@ proto/              the stagd.api.v1 contract (Buf)
 deploy/kubernetes/  what a cluster gets
 ```
 
-The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. Contract changes are checked for breaking changes against what's published.
+The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. A `v*` tag also makes the GitHub release, with the binaries, `install.sh` and `checksums.txt`, and updates the Homebrew formula in [stagdhq/homebrew-tap](https://github.com/stagdhq/homebrew-tap). Contract changes are checked for breaking changes against what's published.
 
 ## Security
 
