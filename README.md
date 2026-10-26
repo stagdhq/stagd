@@ -48,6 +48,21 @@ docker run -d --name stagd-relay --restart unless-stopped \
   ghcr.io/stagdhq/stagd:latest relay
 ```
 
+## Removing Stagd from a cluster
+
+Deleting a Kubernetes connection in Stagd removes what Stagd made outside the cluster (its Cloudflare Tunnel and DNS record), and Stagd refuses while previews still run on it. What the install command put in the cluster stays: Stagd's account may only manage `stagd-*` namespaces, so removing its own rights is the cluster's admins' job. `stagd compute delete` prints the same:
+
+```sh
+kubectl delete namespaces -l stagd.dev/managed=true   # previews left behind, if any
+kubectl delete namespace stagd-system                 # the relay, cloudflared, the builder and registry, their volumes
+kubectl delete clusterrolebinding stagd
+kubectl delete clusterrole stagd stagd-preview
+kubectl delete validatingadmissionpolicybinding stagd-namespaces
+kubectl delete validatingadmissionpolicy stagd-namespaces
+```
+
+On a Docker host: `docker rm -f stagd-relay`.
+
 ## Develop
 
 Go only: `go tool task <name>` (Task is pinned in go.mod). `buf` regenerates `internal/gen` from `proto/`.

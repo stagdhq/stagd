@@ -130,8 +130,28 @@ func TestComputeListAndDeleteByName(t *testing.T) {
 		t.Fatalf("providers: %v\n%s", err, out)
 	}
 
-	if _, err := run(t, srv, "--token", "tok-1", "compute", "delete", "--yes", "fake"); err != nil || f.deleted != "cc-1" {
-		t.Fatalf("delete: %v, deleted %q", err, f.deleted)
+	if out, err := run(t, srv, "--token", "tok-1", "compute", "delete", "--yes", "fake"); err != nil || f.deleted != "cc-1" || out != "Deleted fake.\n" {
+		t.Fatalf("delete: %v, deleted %q\n%s", err, f.deleted, out)
+	}
+}
+
+// After deleting, what's left on the compute and how to remove it: in a
+// cluster, Stagd's install, cluster-wide rights too; on a Docker host, the relay.
+func TestComputeCleanup(t *testing.T) {
+	kube := cleanup(apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES)
+
+	for _, want := range []string{"kubectl delete namespaces -l stagd.dev/managed=true", "kubectl delete namespace stagd-system", "kubectl delete clusterrole stagd stagd-preview", "kubectl delete validatingadmissionpolicy stagd-namespaces"} {
+		if !strings.Contains(kube, want) {
+			t.Errorf("kubernetes: no %q in\n%s", want, kube)
+		}
+	}
+
+	if docker := cleanup(apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER); !strings.Contains(docker, "docker rm -f stagd-relay") {
+		t.Errorf("docker: %s", docker)
+	}
+
+	if cleanup(apiv1.ComputeProvider_COMPUTE_PROVIDER_NAMESPACE) != "" {
+		t.Error("namespace: Stagd's instances go with their previews")
 	}
 }
 

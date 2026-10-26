@@ -479,7 +479,7 @@ func computeDelete(ctx context.Context, cmd *cli.Command) error {
 		confirmed := false
 		form := huh.NewForm(huh.NewGroup(huh.NewConfirm().
 			Title(fmt.Sprintf("Delete %s?", conn.GetName())).
-			Description("Stagd forgets its credentials. Previews running on it keep running until they're torn down.").
+			Description("Stagd forgets it and its credentials; while previews still run on it, it can't be deleted. What it installed on the compute stays, for you to remove.").
 			Affirmative("Delete").
 			Negative("Cancel").
 			Value(&confirmed)))
@@ -497,9 +497,36 @@ func computeDelete(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(cmd.Root().Writer, "Deleted %s.\n", conn.GetName())
+	_, err = fmt.Fprintf(cmd.Root().Writer, "Deleted %s.\n%s", conn.GetName(), cleanup(conn.GetProvider()))
 
 	return err
+}
+
+// The commands that remove Stagd's install from a cluster, cluster-wide
+// objects included: Stagd can't, its account only manages stagd-* namespaces.
+const kubeCleanup = `  kubectl delete namespaces -l stagd.dev/managed=true
+  kubectl delete namespace stagd-system
+  kubectl delete clusterrolebinding stagd
+  kubectl delete clusterrole stagd stagd-preview
+  kubectl delete validatingadmissionpolicybinding stagd-namespaces
+  kubectl delete validatingadmissionpolicy stagd-namespaces
+`
+
+// cleanup is what a deleted connection left on its compute, and how to
+// remove it; Stagd has already removed what it made elsewhere (a cluster's
+// Cloudflare Tunnel).
+func cleanup(provider apiv1.ComputeProvider) string {
+	switch provider {
+	case apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES:
+		return "\nStagd's install is still in the cluster: the relay, cloudflared, the builder and registry, and\n" +
+			"Stagd's account and its rights. To remove them, as a cluster admin (the first line takes any\n" +
+			"preview namespaces left behind):\n\n" + kubeCleanup
+
+	case apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER:
+		return "\nThe relay still runs on the Docker host. To remove it:\n\n  docker rm -f stagd-relay\n"
+	}
+
+	return ""
 }
 
 // relayInstructions is how to run a connection's relay next to its compute.
