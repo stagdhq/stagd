@@ -9,7 +9,7 @@ managed:
     - module: buf.build/bufbuild/protovalidate
   override:
     - file_option: go_package_prefix
-      value: stagd.dev/stagd/internal/gen
+      value: github.com/stagdhq/stagd/internal/gen
 plugins:
   - local: ["go", "tool", "protoc-gen-go"]
     out: internal/gen

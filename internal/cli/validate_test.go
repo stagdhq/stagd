@@ -11,8 +11,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	apiv1 "stagd.dev/stagd/internal/gen/stagd/api/v1"
-	"stagd.dev/stagd/internal/gen/stagd/api/v1/apiv1connect"
+	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
+	"github.com/stagdhq/stagd/internal/gen/stagd/api/v1/apiv1connect"
 )
 
 // fakeValidator asks once for deploy/compose.yaml, like the server does when

@@ -8,8 +8,8 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
+	v1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
 	http "net/http"
-	v1 "stagd.dev/stagd/internal/gen/stagd/api/v1"
 	strings "strings"
 )
 

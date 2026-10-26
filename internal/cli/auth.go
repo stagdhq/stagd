@@ -11,7 +11,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	"stagd.dev/stagd/internal/client/auth"
+	"github.com/stagdhq/stagd/internal/client/auth"
 )
 
 // store is where tokens live; replaced in tests.

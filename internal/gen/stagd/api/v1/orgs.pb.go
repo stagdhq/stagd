@@ -1642,8 +1642,8 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\fRevokeInvite\x12!.stagd.api.v1.RevokeInviteRequest\x1a\".stagd.api.v1.RevokeInviteResponse\x12X\n" +
 	"\rGetInviteLink\x12\".stagd.api.v1.GetInviteLinkRequest\x1a#.stagd.api.v1.GetInviteLinkResponse\x12^\n" +
 	"\x0fResetInviteLink\x12$.stagd.api.v1.ResetInviteLinkRequest\x1a%.stagd.api.v1.ResetInviteLinkResponse\x12d\n" +
-	"\x11DisableInviteLink\x12&.stagd.api.v1.DisableInviteLinkRequest\x1a'.stagd.api.v1.DisableInviteLinkResponseB\xa0\x01\n" +
-	"\x10com.stagd.api.v1B\tOrgsProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\x11DisableInviteLink\x12&.stagd.api.v1.DisableInviteLinkRequest\x1a'.stagd.api.v1.DisableInviteLinkResponseB\xa9\x01\n" +
+	"\x10com.stagd.api.v1B\tOrgsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_orgs_proto_rawDescOnce sync.Once

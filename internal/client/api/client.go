@@ -9,7 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"stagd.dev/stagd/internal/gen/stagd/api/v1/apiv1connect"
+	"github.com/stagdhq/stagd/internal/gen/stagd/api/v1/apiv1connect"
 )
 
 // Config says where the API is and who is calling.

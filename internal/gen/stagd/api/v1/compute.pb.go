@@ -1691,8 +1691,8 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x1bSetDefaultComputeConnection\x120.stagd.api.v1.SetDefaultComputeConnectionRequest\x1a1.stagd.api.v1.SetDefaultComputeConnectionResponse\x12v\n" +
 	"\x17DeleteComputeConnection\x12,.stagd.api.v1.DeleteComputeConnectionRequest\x1a-.stagd.api.v1.DeleteComputeConnectionResponse\x12g\n" +
 	"\x12CreateRelayInstall\x12'.stagd.api.v1.CreateRelayInstallRequest\x1a(.stagd.api.v1.CreateRelayInstallResponse\x12p\n" +
-	"\x15CreateInstallManifest\x12*.stagd.api.v1.CreateInstallManifestRequest\x1a+.stagd.api.v1.CreateInstallManifestResponseB\xa3\x01\n" +
-	"\x10com.stagd.api.v1B\fComputeProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\x15CreateInstallManifest\x12*.stagd.api.v1.CreateInstallManifestRequest\x1a+.stagd.api.v1.CreateInstallManifestResponseB\xac\x01\n" +
+	"\x10com.stagd.api.v1B\fComputeProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_compute_proto_rawDescOnce sync.Once

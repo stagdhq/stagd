@@ -987,8 +987,8 @@ const file_stagd_api_v1_scm_proto_rawDesc = "" +
 	"\x10DeleteConnection\x12%.stagd.api.v1.DeleteConnectionRequest\x1a&.stagd.api.v1.DeleteConnectionResponse\x12a\n" +
 	"\x10ListRepositories\x12%.stagd.api.v1.ListRepositoriesRequest\x1a&.stagd.api.v1.ListRepositoriesResponse\x12g\n" +
 	"\x12SetPreviewsEnabled\x12'.stagd.api.v1.SetPreviewsEnabledRequest\x1a(.stagd.api.v1.SetPreviewsEnabledResponse\x12^\n" +
-	"\x0fCheckRepository\x12$.stagd.api.v1.CheckRepositoryRequest\x1a%.stagd.api.v1.CheckRepositoryResponseB\x9f\x01\n" +
-	"\x10com.stagd.api.v1B\bScmProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\x0fCheckRepository\x12$.stagd.api.v1.CheckRepositoryRequest\x1a%.stagd.api.v1.CheckRepositoryResponseB\xa8\x01\n" +
+	"\x10com.stagd.api.v1B\bScmProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_scm_proto_rawDescOnce sync.Once

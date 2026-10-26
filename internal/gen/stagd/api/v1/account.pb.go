@@ -896,8 +896,8 @@ const file_stagd_api_v1_account_proto_rawDesc = "" +
 	"\x11UpdatePreferences\x12&.stagd.api.v1.UpdatePreferencesRequest\x1a'.stagd.api.v1.UpdatePreferencesResponse\x12U\n" +
 	"\fListSessions\x12!.stagd.api.v1.ListSessionsRequest\x1a\".stagd.api.v1.ListSessionsResponse\x12X\n" +
 	"\rRevokeSession\x12\".stagd.api.v1.RevokeSessionRequest\x1a#.stagd.api.v1.RevokeSessionResponse\x12j\n" +
-	"\x13RevokeOtherSessions\x12(.stagd.api.v1.RevokeOtherSessionsRequest\x1a).stagd.api.v1.RevokeOtherSessionsResponseB\xa3\x01\n" +
-	"\x10com.stagd.api.v1B\fAccountProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\x13RevokeOtherSessions\x12(.stagd.api.v1.RevokeOtherSessionsRequest\x1a).stagd.api.v1.RevokeOtherSessionsResponseB\xac\x01\n" +
+	"\x10com.stagd.api.v1B\fAccountProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_account_proto_rawDescOnce sync.Once

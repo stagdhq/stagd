@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"stagd.dev/stagd/internal/cli"
+	"github.com/stagdhq/stagd/internal/cli"
 )
 
 // Set at build time: -ldflags "-X main.version=v0.1.0".

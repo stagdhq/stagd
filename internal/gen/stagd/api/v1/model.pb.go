@@ -771,9 +771,9 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\x13SCM_PROVIDER_GITHUB\x10\x01\x12\x17\n" +
 	"\x13SCM_PROVIDER_GITLAB\x10\x02\x12\x1a\n" +
 	"\x16SCM_PROVIDER_BITBUCKET\x10\x03\x12\x18\n" +
-	"\x14SCM_PROVIDER_GENERIC\x10\x04B\xa1\x01\n" +
+	"\x14SCM_PROVIDER_GENERIC\x10\x04B\xaa\x01\n" +
 	"\x10com.stagd.api.v1B\n" +
-	"ModelProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"ModelProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_model_proto_rawDescOnce sync.Once

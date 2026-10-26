@@ -208,8 +208,8 @@ const file_stagd_api_v1_events_proto_rawDesc = "" +
 	"\x17CHANGE_KIND_INTEGRATION\x10\a\x12\x16\n" +
 	"\x12CHANGE_KIND_POLICY\x10\b2d\n" +
 	"\fEventService\x12T\n" +
-	"\vWatchEvents\x12 .stagd.api.v1.WatchEventsRequest\x1a!.stagd.api.v1.WatchEventsResponse0\x01B\xa2\x01\n" +
-	"\x10com.stagd.api.v1B\vEventsProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\vWatchEvents\x12 .stagd.api.v1.WatchEventsRequest\x1a!.stagd.api.v1.WatchEventsResponse0\x01B\xab\x01\n" +
+	"\x10com.stagd.api.v1B\vEventsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_events_proto_rawDescOnce sync.Once

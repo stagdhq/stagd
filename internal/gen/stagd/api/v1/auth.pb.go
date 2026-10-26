@@ -150,8 +150,8 @@ const file_stagd_api_v1_auth_proto_rawDesc = "" +
 	"\vpreferences\x18\x04 \x01(\v2\x19.stagd.api.v1.PreferencesR\vpreferences\x12$\n" +
 	"\x0ecan_create_org\x18\x05 \x01(\bR\fcanCreateOrg2O\n" +
 	"\vAuthService\x12@\n" +
-	"\x05GetMe\x12\x1a.stagd.api.v1.GetMeRequest\x1a\x1b.stagd.api.v1.GetMeResponseB\xa0\x01\n" +
-	"\x10com.stagd.api.v1B\tAuthProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\x05GetMe\x12\x1a.stagd.api.v1.GetMeRequest\x1a\x1b.stagd.api.v1.GetMeResponseB\xa9\x01\n" +
+	"\x10com.stagd.api.v1B\tAuthProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_auth_proto_rawDescOnce sync.Once

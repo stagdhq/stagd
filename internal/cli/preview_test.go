@@ -9,8 +9,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	apiv1 "stagd.dev/stagd/internal/gen/stagd/api/v1"
-	"stagd.dev/stagd/internal/gen/stagd/api/v1/apiv1connect"
+	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
+	"github.com/stagdhq/stagd/internal/gen/stagd/api/v1/apiv1connect"
 )
 
 // fakePreviews streams `steps` on watch and records what it was asked.

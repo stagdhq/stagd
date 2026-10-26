@@ -12,8 +12,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 
-	apiv1 "stagd.dev/stagd/internal/gen/stagd/api/v1"
-	"stagd.dev/stagd/internal/gen/stagd/api/v1/apiv1connect"
+	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
+	"github.com/stagdhq/stagd/internal/gen/stagd/api/v1/apiv1connect"
 )
 
 // fakeAuth answers GetMe for the token "tok-1".

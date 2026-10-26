@@ -253,8 +253,8 @@ const file_stagd_api_v1_activity_proto_rawDesc = "" +
 	"\bactivity\x18\x01 \x03(\v2\x16.stagd.api.v1.ActivityR\bactivity\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2h\n" +
 	"\x0fActivityService\x12U\n" +
-	"\fListActivity\x12!.stagd.api.v1.ListActivityRequest\x1a\".stagd.api.v1.ListActivityResponseB\xa4\x01\n" +
-	"\x10com.stagd.api.v1B\rActivityProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\fListActivity\x12!.stagd.api.v1.ListActivityRequest\x1a\".stagd.api.v1.ListActivityResponseB\xad\x01\n" +
+	"\x10com.stagd.api.v1B\rActivityProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_activity_proto_rawDescOnce sync.Once

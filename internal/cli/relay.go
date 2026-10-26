@@ -10,7 +10,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	"stagd.dev/stagd/internal/relay"
+	"github.com/stagdhq/stagd/internal/relay"
 )
 
 func relayCommand(version string) *cli.Command {

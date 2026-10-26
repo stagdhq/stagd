@@ -1,4 +1,4 @@
-module stagd.dev/stagd
+module github.com/stagdhq/stagd
 
 go 1.27.1
 

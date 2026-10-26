@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"stagd.dev/stagd/internal/client/auth"
+	"github.com/stagdhq/stagd/internal/client/auth"
 )
 
 // Tests never touch the real keychain or ~/.config.

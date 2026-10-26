@@ -2,6 +2,14 @@
 
 The command line for [Stagd](https://stagd.dev): live, seeded previews of every pull request, on your own compute. It talks to a Stagd server over its API (`proto/`), and runs `stagd relay`, Stagd's way into compute it can't reach.
 
+## Install
+
+```bash
+go install github.com/stagdhq/stagd/cmd/stagd@latest
+```
+
+Release binaries come later. The relay runs from the image `ghcr.io/stagdhq/stagd`, which Stagd's install commands name.
+
 ## Layout
 
 ```
@@ -32,7 +40,7 @@ stagd validate                       # check stagd.yaml and the compose file, as
 stagd activity
 ```
 
-`--api-url` (`STAGD_API_URL`) says which Stagd server; `--json` prints JSON.
+It talks to hosted Stagd at `https://app.stagd.dev`; `--api-url` (`STAGD_API_URL`) points it at another server. `--json` prints JSON.
 
 ## The relay
 
@@ -71,3 +79,11 @@ go tool task image      # the image, as stagd:local
 ```
 
 The image, `ghcr.io/stagdhq/stagd`, is the binary on distroless as an unprivileged user (65532); CI publishes main as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`.
+
+## Security
+
+Report security issues privately to security@stagd.dev; see [SECURITY.md](SECURITY.md).
+
+## License
+
+Apache License 2.0; see [LICENSE](LICENSE).

@@ -4651,8 +4651,8 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\rListBuildLogs\x12\".stagd.api.v1.ListBuildLogsRequest\x1a#.stagd.api.v1.ListBuildLogsResponse\x12O\n" +
 	"\n" +
 	"ListTraces\x12\x1f.stagd.api.v1.ListTracesRequest\x1a .stagd.api.v1.ListTracesResponse\x12I\n" +
-	"\bGetTrace\x12\x1d.stagd.api.v1.GetTraceRequest\x1a\x1e.stagd.api.v1.GetTraceResponseB\xa4\x01\n" +
-	"\x10com.stagd.api.v1B\rPreviewsProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\bGetTrace\x12\x1d.stagd.api.v1.GetTraceRequest\x1a\x1e.stagd.api.v1.GetTraceResponseB\xad\x01\n" +
+	"\x10com.stagd.api.v1B\rPreviewsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_previews_proto_rawDescOnce sync.Once

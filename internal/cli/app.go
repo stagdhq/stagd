@@ -8,11 +8,12 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	"stagd.dev/stagd/internal/client/api"
+	"github.com/stagdhq/stagd/internal/client/api"
 )
 
-// DefaultAPIURL is a local `stagd server` until the hosted API exists.
-const DefaultAPIURL = "http://localhost:8080"
+// DefaultAPIURL is hosted Stagd's API; --api-url (STAGD_API_URL) points
+// the CLI at another, such as a local server in development.
+const DefaultAPIURL = "https://app.stagd.dev"
 
 // New returns the root command.
 func New(version string) *cli.Command {

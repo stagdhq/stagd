@@ -952,8 +952,8 @@ const file_stagd_api_v1_integrations_proto_rawDesc = "" +
 	"\x10ListIntegrations\x12%.stagd.api.v1.ListIntegrationsRequest\x1a&.stagd.api.v1.ListIntegrationsResponse\x12d\n" +
 	"\x11UpdateIntegration\x12&.stagd.api.v1.UpdateIntegrationRequest\x1a'.stagd.api.v1.UpdateIntegrationResponse\x12^\n" +
 	"\x0fTestIntegration\x12$.stagd.api.v1.TestIntegrationRequest\x1a%.stagd.api.v1.TestIntegrationResponse\x12d\n" +
-	"\x11DeleteIntegration\x12&.stagd.api.v1.DeleteIntegrationRequest\x1a'.stagd.api.v1.DeleteIntegrationResponseB\xa8\x01\n" +
-	"\x10com.stagd.api.v1B\x11IntegrationsProtoP\x01Z/stagd.dev/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
+	"\x11DeleteIntegration\x12&.stagd.api.v1.DeleteIntegrationRequest\x1a'.stagd.api.v1.DeleteIntegrationResponseB\xb1\x01\n" +
+	"\x10com.stagd.api.v1B\x11IntegrationsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
 	file_stagd_api_v1_integrations_proto_rawDescOnce sync.Once

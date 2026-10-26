@@ -13,9 +13,9 @@ import (
 	"github.com/urfave/cli/v3"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"stagd.dev/stagd/internal/client/api"
-	apiv1 "stagd.dev/stagd/internal/gen/stagd/api/v1"
-	"stagd.dev/stagd/internal/output"
+	"github.com/stagdhq/stagd/internal/client/api"
+	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
+	"github.com/stagdhq/stagd/internal/output"
 )
 
 func previewCommand() *cli.Command {

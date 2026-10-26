@@ -11,8 +11,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 
-	apiv1 "stagd.dev/stagd/internal/gen/stagd/api/v1"
-	"stagd.dev/stagd/internal/output"
+	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
+	"github.com/stagdhq/stagd/internal/output"
 )
 
 // rootFiles are what the server looks for first; anything else (app.compose
