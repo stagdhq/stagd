@@ -9,9 +9,9 @@ on:
   push:
     branches: [main]
     tags: ['v*']
-    paths: ['proto/**', 'buf.yaml', 'buf.lock', '.github/workflows/buf.yaml']
+    paths: ['proto/**', '.github/workflows/buf.yaml']
   pull_request:
-    paths: ['proto/**', 'buf.yaml', 'buf.lock', '.github/workflows/buf.yaml']
+    paths: ['proto/**', '.github/workflows/buf.yaml']
   delete: {}
 
 permissions:
@@ -28,5 +28,7 @@ jobs:
       - uses: bufbuild/buf-action@v1
         with:
           token: ${{ secrets.BUF_TOKEN }}
+          # The module and its buf.yaml live in proto/.
+          input: proto
           # Breaking changes are against the published main.
           breaking_against: buf.build/stagdhq/stagd:main

@@ -23,22 +23,22 @@ tasks:
     desc: Regenerate internal/gen from proto/ (needs buf)
     sources:
       - proto/**/*.proto
-      - buf.yaml
-      - buf.gen.yaml
+      - proto/buf.yaml
+      - proto/buf.gen.yaml
     cmds:
-      - buf generate
+      - buf generate --template proto/buf.gen.yaml
 
   lint:
     desc: Lint and format-check the protos
     cmds:
-      - buf lint
-      - buf format -d --exit-code
+      - buf lint proto
+      - buf format proto -d --exit-code
 
   fmt:
     desc: Format Go and the protos
     cmds:
       - gofmt -w cmd internal
-      - buf format -w
+      - buf format proto -w
 
   test:
     desc: Run the tests

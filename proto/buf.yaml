@@ -1,7 +1,8 @@
 version: v2
 modules:
-  # The stagd.api.v1 contract, published at buf.build/stagdhq/stagd.
-  - path: proto
+  # The stagd.api.v1 contract, published at buf.build/stagdhq/stagd: this
+  # folder, so imports are stagd/api/v1/....
+  - path: .
     name: buf.build/stagdhq/stagd
 deps:
   - buf.build/bufbuild/protovalidate
