@@ -103,7 +103,13 @@ proto/              the stagd.api.v1 contract (Buf)
 deploy/kubernetes/  what a cluster gets
 ```
 
-The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. A `v*` tag also makes the GitHub release, with the binaries, `install.sh` and `checksums.txt`, and updates the Homebrew formula in [stagdhq/homebrew-tap](https://github.com/stagdhq/homebrew-tap). Contract changes are checked for breaking changes against what's published.
+The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. A `v*` tag also makes the GitHub release, with the binaries, `install.sh` and `checksums.txt`, and updates the Homebrew formula in [stagdhq/homebrew-tap](https://github.com/stagdhq/homebrew-tap).
+
+To release, tag with a one-line summary: `git tag -a v0.4.0 -m "v0.4.0: what's in it"` and push the tag. The release's notes, which are the changelog, are that summary and the commits since the last tag (`scripts/release-notes.sh`): `feat:` under New, `fix:` under Fixes, `deploy:`, `docs:`, `perf:` and `refactor:` under Also, and `chore:` left out. So write commit subjects for the notes, and use `feat:` or `fix:` for what users notice; `feat!:` marks a breaking change.
+
+## Changes
+
+See [the releases](https://github.com/stagdhq/stagd/releases). Contract changes are checked for breaking changes against what's published.
 
 ## Security
 

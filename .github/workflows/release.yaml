@@ -1,6 +1,7 @@
 # A release, on a v* tag: stagd for macOS and Linux (amd64, arm64),
 # install.sh and checksums.txt, attached to the tag's GitHub release (go
-# tool task dist), then the Homebrew formula in stagdhq/homebrew-tap.
+# tool task dist) with notes from its commits (scripts/release-notes.sh),
+# then the Homebrew formula in stagdhq/homebrew-tap.
 # curl -fsSL https://stagd.dev/install.sh | bash, brew install
 # stagdhq/tap/stagd and stagd update all install from here.
 #
@@ -39,7 +40,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          # The notes, from the tag's message and the commits since the last tag.
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          scripts/release-notes.sh "$GITHUB_REF_NAME" > notes.md
+
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag
+          fi
+
           gh release upload "$GITHUB_REF_NAME" dist/* --clobber
 
       - name: The Homebrew formula
