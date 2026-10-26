@@ -32,7 +32,7 @@ brew install stagdhq/tap/stagd
 go install github.com/stagdhq/stagd/cmd/stagd@latest
 ```
 
-`stagd update` updates it in place, the same way (Homebrew: `brew upgrade stagd`); `stagd update --check` only says whether there's a newer release. The relay runs from the image `ghcr.io/stagdhq/stagd`.
+`stagd update` updates it in place, the same way; `stagd update --check` only says whether there's a newer release. With Homebrew, `brew upgrade stagdhq/tap/stagd`; Homebrew 6 and later leaves third-party taps out of a plain `brew upgrade` until you trust them, once: `brew trust stagdhq/tap`. The relay runs from the image `ghcr.io/stagdhq/stagd`.
 
 ## Get started
 

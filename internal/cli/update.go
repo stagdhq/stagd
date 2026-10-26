@@ -35,7 +35,7 @@ func updateCommand() *cli.Command {
 		Name:  "update",
 		Usage: "update stagd to its latest release",
 		Description: "Downloads the latest release for this machine, checks it against the release's checksums,\n" +
-			"and replaces this binary with it. Installed with Homebrew: brew upgrade stagd.",
+			"and replaces this binary with it. Installed with Homebrew: brew upgrade stagdhq/tap/stagd.",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "check", Usage: "only say whether there's a newer release"},
 		},
@@ -75,7 +75,7 @@ func update(ctx context.Context, cmd *cli.Command) error {
 
 	// Homebrew keeps track of its own files: a cask's, or a formula's from before.
 	if strings.Contains(exe, "/Caskroom/") || strings.Contains(exe, "/Cellar/") {
-		return cli.Exit("this stagd came from Homebrew: brew upgrade stagd", 1)
+		return cli.Exit("this stagd came from Homebrew: brew upgrade stagdhq/tap/stagd", 1)
 	}
 
 	asset, name := releaseAsset(runtime.GOOS, runtime.GOARCH)
