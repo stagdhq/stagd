@@ -1,6 +1,15 @@
 # stagd
 
-The command line for [Stagd](https://stagd.dev): live, seeded previews of every pull request, on your own compute. It talks to a Stagd server over its API (`proto/`), and runs `stagd relay`, Stagd's way into compute it can't reach.
+[Stagd](https://stagd.dev) gives every pull request a live preview of your app: built, started with its database and seed data, and on a URL your team and reviewers can open. Previews run on your own compute, sleep when nobody uses them, and go when the pull request does.
+
+This repository is Stagd's open part:
+
+- **`stagd`**, the command line: everything the dashboard does, for your terminal and scripts.
+- **`stagd relay`**, which connects compute Stagd can't reach (a private Kubernetes cluster, a Docker host behind NAT) by dialling out to Stagd.
+- **The Kubernetes manifests** a cluster gets, so you can read exactly what runs in it.
+- **The API contract**, `stagd.api.v1`, which the CLI and the dashboard use, published at [buf.build/stagdhq/stagd](https://buf.build/stagdhq/stagd).
+
+Stagd itself is hosted at [app.stagd.dev](https://app.stagd.dev).
 
 ## Install
 
@@ -8,82 +17,90 @@ The command line for [Stagd](https://stagd.dev): live, seeded previews of every 
 go install github.com/stagdhq/stagd/cmd/stagd@latest
 ```
 
-Release binaries come later. The relay runs from the image `ghcr.io/stagdhq/stagd`, which Stagd's install commands name.
+Release binaries come later. The relay runs from the image `ghcr.io/stagdhq/stagd`.
 
-## Layout
+## Get started
+
+```bash
+stagd login                          # sign in through your browser; the session goes to your OS keychain
+stagd orgs create acme --name "Acme" # or: stagd orgs list, stagd orgs switch <slug>
+stagd github connect                 # install the Stagd GitHub App and link it to the org
+stagd compute connect namespace      # where previews run: namespace, kubernetes or docker
+stagd secrets set --repo acme/web SESSION_SECRET
+stagd validate                       # check stagd.yaml and the compose file in a checkout
+stagd preview create --repo acme/web --pr 42
+stagd preview list
+```
+
+`stagd <command> --help` explains each one. `--json` prints JSON for scripts, and `--api-url` (`STAGD_API_URL`) points the CLI at another Stagd server.
+
+## The relay
+
+Some compute can't be reached from the internet, and shouldn't be. `stagd relay` runs next to it and opens one outbound connection to Stagd (a WebSocket over HTTPS); Stagd manages the compute and reaches previews through it. Nothing next to the relay needs to accept connections, and no cluster credentials leave it.
+
+### Kubernetes
+
+```bash
+stagd compute connect kubernetes --name my-cluster
+stagd compute install my-cluster | kubectl apply -f -
+```
+
+`stagd compute install` asks Stagd for the cluster's install and prints it for kubectl, with a new relay token: there's no link, and the token is only ever in the pipe. Running it again gives a new token and cuts off a relay still using the old one. `--wait` waits until the relay connects.
+
+What it installs, from [`deploy/kubernetes`](deploy/kubernetes):
+
+| Manifest | What it is |
+|---|---|
+| `stagd-access.yaml` | The `stagd-system` namespace and Stagd's service account. Cluster-wide it may only create namespaces and bind its own role in them; an admission policy keeps every change it makes to `stagd-*` namespaces, other than `stagd-system`. It can't read anything elsewhere. |
+| `stagd-relay.yaml` | The relay, running as that account. It only connects Stagd to services in `stagd-*` namespaces. |
+| `stagd-build.yaml` | Optional: a BuildKit daemon whose cache every preview shares, and a registry for what it builds, so building needs nothing set up. The daemon runs privileged; clusters that forbid that build elsewhere. |
+| `stagd-tunnel.yaml` | Optional: `cloudflared`, for preview traffic through a Cloudflare Tunnel Stagd makes for the cluster, which is faster than through the relay's connection. It also only dials out; the relay checks every request it passes on. |
+
+To remove Stagd from a cluster, delete the connection in Stagd (it refuses while previews still run on it), then, as a cluster admin:
+
+```bash
+stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -
+```
+
+It prints everything an install can bring, without tokens. Stagd can't do this itself: it has no rights outside its own namespaces, by design.
+
+### Docker
+
+```bash
+stagd compute connect docker --name build-box
+```
+
+prints the `docker run` command for the host, with the relay's token. Whoever reaches the Docker API controls the host, so use a host meant for previews. To remove it: `docker rm -f stagd-relay`.
+
+## Develop
+
+Everything runs with Go alone: `go tool task <name>` (Task is pinned in `go.mod`).
+
+```bash
+go tool task build      # bin/stagd
+go tool task check      # what CI runs: protos, formatting, vet, tests
+go tool task generate   # internal/gen from proto/ (needs buf)
+go tool task image      # the image, as stagd:local
+```
 
 ```
 cmd/stagd/          the stagd binary
 internal/
-  cli/              commands (urfave/cli, huh, lipgloss)
-  client/api/       Connect client for stagd.api.v1
-  client/auth/      device login, token storage (OS keychain)
-  output/           table and JSON output
-  relay/            stagd relay, and the relay protocol
-  gen/              generated Go (protobuf + connect-go), never edited by hand
+  cli/              the commands
+  client/           the API client, device login and token storage
+  output/           tables and JSON
+  relay/            stagd relay, and its protocol
+  gen/              generated from proto/, never edited by hand
 proto/              the stagd.api.v1 contract (Buf)
-deploy/kubernetes/  Stagd's access to a cluster, and the relay in it
+deploy/kubernetes/  what a cluster gets
 ```
 
-## The CLI
-
-```bash
-stagd login                          # device login in the browser; the token goes to the OS keychain
-stagd orgs list | switch <slug>
-stagd github connect                 # install the Stagd GitHub App, link it to the org
-stagd repos list
-stagd compute connect namespace      # or kubernetes, docker; see stagd compute providers
-stagd integrations connect neon      # a database branch per preview
-stagd secrets set --repo owner/name SESSION_SECRET
-stagd preview create | list | watch | mail
-stagd validate                       # check stagd.yaml and the compose file, as previews read them
-stagd activity
-```
-
-It talks to hosted Stagd at `https://app.stagd.dev`; `--api-url` (`STAGD_API_URL`) points it at another server. `--json` prints JSON.
-
-## The relay
-
-`stagd relay` runs next to compute Stagd can't reach, and dials out to it: Stagd manages the compute and sends preview traffic through that one connection, so nothing next to the relay needs to be reachable from outside.
-
-- **Kubernetes:** `deploy/kubernetes/stagd-access.yaml` makes Stagd's service account, kept to `stagd-*` namespaces by an admission policy; `stagd-relay.yaml` runs the relay as it. The relay only connects Stagd to services in `stagd-*` namespaces. `stagd compute install <name> | kubectl apply -f -` installs both with a new relay token: the CLI asks Stagd for the cluster's manifest and prints it, so there's no link and the token is only ever in the pipe; `--wait` waits for the relay to connect. The manifest also brings, as the connection chooses: `stagd-build.yaml`, a shared BuildKit daemon and a registry for building in the cluster; and `stagd-tunnel.yaml`, a Cloudflare Tunnel Stagd makes for the cluster, so preview traffic goes from Stagd's edge to the relay on Cloudflare's network rather than through Stagd's server (the relay takes it on `--http`).
-- **Docker:** run it on the host with the Docker socket. Whoever reaches the Docker API controls the host: use a host meant for previews.
-
-```bash
-docker run -d --name stagd-relay --restart unless-stopped \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -e STAGD_URL=https://stagd.example.com -e STAGD_RELAY_TOKEN=stagd_relay.… \
-  ghcr.io/stagdhq/stagd:latest relay
-```
-
-## Removing Stagd from a cluster
-
-Deleting a Kubernetes connection in Stagd removes what Stagd made outside the cluster (its Cloudflare Tunnel and DNS record), and Stagd refuses while previews still run on it. What the install put in the cluster stays: Stagd's account may only manage `stagd-*` namespaces, so removing its own rights is the cluster's admins' job. As a cluster admin:
-
-```sh
-stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -
-```
-
-It prints every manifest an install can bring (Stagd's account and rights, the relay, cloudflared, the builder and registry), without tokens, and needs no connection. Preview namespaces Stagd left behind, if any: `kubectl delete namespaces -l stagd.dev/managed=true`.
-
-On a Docker host: `docker rm -f stagd-relay`.
-
-## Develop
-
-Go only: `go tool task <name>` (Task is pinned in go.mod). `buf` regenerates `internal/gen` from `proto/`.
-
-```bash
-go tool task build      # bin/stagd
-go tool task check      # what CI runs
-go tool task image      # the image, as stagd:local
-```
-
-The image, `ghcr.io/stagdhq/stagd`, is the binary on distroless as an unprivileged user (65532); CI publishes main as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`.
+The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. Contract changes are checked for breaking changes against what's published.
 
 ## Security
 
-Report security issues privately to security@stagd.dev; see [SECURITY.md](SECURITY.md).
+Please report security issues privately to security@stagd.dev; see [SECURITY.md](SECURITY.md).
 
 ## License
 
-Apache License 2.0; see [LICENSE](LICENSE).
+[Apache License 2.0](LICENSE).
