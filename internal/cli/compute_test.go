@@ -140,7 +140,7 @@ func TestComputeListAndDeleteByName(t *testing.T) {
 func TestComputeCleanup(t *testing.T) {
 	kube := cleanup(apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES)
 
-	for _, want := range []string{"stagd compute uninstall | kubectl delete --ignore-not-found -f -"} {
+	for _, want := range []string{"stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -"} {
 		if !strings.Contains(kube, want) {
 			t.Errorf("kubernetes: no %q in\n%s", want, kube)
 		}
@@ -275,7 +275,19 @@ func TestComputeInstallPrintsTheManifest(t *testing.T) {
 // uninstall prints every manifest an install can bring, without tokens,
 // for kubectl delete: Stagd's access and rights included.
 func TestComputeUninstall(t *testing.T) {
-	out, err := run(t, httptest.NewServer(http.NotFoundHandler()), "compute", "uninstall")
+	srv := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(srv.Close)
+
+	// The target is named, for others to come.
+	if _, err := run(t, srv, "compute", "uninstall"); err == nil {
+		t.Error("no target: it printed anyway")
+	}
+
+	if _, err := run(t, srv, "compute", "uninstall", "namespace"); err == nil {
+		t.Error("namespace: nothing to uninstall, yet no error")
+	}
+
+	out, err := run(t, srv, "compute", "uninstall", "kubernetes")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,5 +1,5 @@
 // Package kubernetes holds Stagd's Kubernetes manifests, for the CLI to
-// print: `stagd compute uninstall | kubectl delete --ignore-not-found -f -`
+// print: `stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -`
 // removes all of them. Installs come from Stagd (CreateInstallManifest),
 // with the connection's tokens.
 package kubernetes

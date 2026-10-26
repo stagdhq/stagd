@@ -88,10 +88,11 @@ func computeCommand() *cli.Command {
 				Action: computeInstall,
 			},
 			{
-				Name:  "uninstall",
-				Usage: "print what removes Stagd from a Kubernetes cluster, for kubectl",
-				Description: "Prints every manifest a Stagd install can bring, without its tokens:\n\n" +
-					"  stagd compute uninstall | kubectl delete --ignore-not-found -f -\n\n" +
+				Name:      "uninstall",
+				Usage:     "print what removes Stagd's install from your compute: kubernetes",
+				ArgsUsage: "kubernetes",
+				Description: "For a Kubernetes cluster, prints every manifest a Stagd install can bring, without its tokens:\n\n" +
+					"  stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -\n\n" +
 					"removes Stagd's account and rights, the relay, cloudflared, the builder and registry. Run it\n" +
 					"as a cluster admin, after deleting the connection in Stagd (which removes the Cloudflare\n" +
 					"Tunnel Stagd made for it). Stagd deletes a connection only when no previews run on it.",
@@ -520,7 +521,7 @@ func computeDelete(ctx context.Context, cmd *cli.Command) error {
 
 // The commands that remove Stagd's install from a cluster, cluster-wide
 // objects included: Stagd can't, its account only manages stagd-* namespaces.
-const kubeCleanup = "  stagd compute uninstall | kubectl delete --ignore-not-found -f -\n"
+const kubeCleanup = "  stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -\n"
 
 // cleanup is what a deleted connection left on its compute, and how to
 // remove it; Stagd has already removed what it made elsewhere (a cluster's
@@ -689,6 +690,16 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 // computeUninstall prints every manifest an install can bring, for kubectl
 // delete; it needs no connection, so it works after Stagd forgets it.
 func computeUninstall(_ context.Context, cmd *cli.Command) error {
+	switch kind := strings.ToLower(cmd.Args().First()); kind {
+	case "kubernetes":
+
+	case "":
+		return cli.Exit("usage: stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -", 2)
+
+	default:
+		return cli.Exit(fmt.Sprintf("nothing to uninstall for %q: Stagd removes what it made there itself (only kubernetes has an install to remove)", kind), 2)
+	}
+
 	w := cmd.Root().Writer
 
 	for i, name := range kubernetes.Uninstall {

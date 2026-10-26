@@ -53,7 +53,7 @@ docker run -d --name stagd-relay --restart unless-stopped \
 Deleting a Kubernetes connection in Stagd removes what Stagd made outside the cluster (its Cloudflare Tunnel and DNS record), and Stagd refuses while previews still run on it. What the install put in the cluster stays: Stagd's account may only manage `stagd-*` namespaces, so removing its own rights is the cluster's admins' job. As a cluster admin:
 
 ```sh
-stagd compute uninstall | kubectl delete --ignore-not-found -f -
+stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -
 ```
 
 It prints every manifest an install can bring (Stagd's account and rights, the relay, cloudflared, the builder and registry), without tokens, and needs no connection. Preview namespaces Stagd left behind, if any: `kubectl delete namespaces -l stagd.dev/managed=true`.
