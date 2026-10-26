@@ -56,7 +56,7 @@ tasks:
       - go test ./...
 
   dist:
-    desc: "Release files into dist/: stagd for macOS and Linux (amd64, arm64), install.sh, checksums.txt"
+    desc: "Release files into dist/: stagd for macOS, Linux and Windows (amd64, arm64), install.sh, install.ps1, checksums.txt"
     cmds:
       - rm -rf dist && mkdir -p dist
       - |
@@ -69,7 +69,15 @@ tasks:
           tar -czf "dist/stagd_${os}_${arch}.tar.gz" -C "$dir" stagd LICENSE README.md
           rm -rf "$dir"
         done
-      - cp install.sh dist/
+      - |
+        for arch in amd64 arm64; do
+          dir=$(mktemp -d)
+          CGO_ENABLED=0 GOOS=windows GOARCH=$arch go build -trimpath -ldflags "{{.LDFLAGS}}" -o "$dir/stagd.exe" ./cmd/stagd
+          cp LICENSE README.md "$dir/"
+          zip -q -j "dist/stagd_windows_${arch}.zip" "$dir/stagd.exe" "$dir/LICENSE" "$dir/README.md"
+          rm -rf "$dir"
+        done
+      - cp install.sh install.ps1 dist/
       - cd dist && if command -v sha256sum >/dev/null; then sha256sum *; else shasum -a 256 *; fi | grep -v checksums.txt > checksums.txt
 
   image:

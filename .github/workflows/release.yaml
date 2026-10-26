@@ -1,7 +1,8 @@
-# A release, on a v* tag: stagd for macOS and Linux (amd64, arm64),
-# install.sh and checksums.txt, attached to the tag's GitHub release (go
+# A release, on a v* tag: stagd for macOS, Linux and Windows (amd64,
+# arm64), install.sh, install.ps1 and checksums.txt, attached to the tag's GitHub release (go
 # tool task dist) with notes from its commits (scripts/release-notes.sh),
-# then the Homebrew formula in stagdhq/homebrew-tap.
+# then the Homebrew formula in stagdhq/homebrew-tap, and the release
+# installed on Linux, macOS and Windows as users do.
 # curl -fsSL https://stagd.dev/install.sh | bash, brew install
 # stagdhq/tap/stagd and stagd update all install from here.
 #
@@ -71,3 +72,43 @@ jobs:
           git add Formula/stagd.rb
           git commit -m "stagd $GITHUB_REF_NAME"
           git push
+
+  # The release just made, installed the way users do, on each kind of
+  # machine: install.sh on Linux and macOS, install.ps1 on Windows (Windows
+  # PowerShell 5.1, then PowerShell 7 over it).
+  verify:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: install.sh
+        if: runner.os != 'Windows'
+        env:
+          STAGD_VERSION: ${{ github.ref_name }}
+        run: |
+          curl -fsSL https://stagd.dev/install.sh | bash
+          "$HOME/.local/bin/stagd" --version | grep -F "$STAGD_VERSION"
+
+      - name: install.ps1, Windows PowerShell
+        if: runner.os == 'Windows'
+        shell: powershell
+        env:
+          STAGD_VERSION: ${{ github.ref_name }}
+        run: |
+          irm https://stagd.dev/install.ps1 | iex
+          $v = stagd --version
+          if ($v -notmatch [regex]::Escape($env:STAGD_VERSION)) { throw "installed: $v" }
+
+      - name: install.ps1 again, PowerShell 7
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          STAGD_VERSION: ${{ github.ref_name }}
+        run: |
+          irm https://stagd.dev/install.ps1 | iex
+          $v = stagd --version
+          if ($v -notmatch [regex]::Escape($env:STAGD_VERSION)) { throw "installed: $v" }

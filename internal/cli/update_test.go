@@ -2,6 +2,7 @@ package cli
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -145,5 +146,41 @@ func TestUpdateRefusesATamperedDownload(t *testing.T) {
 
 	if got, _ := os.ReadFile(exe); string(got) != "the old stagd" {
 		t.Fatal("a tampered download replaced the binary")
+	}
+}
+
+// Windows: the release's .zip, stagd.exe in it, and the running binary moved
+// aside rather than overwritten.
+func TestUpdateOnWindows(t *testing.T) {
+	asset, name := releaseAsset("windows", "arm64")
+	if asset != "stagd_windows_arm64.zip" || name != "stagd.exe" {
+		t.Fatalf("asset %q, name %q", asset, name)
+	}
+
+	var buf bytes.Buffer
+
+	zw := zip.NewWriter(&buf)
+	f, _ := zw.Create("stagd.exe")
+	f.Write([]byte("the new stagd.exe"))
+	zw.Close()
+
+	binary, err := fromArchive(buf.Bytes(), asset, name)
+	if err != nil || string(binary) != "the new stagd.exe" {
+		t.Fatalf("from the zip: %q %v", binary, err)
+	}
+
+	exe := filepath.Join(t.TempDir(), "stagd.exe")
+	os.WriteFile(exe, []byte("the running stagd.exe"), 0o755)
+	os.WriteFile(exe+".old", []byte("the one before"), 0o755)
+
+	if err := replace(exe, binary, true); err != nil {
+		t.Fatal(err)
+	}
+
+	now, _ := os.ReadFile(exe)
+	old, _ := os.ReadFile(exe + ".old")
+
+	if string(now) != "the new stagd.exe" || string(old) != "the running stagd.exe" {
+		t.Fatalf("now %q, aside %q", now, old)
 	}
 }

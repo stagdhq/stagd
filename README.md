@@ -13,11 +13,19 @@ Stagd itself is hosted at [app.stagd.dev](https://app.stagd.dev).
 
 ## Install
 
+On macOS and Linux:
+
 ```bash
 curl -fsSL https://stagd.dev/install.sh | bash
 ```
 
-It downloads the latest release for your machine (macOS or Linux, amd64 or arm64), checks it against the release's checksums, and puts `stagd` in `~/.local/bin` (`STAGD_INSTALL_DIR` for elsewhere, `STAGD_VERSION` for another release). Or with Homebrew, or Go:
+On Windows, in PowerShell:
+
+```powershell
+irm https://stagd.dev/install.ps1 | iex
+```
+
+Either downloads the latest release for your machine (amd64 or arm64), checks it against the release's checksums, and installs `stagd`: in `~/.local/bin`, or on Windows in `%LOCALAPPDATA%\Programs\stagd`, which it adds to your PATH. `STAGD_INSTALL_DIR` puts it elsewhere, `STAGD_VERSION` installs another release. Or with Homebrew, or Go:
 
 ```bash
 brew install stagdhq/tap/stagd
@@ -103,7 +111,7 @@ proto/              the stagd.api.v1 contract (Buf)
 deploy/kubernetes/  what a cluster gets
 ```
 
-The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. A `v*` tag also makes the GitHub release, with the binaries, `install.sh` and `checksums.txt`, and updates the Homebrew formula in [stagdhq/homebrew-tap](https://github.com/stagdhq/homebrew-tap).
+The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. A `v*` tag also makes the GitHub release, with the binaries, `install.sh`, `install.ps1` and `checksums.txt`, and updates the Homebrew formula in [stagdhq/homebrew-tap](https://github.com/stagdhq/homebrew-tap).
 
 To release, tag with a one-line summary: `git tag -a v0.4.0 -m "v0.4.0: what's in it"` and push the tag. The release's notes, which are the changelog, are that summary and the commits since the last tag (`scripts/release-notes.sh`): `feat:` under New, `fix:` under Fixes, `deploy:`, `docs:`, `perf:` and `refactor:` under Also, and `chore:` left out. So write commit subjects for the notes, and use `feat:` or `fix:` for what users notice; `feat!:` marks a breaking change.
 

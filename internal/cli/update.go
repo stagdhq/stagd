@@ -2,7 +2,9 @@ package cli
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
@@ -76,7 +78,7 @@ func update(ctx context.Context, cmd *cli.Command) error {
 		return cli.Exit("this stagd came from Homebrew: brew upgrade stagd", 1)
 	}
 
-	asset := fmt.Sprintf("stagd_%s_%s.tar.gz", runtime.GOOS, runtime.GOARCH)
+	asset, name := releaseAsset(runtime.GOOS, runtime.GOARCH)
 	base := releasesURL + "/download/" + latest
 
 	fmt.Fprintf(cmd.Root().ErrWriter, "Downloading stagd %s (%s/%s)…\n", latest, runtime.GOOS, runtime.GOARCH)
@@ -95,12 +97,13 @@ func update(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	binary, err := fromArchive(archive, "stagd")
+	binary, err := fromArchive(archive, asset, name)
 	if err != nil {
 		return err
 	}
 
-	if err := replace(exe, binary); err != nil {
+	// Windows won't overwrite a running .exe, but moves it aside.
+	if err := replace(exe, binary, runtime.GOOS == "windows"); err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			return cli.Exit(fmt.Sprintf("can't write %s: run stagd update with sudo, or install again with curl -fsSL https://stagd.dev/install.sh | bash", filepath.Dir(exe)), 1)
 		}
@@ -183,9 +186,41 @@ func checkSum(data []byte, name string, sums []byte) error {
 	return fmt.Errorf("%s isn't in the release's checksums", name)
 }
 
-// fromArchive is one file from a .tar.gz.
-func fromArchive(archive []byte, name string) ([]byte, error) {
-	gz, err := gzip.NewReader(strings.NewReader(string(archive)))
+// releaseAsset is this machine's archive in a release, and the binary's name in it.
+func releaseAsset(goos, goarch string) (asset, binary string) {
+	if goos == "windows" {
+		return fmt.Sprintf("stagd_windows_%s.zip", goarch), "stagd.exe"
+	}
+
+	return fmt.Sprintf("stagd_%s_%s.tar.gz", goos, goarch), "stagd"
+}
+
+// fromArchive is one file from a release's archive: a .zip for Windows, else a .tar.gz.
+func fromArchive(archive []byte, asset, name string) ([]byte, error) {
+	if strings.HasSuffix(asset, ".zip") {
+		zr, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
+		if err != nil {
+			return nil, err
+		}
+
+		for _, f := range zr.File {
+			if f.Name != name {
+				continue
+			}
+
+			rc, err := f.Open()
+			if err != nil {
+				return nil, err
+			}
+			defer rc.Close()
+
+			return io.ReadAll(rc)
+		}
+
+		return nil, fmt.Errorf("no %s in the release", name)
+	}
+
+	gz, err := gzip.NewReader(bytes.NewReader(archive))
 	if err != nil {
 		return nil, err
 	}
@@ -209,8 +244,10 @@ func fromArchive(archive []byte, name string) ([]byte, error) {
 }
 
 // replace puts a new binary where exe is: written next to it, then renamed
-// over it, so stagd is never half-written.
-func replace(exe string, binary []byte) error {
+// over it, so stagd is never half-written. aside first moves the old one
+// to exe.old (Windows: a running .exe can be moved, not overwritten); the
+// next update removes it.
+func replace(exe string, binary []byte, aside bool) error {
 	tmp, err := os.CreateTemp(filepath.Dir(exe), ".stagd-update-*")
 	if err != nil {
 		return err
@@ -229,6 +266,14 @@ func replace(exe string, binary []byte) error {
 
 	if err := os.Chmod(tmp.Name(), 0o755); err != nil {
 		return err
+	}
+
+	if aside {
+		os.Remove(exe + ".old")
+
+		if err := os.Rename(exe, exe+".old"); err != nil {
+			return err
+		}
 	}
 
 	return os.Rename(tmp.Name(), exe)
