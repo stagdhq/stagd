@@ -41,6 +41,10 @@ rules:
   - apiGroups: [""]
     resources: [pods, pods/log]
     verbs: [get, list]
+  # Each service's CPU and memory, from metrics-server, for the preview's graphs.
+  - apiGroups: [metrics.k8s.io]
+    resources: [pods]
+    verbs: [get, list]
   - apiGroups: [apps]
     resources: [deployments]
     verbs: [get, list, create, update, patch, delete]
