@@ -60,6 +60,9 @@ const (
 	// ComputeServiceCreateInstallManifestProcedure is the fully-qualified name of the ComputeService's
 	// CreateInstallManifest RPC.
 	ComputeServiceCreateInstallManifestProcedure = "/stagd.api.v1.ComputeService/CreateInstallManifest"
+	// ComputeServiceGetComputeConnectionDetailsProcedure is the fully-qualified name of the
+	// ComputeService's GetComputeConnectionDetails RPC.
+	ComputeServiceGetComputeConnectionDetailsProcedure = "/stagd.api.v1.ComputeService/GetComputeConnectionDetails"
 )
 
 // ComputeServiceClient is a client for the stagd.api.v1.ComputeService service.
@@ -91,6 +94,11 @@ type ComputeServiceClient interface {
 	// connection chooses (the builder, the Cloudflare Tunnel with its token).
 	// The tokens are in the manifest and nowhere else.
 	CreateInstallManifest(context.Context, *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error)
+	// GetComputeConnectionDetails is everything Stagd can tell about one
+	// connection, asked for now: its relay and tunnel as they are, what the
+	// compute says about itself, and what's been done to it. Slower than
+	// ListComputeConnections, which answers from what Stagd keeps.
+	GetComputeConnectionDetails(context.Context, *connect.Request[v1.GetComputeConnectionDetailsRequest]) (*connect.Response[v1.GetComputeConnectionDetailsResponse], error)
 }
 
 // NewComputeServiceClient constructs a client for the stagd.api.v1.ComputeService service. By
@@ -158,6 +166,12 @@ func NewComputeServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(computeServiceMethods.ByName("CreateInstallManifest")),
 			connect.WithClientOptions(opts...),
 		),
+		getComputeConnectionDetails: connect.NewClient[v1.GetComputeConnectionDetailsRequest, v1.GetComputeConnectionDetailsResponse](
+			httpClient,
+			baseURL+ComputeServiceGetComputeConnectionDetailsProcedure,
+			connect.WithSchema(computeServiceMethods.ByName("GetComputeConnectionDetails")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -172,6 +186,7 @@ type computeServiceClient struct {
 	deleteComputeConnection     *connect.Client[v1.DeleteComputeConnectionRequest, v1.DeleteComputeConnectionResponse]
 	createRelayInstall          *connect.Client[v1.CreateRelayInstallRequest, v1.CreateRelayInstallResponse]
 	createInstallManifest       *connect.Client[v1.CreateInstallManifestRequest, v1.CreateInstallManifestResponse]
+	getComputeConnectionDetails *connect.Client[v1.GetComputeConnectionDetailsRequest, v1.GetComputeConnectionDetailsResponse]
 }
 
 // ListProviders calls stagd.api.v1.ComputeService.ListProviders.
@@ -219,6 +234,11 @@ func (c *computeServiceClient) CreateInstallManifest(ctx context.Context, req *c
 	return c.createInstallManifest.CallUnary(ctx, req)
 }
 
+// GetComputeConnectionDetails calls stagd.api.v1.ComputeService.GetComputeConnectionDetails.
+func (c *computeServiceClient) GetComputeConnectionDetails(ctx context.Context, req *connect.Request[v1.GetComputeConnectionDetailsRequest]) (*connect.Response[v1.GetComputeConnectionDetailsResponse], error) {
+	return c.getComputeConnectionDetails.CallUnary(ctx, req)
+}
+
 // ComputeServiceHandler is an implementation of the stagd.api.v1.ComputeService service.
 type ComputeServiceHandler interface {
 	// ListProviders lists the compute providers this Stagd server supports.
@@ -248,6 +268,11 @@ type ComputeServiceHandler interface {
 	// connection chooses (the builder, the Cloudflare Tunnel with its token).
 	// The tokens are in the manifest and nowhere else.
 	CreateInstallManifest(context.Context, *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error)
+	// GetComputeConnectionDetails is everything Stagd can tell about one
+	// connection, asked for now: its relay and tunnel as they are, what the
+	// compute says about itself, and what's been done to it. Slower than
+	// ListComputeConnections, which answers from what Stagd keeps.
+	GetComputeConnectionDetails(context.Context, *connect.Request[v1.GetComputeConnectionDetailsRequest]) (*connect.Response[v1.GetComputeConnectionDetailsResponse], error)
 }
 
 // NewComputeServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -311,6 +336,12 @@ func NewComputeServiceHandler(svc ComputeServiceHandler, opts ...connect.Handler
 		connect.WithSchema(computeServiceMethods.ByName("CreateInstallManifest")),
 		connect.WithHandlerOptions(opts...),
 	)
+	computeServiceGetComputeConnectionDetailsHandler := connect.NewUnaryHandler(
+		ComputeServiceGetComputeConnectionDetailsProcedure,
+		svc.GetComputeConnectionDetails,
+		connect.WithSchema(computeServiceMethods.ByName("GetComputeConnectionDetails")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.ComputeService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ComputeServiceListProvidersProcedure:
@@ -331,6 +362,8 @@ func NewComputeServiceHandler(svc ComputeServiceHandler, opts ...connect.Handler
 			computeServiceCreateRelayInstallHandler.ServeHTTP(w, r)
 		case ComputeServiceCreateInstallManifestProcedure:
 			computeServiceCreateInstallManifestHandler.ServeHTTP(w, r)
+		case ComputeServiceGetComputeConnectionDetailsProcedure:
+			computeServiceGetComputeConnectionDetailsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -374,4 +407,8 @@ func (UnimplementedComputeServiceHandler) CreateRelayInstall(context.Context, *c
 
 func (UnimplementedComputeServiceHandler) CreateInstallManifest(context.Context, *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ComputeService.CreateInstallManifest is not implemented"))
+}
+
+func (UnimplementedComputeServiceHandler) GetComputeConnectionDetails(context.Context, *connect.Request[v1.GetComputeConnectionDetailsRequest]) (*connect.Response[v1.GetComputeConnectionDetailsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ComputeService.GetComputeConnectionDetails is not implemented"))
 }

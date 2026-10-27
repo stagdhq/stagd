@@ -5,8 +5,8 @@
 #   kubectl -n stagd-system get secret stagd -o jsonpath='{.data.token}' | base64 -d
 #
 # Cluster-wide, the account can only handle namespaces and the role binding
-# that gives it rights inside one; the admission policy at the end keeps both
-# to stagd-* namespaces. Inside a preview's namespace it gets stagd-preview,
+# that gives it rights inside one, and read the nodes; the admission policy at
+# the end keeps its changes to stagd-* namespaces. Inside a preview's namespace it gets stagd-preview,
 # through the role binding it makes there. It can't read anything in other
 # namespaces. Needs Kubernetes 1.30 or newer (ValidatingAdmissionPolicy).
 apiVersion: v1
@@ -67,6 +67,10 @@ rules:
   - apiGroups: [""]
     resources: [namespaces]
     verbs: [get, list, create, update, patch, delete]
+  # Reading the nodes, for what the connection's details say the cluster can run.
+  - apiGroups: [""]
+    resources: [nodes]
+    verbs: [get, list]
   - apiGroups: [rbac.authorization.k8s.io]
     resources: [rolebindings]
     verbs: [get, create, update, patch]

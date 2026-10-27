@@ -5,6 +5,7 @@ package stagd.api.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/activity.proto";
 import "stagd/api/v1/model.proto";
 
 // ComputeService connects the compute that previews run on to the active
@@ -43,6 +44,11 @@ service ComputeService {
   // connection chooses (the builder, the Cloudflare Tunnel with its token).
   // The tokens are in the manifest and nowhere else.
   rpc CreateInstallManifest(CreateInstallManifestRequest) returns (CreateInstallManifestResponse);
+  // GetComputeConnectionDetails is everything Stagd can tell about one
+  // connection, asked for now: its relay and tunnel as they are, what the
+  // compute says about itself, and what's been done to it. Slower than
+  // ListComputeConnections, which answers from what Stagd keeps.
+  rpc GetComputeConnectionDetails(GetComputeConnectionDetailsRequest) returns (GetComputeConnectionDetailsResponse);
 }
 
 enum ComputeProvider {
@@ -148,6 +154,13 @@ message StagdRelay {
   // Whether it should be updated rather than may be: a minor release or more
   // behind, e.g. v0.4.1 with v0.5.0 out, not v0.5.0 with v0.5.1.
   bool update_recommended = 4;
+  // Where it connects from: the address Stagd sees, and the Cloudflare
+  // location it reached, e.g. "CPH". Only in GetComputeConnectionDetails.
+  string remote_address = 5;
+  string location = 6;
+  // A ping's round trip over its connection, from Stagd to the relay and
+  // back. Only in GetComputeConnectionDetails; unset when it didn't answer.
+  google.protobuf.Duration round_trip = 7;
 }
 
 // Unused: Stagd's own ingress in clusters, replaced by StagdTunnel.
@@ -175,6 +188,28 @@ message StagdTunnel {
   string problem = 3;
   // When Stagd last looked; unset before it has.
   google.protobuf.Timestamp check_time = 4;
+  // Its connectors as Cloudflare has them now. Only in
+  // GetComputeConnectionDetails.
+  repeated TunnelConnector connectors = 5;
+}
+
+// One connection from cloudflared next to the relay to Cloudflare; each
+// cloudflared keeps several, at nearby locations.
+message TunnelConnector {
+  // The Cloudflare location, e.g. "cph01".
+  string location = 1;
+  // cloudflared's release, e.g. "2026.9.1".
+  string version = 2;
+  // The address it connects from, as Cloudflare sees it.
+  string origin_address = 3;
+  google.protobuf.Timestamp open_time = 4;
+}
+
+// ComputeFact is one thing the compute says about itself, e.g. {"CPUs",
+// "8"}, in the provider's own terms, to show as it is.
+message ComputeFact {
+  string label = 1;
+  string value = 2;
 }
 
 message ListProvidersRequest {}
@@ -274,4 +309,23 @@ message CreateInstallManifestResponse {
   // Multi-document YAML, for `kubectl apply -f -`. It holds the new relay
   // token (and the tunnel's): print it, pipe it, don't keep it around.
   string manifest = 1;
+}
+
+message GetComputeConnectionDetailsRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetComputeConnectionDetailsResponse {
+  // With its relay and tunnel asked for now, so with their details.
+  ComputeConnection connection = 1;
+  // What the compute says about itself, e.g. a Docker host's CPUs, memory
+  // and engine, or a cluster's version and nodes; empty when it can't be
+  // asked.
+  repeated ComputeFact facts = 2;
+  // Why there are no facts, or not all of them, e.g. "the relay isn't
+  // connected"; empty when there's nothing missing.
+  string facts_problem = 3;
+  // What's been done to the connection, newest first: made, changed, new
+  // relay tokens. At most 20.
+  repeated Activity activity = 4;
 }
