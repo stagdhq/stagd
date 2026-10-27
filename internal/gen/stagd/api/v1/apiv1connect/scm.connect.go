@@ -53,6 +53,9 @@ const (
 	// ScmServiceCheckRepositoryProcedure is the fully-qualified name of the ScmService's
 	// CheckRepository RPC.
 	ScmServiceCheckRepositoryProcedure = "/stagd.api.v1.ScmService/CheckRepository"
+	// ScmServiceSetRepositoryHiddenProcedure is the fully-qualified name of the ScmService's
+	// SetRepositoryHidden RPC.
+	ScmServiceSetRepositoryHiddenProcedure = "/stagd.api.v1.ScmService/SetRepositoryHidden"
 )
 
 // ScmServiceClient is a client for the stagd.api.v1.ScmService service.
@@ -75,6 +78,9 @@ type ScmServiceClient interface {
 	// default branch (its setup), unless it looked in the last few minutes.
 	// Only for repositories with previews on: Stagd never reads the others.
 	CheckRepository(context.Context, *connect.Request[v1.CheckRepositoryRequest]) (*connect.Response[v1.CheckRepositoryResponse], error)
+	// SetRepositoryHidden hides a repository from the org's lists, or shows it
+	// again. Its previews are left as they are.
+	SetRepositoryHidden(context.Context, *connect.Request[v1.SetRepositoryHiddenRequest]) (*connect.Response[v1.SetRepositoryHiddenResponse], error)
 }
 
 // NewScmServiceClient constructs a client for the stagd.api.v1.ScmService service. By default, it
@@ -130,18 +136,25 @@ func NewScmServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(scmServiceMethods.ByName("CheckRepository")),
 			connect.WithClientOptions(opts...),
 		),
+		setRepositoryHidden: connect.NewClient[v1.SetRepositoryHiddenRequest, v1.SetRepositoryHiddenResponse](
+			httpClient,
+			baseURL+ScmServiceSetRepositoryHiddenProcedure,
+			connect.WithSchema(scmServiceMethods.ByName("SetRepositoryHidden")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // scmServiceClient implements ScmServiceClient.
 type scmServiceClient struct {
-	startConnect       *connect.Client[v1.StartConnectRequest, v1.StartConnectResponse]
-	getConnectStatus   *connect.Client[v1.GetConnectStatusRequest, v1.GetConnectStatusResponse]
-	listConnections    *connect.Client[v1.ListConnectionsRequest, v1.ListConnectionsResponse]
-	deleteConnection   *connect.Client[v1.DeleteConnectionRequest, v1.DeleteConnectionResponse]
-	listRepositories   *connect.Client[v1.ListRepositoriesRequest, v1.ListRepositoriesResponse]
-	setPreviewsEnabled *connect.Client[v1.SetPreviewsEnabledRequest, v1.SetPreviewsEnabledResponse]
-	checkRepository    *connect.Client[v1.CheckRepositoryRequest, v1.CheckRepositoryResponse]
+	startConnect        *connect.Client[v1.StartConnectRequest, v1.StartConnectResponse]
+	getConnectStatus    *connect.Client[v1.GetConnectStatusRequest, v1.GetConnectStatusResponse]
+	listConnections     *connect.Client[v1.ListConnectionsRequest, v1.ListConnectionsResponse]
+	deleteConnection    *connect.Client[v1.DeleteConnectionRequest, v1.DeleteConnectionResponse]
+	listRepositories    *connect.Client[v1.ListRepositoriesRequest, v1.ListRepositoriesResponse]
+	setPreviewsEnabled  *connect.Client[v1.SetPreviewsEnabledRequest, v1.SetPreviewsEnabledResponse]
+	checkRepository     *connect.Client[v1.CheckRepositoryRequest, v1.CheckRepositoryResponse]
+	setRepositoryHidden *connect.Client[v1.SetRepositoryHiddenRequest, v1.SetRepositoryHiddenResponse]
 }
 
 // StartConnect calls stagd.api.v1.ScmService.StartConnect.
@@ -179,6 +192,11 @@ func (c *scmServiceClient) CheckRepository(ctx context.Context, req *connect.Req
 	return c.checkRepository.CallUnary(ctx, req)
 }
 
+// SetRepositoryHidden calls stagd.api.v1.ScmService.SetRepositoryHidden.
+func (c *scmServiceClient) SetRepositoryHidden(ctx context.Context, req *connect.Request[v1.SetRepositoryHiddenRequest]) (*connect.Response[v1.SetRepositoryHiddenResponse], error) {
+	return c.setRepositoryHidden.CallUnary(ctx, req)
+}
+
 // ScmServiceHandler is an implementation of the stagd.api.v1.ScmService service.
 type ScmServiceHandler interface {
 	// StartConnect begins connecting a code host account to the active org.
@@ -199,6 +217,9 @@ type ScmServiceHandler interface {
 	// default branch (its setup), unless it looked in the last few minutes.
 	// Only for repositories with previews on: Stagd never reads the others.
 	CheckRepository(context.Context, *connect.Request[v1.CheckRepositoryRequest]) (*connect.Response[v1.CheckRepositoryResponse], error)
+	// SetRepositoryHidden hides a repository from the org's lists, or shows it
+	// again. Its previews are left as they are.
+	SetRepositoryHidden(context.Context, *connect.Request[v1.SetRepositoryHiddenRequest]) (*connect.Response[v1.SetRepositoryHiddenResponse], error)
 }
 
 // NewScmServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -250,6 +271,12 @@ func NewScmServiceHandler(svc ScmServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(scmServiceMethods.ByName("CheckRepository")),
 		connect.WithHandlerOptions(opts...),
 	)
+	scmServiceSetRepositoryHiddenHandler := connect.NewUnaryHandler(
+		ScmServiceSetRepositoryHiddenProcedure,
+		svc.SetRepositoryHidden,
+		connect.WithSchema(scmServiceMethods.ByName("SetRepositoryHidden")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.ScmService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ScmServiceStartConnectProcedure:
@@ -266,6 +293,8 @@ func NewScmServiceHandler(svc ScmServiceHandler, opts ...connect.HandlerOption) 
 			scmServiceSetPreviewsEnabledHandler.ServeHTTP(w, r)
 		case ScmServiceCheckRepositoryProcedure:
 			scmServiceCheckRepositoryHandler.ServeHTTP(w, r)
+		case ScmServiceSetRepositoryHiddenProcedure:
+			scmServiceSetRepositoryHiddenHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -301,4 +330,8 @@ func (UnimplementedScmServiceHandler) SetPreviewsEnabled(context.Context, *conne
 
 func (UnimplementedScmServiceHandler) CheckRepository(context.Context, *connect.Request[v1.CheckRepositoryRequest]) (*connect.Response[v1.CheckRepositoryResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ScmService.CheckRepository is not implemented"))
+}
+
+func (UnimplementedScmServiceHandler) SetRepositoryHidden(context.Context, *connect.Request[v1.SetRepositoryHiddenRequest]) (*connect.Response[v1.SetRepositoryHiddenResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.ScmService.SetRepositoryHidden is not implemented"))
 }

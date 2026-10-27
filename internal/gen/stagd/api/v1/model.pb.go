@@ -410,7 +410,11 @@ type Repository struct {
 	PreviewsEnabled bool `protobuf:"varint,9,opt,name=previews_enabled,json=previewsEnabled,proto3" json:"previews_enabled,omitempty"`
 	// How the app is described on the default branch, as previews would read
 	// it; unset until Stagd has looked, and never while previews are off.
-	Setup         *RepositorySetup `protobuf:"bytes,10,opt,name=setup,proto3" json:"setup,omitempty"`
+	Setup *RepositorySetup `protobuf:"bytes,10,opt,name=setup,proto3" json:"setup,omitempty"`
+	// Hidden by an org admin: left out of the lists (repositories, the
+	// new-preview picker, the command palette) unless asked for. Only the
+	// lists: previews carry on as they are.
+	Hidden        bool `protobuf:"varint,11,opt,name=hidden,proto3" json:"hidden,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -513,6 +517,13 @@ func (x *Repository) GetSetup() *RepositorySetup {
 		return x.Setup
 	}
 	return nil
+}
+
+func (x *Repository) GetHidden() bool {
+	if x != nil {
+		return x.Hidden
+	}
+	return false
 }
 
 // RepositorySetup is what Stagd found on a repository's default branch:
@@ -729,7 +740,7 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\n" +
 	"Membership\x12#\n" +
 	"\x03org\x18\x01 \x01(\v2\x11.stagd.api.v1.OrgR\x03org\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\"\xe9\x02\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\"\x81\x03\n" +
 	"\n" +
 	"Repository\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
@@ -743,7 +754,8 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\x03url\x18\b \x01(\tR\x03url\x12)\n" +
 	"\x10previews_enabled\x18\t \x01(\bR\x0fpreviewsEnabled\x123\n" +
 	"\x05setup\x18\n" +
-	" \x01(\v2\x1d.stagd.api.v1.RepositorySetupR\x05setup\"\xe4\x01\n" +
+	" \x01(\v2\x1d.stagd.api.v1.RepositorySetupR\x05setup\x12\x16\n" +
+	"\x06hidden\x18\v \x01(\bR\x06hidden\"\xe4\x01\n" +
 	"\x0fRepositorySetup\x12\x1f\n" +
 	"\vconfig_file\x18\x01 \x01(\tR\n" +
 	"configFile\x12!\n" +

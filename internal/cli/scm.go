@@ -201,6 +201,7 @@ func reposCommand() *cli.Command {
 				Usage: "list repositories from every connected account",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "connection", Usage: "only this connection's repositories"},
+					&cli.BoolFlag{Name: "all", Usage: "hidden repositories too"},
 				},
 				Action: reposList,
 			},
@@ -216,8 +217,55 @@ func reposCommand() *cli.Command {
 				ArgsUsage: "<owner/name>",
 				Action:    func(ctx context.Context, cmd *cli.Command) error { return setPreviews(ctx, cmd, false) },
 			},
+			{
+				Name:      "hide",
+				Usage:     "hide a repository from the org's lists (its previews carry on)",
+				ArgsUsage: "<owner/name>",
+				Action:    func(ctx context.Context, cmd *cli.Command) error { return setHidden(ctx, cmd, true) },
+			},
+			{
+				Name:      "unhide",
+				Usage:     "show a hidden repository in the org's lists again",
+				ArgsUsage: "<owner/name>",
+				Action:    func(ctx context.Context, cmd *cli.Command) error { return setHidden(ctx, cmd, false) },
+			},
 		},
 	}
+}
+
+func setHidden(ctx context.Context, cmd *cli.Command, hidden bool) error {
+	repo := strings.TrimSpace(cmd.Args().First())
+	if repo == "" {
+		return cli.Exit("name the repository: owner/name (see stagd repos list --all)", 2)
+	}
+
+	c, err := clients(cmd)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Scm.SetRepositoryHidden(ctx, connect.NewRequest(&apiv1.SetRepositoryHiddenRequest{Repository: repo, Hidden: hidden}))
+	if err != nil {
+		return err
+	}
+
+	w := cmd.Root().Writer
+
+	if cmd.Bool("json") {
+		return output.JSON(w, res.Msg)
+	}
+
+	name := res.Msg.GetRepository().GetFullName()
+
+	if hidden {
+		_, err = fmt.Fprintf(w, "%s is hidden from the org's lists; its previews carry on. See it with stagd repos list --all.\n", name)
+
+		return err
+	}
+
+	_, err = fmt.Fprintf(w, "%s is in the org's lists again.\n", name)
+
+	return err
 }
 
 func setPreviews(ctx context.Context, cmd *cli.Command, enabled bool) error {
@@ -279,9 +327,17 @@ func reposList(ctx context.Context, cmd *cli.Command) error {
 		return output.JSON(w, res.Msg)
 	}
 
+	all := cmd.Bool("all")
 	rows := make([][]string, 0, len(res.Msg.GetRepositories()))
+	hiddenLeftOut := 0
 
 	for _, r := range res.Msg.GetRepositories() {
+		if r.GetHidden() && !all {
+			hiddenLeftOut++
+
+			continue
+		}
+
 		visibility := "public"
 		if r.GetPrivate() {
 			visibility = "private"
@@ -292,8 +348,20 @@ func reposList(ctx context.Context, cmd *cli.Command) error {
 			previews = "on"
 		}
 
+		if r.GetHidden() {
+			previews += " (hidden)"
+		}
+
 		rows = append(rows, []string{r.GetFullName(), previews, providerLabel(r.GetProvider()), r.GetDefaultBranch(), visibility})
 	}
 
-	return output.Table(w, []string{"repository", "previews", "host", "default branch", "visibility"}, rows)
+	if err := output.Table(w, []string{"repository", "previews", "host", "default branch", "visibility"}, rows); err != nil {
+		return err
+	}
+
+	if hiddenLeftOut > 0 {
+		_, err = fmt.Fprintf(w, "\n%d hidden; see them with stagd repos list --all.\n", hiddenLeftOut)
+	}
+
+	return err
 }

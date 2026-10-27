@@ -36,6 +36,9 @@ service ScmService {
   // default branch (its setup), unless it looked in the last few minutes.
   // Only for repositories with previews on: Stagd never reads the others.
   rpc CheckRepository(CheckRepositoryRequest) returns (CheckRepositoryResponse);
+  // SetRepositoryHidden hides a repository from the org's lists, or shows it
+  // again. Its previews are left as they are.
+  rpc SetRepositoryHidden(SetRepositoryHiddenRequest) returns (SetRepositoryHiddenResponse);
 }
 
 enum ConnectionStatus {
@@ -142,4 +145,14 @@ message SetPreviewsEnabledResponse {
   Repository repository = 1;
   // Previews torn down because previews were turned off.
   int32 destroyed = 2;
+}
+
+message SetRepositoryHiddenRequest {
+  // A repository id or "owner/name".
+  string repository = 1 [(buf.validate.field).string.min_len = 1];
+  bool hidden = 2;
+}
+
+message SetRepositoryHiddenResponse {
+  Repository repository = 1;
 }

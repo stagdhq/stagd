@@ -89,6 +89,10 @@ message Repository {
   // How the app is described on the default branch, as previews would read
   // it; unset until Stagd has looked, and never while previews are off.
   RepositorySetup setup = 10;
+  // Hidden by an org admin: left out of the lists (repositories, the
+  // new-preview picker, the command palette) unless asked for. Only the
+  // lists: previews carry on as they are.
+  bool hidden = 11;
 }
 
 // RepositorySetup is what Stagd found on a repository's default branch:

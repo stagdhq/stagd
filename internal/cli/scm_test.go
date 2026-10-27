@@ -24,6 +24,7 @@ type fakeScm struct {
 	polls        int
 	deleted      string
 	enabled      map[string]bool
+	hidden       map[string]bool
 }
 
 var acmeConnection = &apiv1.Connection{
@@ -83,6 +84,7 @@ func (f *fakeScm) SetPreviewsEnabled(_ context.Context, req *connect.Request[api
 func (f *fakeScm) ListRepositories(_ context.Context, req *connect.Request[apiv1.ListRepositoriesRequest]) (*connect.Response[apiv1.ListRepositoriesResponse], error) {
 	repos := []*apiv1.Repository{
 		{Id: "r-1", ConnectionId: "c-1", Provider: apiv1.ScmProvider_SCM_PROVIDER_GITHUB, FullName: "acme-inc/web", DefaultBranch: "main", Private: true},
+		{Id: "r-2", ConnectionId: "c-1", Provider: apiv1.ScmProvider_SCM_PROVIDER_GITHUB, FullName: "acme-inc/.github", DefaultBranch: "main", Hidden: f.hidden["acme-inc/.github"]},
 	}
 
 	if req.Msg.GetConnectionId() != "" && req.Msg.GetConnectionId() != "c-1" {
@@ -90,6 +92,16 @@ func (f *fakeScm) ListRepositories(_ context.Context, req *connect.Request[apiv1
 	}
 
 	return connect.NewResponse(&apiv1.ListRepositoriesResponse{Repositories: repos}), nil
+}
+
+func (f *fakeScm) SetRepositoryHidden(_ context.Context, req *connect.Request[apiv1.SetRepositoryHiddenRequest]) (*connect.Response[apiv1.SetRepositoryHiddenResponse], error) {
+	if f.hidden == nil {
+		f.hidden = map[string]bool{}
+	}
+
+	f.hidden[req.Msg.GetRepository()] = req.Msg.GetHidden()
+
+	return connect.NewResponse(&apiv1.SetRepositoryHiddenResponse{Repository: &apiv1.Repository{FullName: req.Msg.GetRepository(), Hidden: req.Msg.GetHidden()}}), nil
 }
 
 func scmServer(t *testing.T, scm *fakeScm) *httptest.Server {
@@ -181,5 +193,31 @@ func TestReposEnableAndDisable(t *testing.T) {
 	out, err = run(t, srv, "--token", "tok-1", "repos", "list")
 	if err != nil || !strings.Contains(out, "PREVIEWS") {
 		t.Fatalf("list: %v\n%s", err, out)
+	}
+}
+
+func TestReposHideAndUnhide(t *testing.T) {
+	scm := &fakeScm{}
+	srv := scmServer(t, scm)
+
+	out, err := run(t, srv, "--token", "tok-1", "repos", "hide", "acme-inc/.github")
+	if err != nil || !scm.hidden["acme-inc/.github"] || !strings.Contains(out, "acme-inc/.github is hidden") {
+		t.Fatalf("hide: %v %v\n%s", err, scm.hidden, out)
+	}
+
+	// Left out of the list, and said so.
+	out, err = run(t, srv, "--token", "tok-1", "repos", "list")
+	if err != nil || strings.Contains(out, "acme-inc/.github") || !strings.Contains(out, "1 hidden; see them with stagd repos list --all") {
+		t.Fatalf("list: %v\n%s", err, out)
+	}
+
+	out, err = run(t, srv, "--token", "tok-1", "repos", "list", "--all")
+	if err != nil || !strings.Contains(out, "acme-inc/.github") || !strings.Contains(out, "(hidden)") {
+		t.Fatalf("list --all: %v\n%s", err, out)
+	}
+
+	out, err = run(t, srv, "--token", "tok-1", "repos", "unhide", "acme-inc/.github")
+	if err != nil || scm.hidden["acme-inc/.github"] || !strings.Contains(out, "in the org's lists again") {
+		t.Fatalf("unhide: %v\n%s", err, out)
 	}
 }
