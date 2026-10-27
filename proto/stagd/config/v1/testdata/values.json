@@ -1,0 +1,10 @@
+{
+  "problems": [
+    "previews should be on-demand, always or { label: <name> }, not \"sometimes\"",
+    "commands.handled should be delete, collapse or keep, not \"archive\"",
+    "wait.timeout should be between 1m and 2h0m0s",
+    "lifecycle.sleep_after should be between 45m and 24h",
+    "lifecycle.expire_after should be between 1h and 48h",
+    "compute should be a compute connection's name, as on Settings → Compute, e.g. compute: kind"
+  ]
+}

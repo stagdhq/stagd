@@ -1,0 +1,93 @@
+{
+  "config": {
+    "version": 1,
+    "app": {
+      "compose": "deploy/compose.preview.yaml"
+    },
+    "ingress": {
+      "web": {
+        "service": "web",
+        "port": 3000,
+        "primary": true
+      },
+      "api": {
+        "service": "api",
+        "port": 8080
+      }
+    },
+    "build": {
+      "web": {
+        "context": ".",
+        "dockerfile": "Dockerfile",
+        "target": "prod",
+        "args": {
+          "NODE_ENV": "production"
+        }
+      },
+      "api": {
+        "image": "ghcr.io/acme/api"
+      },
+      "worker": {
+        "image": "ghcr.io/acme/worker:sha-${STAGD_SHA}",
+        "wait": "1200s"
+      }
+    },
+    "services": {
+      "mail": {},
+      "otel": {
+        "export": {
+          "endpoint": "https://otlp.example.com",
+          "protocol": "grpc",
+          "headers": {
+            "Authorization": "Bearer ${DASH0_TOKEN}"
+          }
+        },
+        "ignore": [
+          "/healthz",
+          "/internal/*"
+        ]
+      }
+    },
+    "env": {
+      "ENVIRONMENT_TAG": "pr-${STAGD_PR_NUMBER}",
+      "WORKERS": "4"
+    },
+    "database": {
+      "neon": {
+        "project": "billowing-sound-61277569",
+        "parent": "br-broad-heart-a2qzljrk",
+        "database": "neondb",
+        "role": "neondb_owner",
+        "env": {
+          "url": "SQL_URL",
+          "unpooled": "SQL_UNPOOLED_URL"
+        }
+      }
+    },
+    "previews": {
+      "when": "on-demand"
+    },
+    "comment": "Sign in with code 123456.",
+    "commands": {
+      "handled": "collapse"
+    },
+    "wait": {
+      "checks": [
+        "build-images",
+        "tests"
+      ],
+      "timeout": "2700s"
+    },
+    "registries": {
+      "ghcr.io": {
+        "username": "acme-bot",
+        "password": "${GHCR_TOKEN}"
+      }
+    },
+    "lifecycle": {
+      "sleep_after": "7200s",
+      "expire_after": "129600s"
+    },
+    "compute": "kind"
+  }
+}

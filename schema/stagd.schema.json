@@ -1,0 +1,458 @@
+{
+  "$defs": {
+    "App": {
+      "additionalProperties": false,
+      "description": "Where the app is described: a compose file only, for now (Helm, Kustomize and manifests come later).",
+      "properties": {
+        "compose": {
+          "description": "The compose file's path in the repository, e.g. deploy/compose.yaml. Left out, compose.yaml (or compose.yml, docker-compose.yaml…) at the root.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Build": {
+      "additionalProperties": false,
+      "description": "A service's image: built from the repository, or one built elsewhere.",
+      "oneOf": [
+        {
+          "required": [
+            "context"
+          ]
+        },
+        {
+          "required": [
+            "image"
+          ]
+        }
+      ],
+      "properties": {
+        "args": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "With context: build arguments.",
+          "type": "object"
+        },
+        "context": {
+          "description": "Built from this directory in the repository, e.g. \".\" or services/api.",
+          "type": "string"
+        },
+        "dockerfile": {
+          "description": "With context: the Dockerfile's path, from the context.",
+          "type": "string"
+        },
+        "image": {
+          "description": "Pulled as it is, e.g. ghcr.io/acme/api:${STAGD_SHA}: pushed by CI.",
+          "type": "string"
+        },
+        "target": {
+          "description": "With context: the Dockerfile's stage to build.",
+          "type": "string"
+        },
+        "wait": {
+          "description": "With image: how long to keep trying to pull it, as CI may push it after the deploy starts; between 1m and 2h. Left out, a missing image fails the deploy at once.",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h|d))+$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Commands": {
+      "additionalProperties": false,
+      "properties": {
+        "handled": {
+          "description": "What happens to a /stagd comment once it's handled: delete (the default), collapse or keep.",
+          "enum": [
+            "delete",
+            "collapse",
+            "keep"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Config": {
+      "additionalProperties": false,
+      "description": "Config is a repository's stagd.yaml, as Stagd reads it: the optional file at the repository's root that says where the app is described and what Stagd adds on top.\n\nThe messages have stagd.yaml's own shape: a message's JSON (protojson, with the proto field names) is the file in its plain form. A file may also use a few shorthands, which read as their plain form:\n\n  previews: always           previews: { when: always }\n  services: { mail: true }   services: { mail: {} }\n  mail: false (or otel)      left out\n\nA reader fills in the defaults, e.g. a Neon database's name, and gives durations as protojson's (\"1200s\" for 20m). Who may open previews is never set here: a pull request mustn't be able to loosen its own preview's access by editing a file. That's set in Stagd.\n\nstagd/config/v1/testdata in the stagd repository holds files with how they read, or the problems they have: every reader runs them.",
+      "properties": {
+        "app": {
+          "$ref": "#/$defs/App",
+          "description": "Where the app is described."
+        },
+        "build": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Build"
+          },
+          "description": "Where each service's image comes from, by the compose file's service name.",
+          "type": "object"
+        },
+        "commands": {
+          "$ref": "#/$defs/Commands",
+          "description": "What happens to /stagd commands."
+        },
+        "comment": {
+          "description": "Added to the pull request comment once the preview is live, e.g. how to sign in. Markdown.",
+          "type": "string"
+        },
+        "compute": {
+          "description": "The compute connection previews run on, by its name on Settings → Compute, e.g. kind. Left out, the org's default.",
+          "type": "string"
+        },
+        "database": {
+          "$ref": "#/$defs/Database",
+          "description": "The preview's own database."
+        },
+        "env": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "Variables the compose file can use, like compose's .env file. Values may use Stagd's variables and secrets, ${STAGD_PR_NUMBER} or ${SESSION_SECRET}; a secret wins over a variable of the same name.",
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "ingress": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Ingress"
+          },
+          "description": "The preview's URLs by name, e.g. web: { service: web, port: 3000 }. When set, it replaces the dev.stagd.* labels in the compose file.",
+          "propertyNames": {
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/Lifecycle",
+          "description": "How long previews stay awake and live, in place of the org's setting."
+        },
+        "previews": {
+          "$ref": "#/$defs/Previews",
+          "description": "When pull requests get previews: when someone asks with /stagd deploy (on-demand, the default), always, or while they have a label."
+        },
+        "registries": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Registry"
+          },
+          "description": "Logins for pulling private images, by the registry's host, e.g. ghcr.io.",
+          "propertyNames": {
+            "pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?$",
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "services": {
+          "$ref": "#/$defs/Services",
+          "description": "What Stagd runs next to the app."
+        },
+        "version": {
+          "const": 1,
+          "description": "The file's format: 1, the only one so far.",
+          "type": "integer"
+        },
+        "wait": {
+          "$ref": "#/$defs/Wait",
+          "description": "GitHub checks on the commit that must pass before it deploys, e.g. the workflow that pushes the images."
+        }
+      },
+      "type": "object"
+    },
+    "Database": {
+      "additionalProperties": false,
+      "description": "The preview's own database.",
+      "properties": {
+        "neon": {
+          "$ref": "#/$defs/Neon",
+          "description": "A branch of a Neon database, forked for each preview."
+        }
+      },
+      "type": "object"
+    },
+    "Ingress": {
+      "additionalProperties": false,
+      "description": "One of the preview's URLs: a service's port.",
+      "properties": {
+        "port": {
+          "maximum": 65535,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "primary": {
+          "description": "The URL the pull request comment and the dashboard link to first.",
+          "type": "boolean"
+        },
+        "service": {
+          "description": "The compose file's service.",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Lifecycle": {
+      "additionalProperties": false,
+      "description": "How long previews stay awake and live, in place of the org's setting.",
+      "properties": {
+        "expire_after": {
+          "description": "How long a preview lives without a new commit: 1h to 48h.",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h|d))+$",
+          "type": "string"
+        },
+        "sleep_after": {
+          "description": "How long a preview nobody opens stays awake: 45m to 24h.",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h|d))+$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Mail": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      ]
+    },
+    "Neon": {
+      "additionalProperties": false,
+      "description": "A Neon branch per preview, forked from a parent branch. Which parents may be forked is the org's Neon integration's to say: a pull request that could name any parent could fork production into its preview.",
+      "properties": {
+        "database": {
+          "description": "The database, neondb by default.",
+          "type": "string"
+        },
+        "env": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "The variables the URLs are given as, by kind: url (pooled or not, as pooled says), pooled and unpooled. By default url: DATABASE_URL.",
+          "propertyNames": {
+            "enum": [
+              "url",
+              "pooled",
+              "unpooled"
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "integration": {
+          "description": "Which of the org's Neon integrations, when it has several.",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "Added to the URLs, e.g. sslmode: verify-full.",
+          "type": "object"
+        },
+        "parent": {
+          "description": "The branch to fork: its id or name.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "pooled": {
+          "description": "Whether url is the pooled URL.",
+          "type": "boolean"
+        },
+        "project": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "role": {
+          "description": "The role the URLs sign in as, neondb_owner by default.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "OTel": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "export": {
+              "$ref": "#/$defs/OTelExport",
+              "description": "Where a copy of what the app sends goes on to: the team's own backend."
+            },
+            "ignore": {
+              "description": "Request paths whose traces aren't kept, a * matching the rest, e.g. [/healthz, /internal/*].",
+              "items": {
+                "pattern": "^/[^ ?#]*$",
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      ]
+    },
+    "OTelExport": {
+      "additionalProperties": false,
+      "properties": {
+        "endpoint": {
+          "description": "An OTLP endpoint, e.g. https://otlp.example.com.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "Headers sent with it, e.g. Authorization: \"Bearer ${DASH0_TOKEN}\".",
+          "type": "object"
+        },
+        "protocol": {
+          "description": "How it's sent: http/protobuf (the default) or grpc.",
+          "enum": [
+            "http/protobuf",
+            "grpc"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Previews": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "description": "When pull requests get previews.",
+          "oneOf": [
+            {
+              "required": [
+                "when"
+              ]
+            },
+            {
+              "required": [
+                "label"
+              ]
+            }
+          ],
+          "properties": {
+            "label": {
+              "description": "A GitHub label: adding it deploys the preview, removing it tears the preview down.",
+              "maxLength": 50,
+              "minLength": 1,
+              "type": "string"
+            },
+            "when": {
+              "description": "on-demand, when someone asks with /stagd deploy; or always.",
+              "enum": [
+                "on-demand",
+                "always"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "description": "on-demand, when someone asks with /stagd deploy; or always.",
+          "enum": [
+            "on-demand",
+            "always"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "Registry": {
+      "additionalProperties": false,
+      "description": "A login for pulling images from one registry.",
+      "properties": {
+        "password": {
+          "description": "A secret of Stagd's, written as \"${NAME}\": a password in the repository is a leaked password.",
+          "pattern": "\\$\\{",
+          "type": "string"
+        },
+        "username": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Services": {
+      "additionalProperties": false,
+      "description": "What Stagd runs next to the app.",
+      "properties": {
+        "mail": {
+          "$ref": "#/$defs/Mail",
+          "description": "Captures the mail the app sends (Mailpit), for the dashboard and the preview's own inbox."
+        },
+        "otel": {
+          "$ref": "#/$defs/OTel",
+          "description": "An OpenTelemetry endpoint for the app's traces, with a viewer (Jaeger)."
+        }
+      },
+      "type": "object"
+    },
+    "Wait": {
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "description": "Check run or workflow names, e.g. [build-images]; one failing fails the preview at once.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "type": "array"
+        },
+        "timeout": {
+          "description": "How long to wait for them, from when the deploy starts: 30m by default, 1m to 2h.",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h|d))+$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$id": "https://stagd.dev/schema/stagd.schema.json",
+  "$ref": "#/$defs/Config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Config is a repository's stagd.yaml, as Stagd reads it: the optional file at the repository's root that says where the app is described and what Stagd adds on top.\n\nThe messages have stagd.yaml's own shape: a message's JSON (protojson, with the proto field names) is the file in its plain form. A file may also use a few shorthands, which read as their plain form:\n\n  previews: always           previews: { when: always }\n  services: { mail: true }   services: { mail: {} }\n  mail: false (or otel)      left out\n\nA reader fills in the defaults, e.g. a Neon database's name, and gives durations as protojson's (\"1200s\" for 20m). Who may open previews is never set here: a pull request mustn't be able to loosen its own preview's access by editing a file. That's set in Stagd.\n\nstagd/config/v1/testdata in the stagd repository holds files with how they read, or the problems they have: every reader runs them.",
+  "title": "stagd.yaml"
+}

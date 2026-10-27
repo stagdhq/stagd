@@ -1,0 +1,6 @@
+# previews: always is { when: always }; true and {} turn a service on, false
+# leaves it out.
+previews: always
+services:
+  mail: true
+  otel: false

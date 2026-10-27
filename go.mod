@@ -10,19 +10,23 @@ tool (
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2
+	buf.build/go/protovalidate v1.4.0
 	charm.land/huh/v2 v2.0.3
 	charm.land/lipgloss/v2 v2.0.6
 	connectrpc.com/connect v1.21.1
 	github.com/coder/websocket v1.8.14
 	github.com/hashicorp/yamux v0.1.2
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/urfave/cli/v3 v3.14.0
 	github.com/zalando/go-keyring v0.2.8
+	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/term v0.47.0
 	google.golang.org/protobuf v1.36.12
 )
 
 require (
-	cel.dev/expr v0.25.2 // indirect
+	cel.dev/cel-go v0.32.0 // indirect
+	cel.dev/expr v0.25.3 // indirect
 	charm.land/bubbles/v2 v2.1.1 // indirect
 	charm.land/bubbletea/v2 v2.0.10 // indirect
 	cloud.google.com/go v0.123.0 // indirect
@@ -38,6 +42,7 @@ require (
 	github.com/Ladicle/tabwriter v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/alecthomas/chroma/v2 v2.27.0 // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.44.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.20 // indirect
@@ -132,8 +137,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.45.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.45.0 // indirect
 	go.opentelemetry.io/otel/trace v1.45.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
+	golang.org/x/exp v0.0.0-20260820142414-ca536658362e // indirect
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
@@ -142,7 +147,7 @@ require (
 	golang.org/x/time v0.16.0 // indirect
 	google.golang.org/api v0.299.0 // indirect
 	google.golang.org/genproto v0.0.0-20260724162435-b2f20204f0df // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260724162435-b2f20204f0df // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260921155816-b14227669459 // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	mvdan.cc/sh/v3 v3.14.1 // indirect

@@ -1,0 +1,6 @@
+{
+  "problems": [
+    "\"access\" can't be set in the repository: who may open previews is set in Stagd (stagd preview policy)",
+    "ingress \"web\": \"public\" can't be set in the repository: it's set in Stagd (stagd preview policy)"
+  ]
+}

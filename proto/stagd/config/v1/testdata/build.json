@@ -1,0 +1,9 @@
+{
+  "problems": [
+    "ingress \"ab\": use one letter or at least three; two-letter names make URLs DNS reserves",
+    "ingress \"api\" needs a service and a port, e.g. { service: web, port: 3000 }",
+    "build \"web\" needs either context (build it) or image (use a prebuilt one)",
+    "build \"api\": context should be a path inside the repository",
+    "build \"worker\": wait should be between 1m and 2h0m0s"
+  ]
+}

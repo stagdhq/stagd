@@ -1,0 +1,13 @@
+{
+  "config": {
+    "version": 1,
+    "app": {},
+    "services": {},
+    "previews": {
+      "when": "on-demand"
+    },
+    "commands": {
+      "handled": "delete"
+    }
+  }
+}

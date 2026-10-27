@@ -1,0 +1,5 @@
+previews: sometimes
+commands: { handled: archive }
+lifecycle: { sleep_after: 10m, expire_after: 3d }
+wait: { timeout: 5h }
+compute: ""

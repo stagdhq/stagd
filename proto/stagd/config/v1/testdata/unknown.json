@@ -1,0 +1,9 @@
+{
+  "problems": [
+    "unknown setting \"servces\"",
+    "version 2 isn't supported; use version: 1",
+    "app.helm isn't supported yet; describe the app with compose for now",
+    "services.redis isn't supported yet; run it in the compose file for now",
+    "services.mail.allow_real_delivery isn't supported yet: all mail stays in the preview"
+  ]
+}

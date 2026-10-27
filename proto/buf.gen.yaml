@@ -1,4 +1,5 @@
-# Go for the stagd.api.v1 protos in proto/, into internal/gen. Run
+# Go for the protos in proto/, into internal/gen, and stagd.yaml's JSON
+# Schema (from stagd.config.v1.Config) into schema/. Run
 # `task generate` from the repository's root (where out paths start);
 # never edit generated code by hand.
 version: v2
@@ -20,3 +21,6 @@ plugins:
   - local: ["go", "tool", "protoc-gen-connect-go"]
     out: internal/gen
     opt: paths=source_relative
+  - local: ["go", "run", "./internal/configschema/protoc-gen-stagd-schema"]
+    out: schema
+    strategy: all

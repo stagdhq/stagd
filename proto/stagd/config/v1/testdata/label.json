@@ -1,0 +1,15 @@
+{
+  "config": {
+    "version": 1,
+    "app": {},
+    "services": {
+      "otel": {}
+    },
+    "previews": {
+      "label": "preview"
+    },
+    "commands": {
+      "handled": "keep"
+    }
+  }
+}

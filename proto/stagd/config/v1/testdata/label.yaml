@@ -1,0 +1,4 @@
+previews: { label: preview }
+services:
+  otel:
+commands: { handled: keep }

@@ -1,0 +1,15 @@
+{
+  "config": {
+    "version": 1,
+    "app": {},
+    "services": {
+      "mail": {}
+    },
+    "previews": {
+      "when": "always"
+    },
+    "commands": {
+      "handled": "delete"
+    }
+  }
+}

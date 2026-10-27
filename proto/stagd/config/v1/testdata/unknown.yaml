@@ -1,0 +1,4 @@
+version: 2
+servces: { mail: {} }
+services: { redis: {}, mail: { allow_real_delivery: true } }
+app: { helm: chart }

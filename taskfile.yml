@@ -25,6 +25,7 @@ tasks:
       - proto/**/*.proto
       - proto/buf.yaml
       - proto/buf.gen.yaml
+      - internal/configschema/**/*.go
     cmds:
       - buf generate --template proto/buf.gen.yaml
 

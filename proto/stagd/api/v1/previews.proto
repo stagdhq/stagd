@@ -7,6 +7,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/compute.proto";
 import "stagd/api/v1/model.proto";
+import "stagd/config/v1/config.proto";
 
 // PreviewService starts, watches and tears down preview environments.
 //
@@ -387,6 +388,9 @@ message ValidateAppResponse {
   repeated AppComponent components = 5;
   // Ingress names, components and ports; URLs come with a real preview.
   repeated PreviewIngress ingresses = 6;
+  // stagd.yaml as previews read it, defaults filled in: unset when it has
+  // problems, empty when there's no stagd.yaml.
+  stagd.config.v1.Config config = 7;
 }
 
 message ListPreviewEventsRequest {

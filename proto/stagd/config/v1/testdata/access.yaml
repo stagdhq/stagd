@@ -1,0 +1,4 @@
+# Who may open previews is Stagd's setting, never the repository's.
+access: public
+ingress:
+  web: { service: web, port: 3000, public: true }

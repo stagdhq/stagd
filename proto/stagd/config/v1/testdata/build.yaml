@@ -1,0 +1,7 @@
+build:
+  web: { dockerfile: Dockerfile }
+  api: { context: ../outside }
+  worker: { image: ghcr.io/acme/worker, wait: 3h }
+ingress:
+  ab: { service: web, port: 3000 }
+  api: { service: api }

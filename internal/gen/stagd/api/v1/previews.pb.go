@@ -8,6 +8,7 @@ package apiv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	v1 "github.com/stagdhq/stagd/internal/gen/stagd/config/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -2093,7 +2094,10 @@ type ValidateAppResponse struct {
 	Notes      []string        `protobuf:"bytes,4,rep,name=notes,proto3" json:"notes,omitempty"`
 	Components []*AppComponent `protobuf:"bytes,5,rep,name=components,proto3" json:"components,omitempty"`
 	// Ingress names, components and ports; URLs come with a real preview.
-	Ingresses     []*PreviewIngress `protobuf:"bytes,6,rep,name=ingresses,proto3" json:"ingresses,omitempty"`
+	Ingresses []*PreviewIngress `protobuf:"bytes,6,rep,name=ingresses,proto3" json:"ingresses,omitempty"`
+	// stagd.yaml as previews read it, defaults filled in: unset when it has
+	// problems, empty when there's no stagd.yaml.
+	Config        *v1.Config `protobuf:"bytes,7,opt,name=config,proto3" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2166,6 +2170,13 @@ func (x *ValidateAppResponse) GetComponents() []*AppComponent {
 func (x *ValidateAppResponse) GetIngresses() []*PreviewIngress {
 	if x != nil {
 		return x.Ingresses
+	}
+	return nil
+}
+
+func (x *ValidateAppResponse) GetConfig() *v1.Config {
+	if x != nil {
+		return x.Config
 	}
 	return nil
 }
@@ -4270,7 +4281,7 @@ var File_stagd_api_v1_previews_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\n" +
-	"\x1bstagd/api/v1/previews.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1astagd/api/v1/compute.proto\x1a\x18stagd/api/v1/model.proto\"\x8f\x03\n" +
+	"\x1bstagd/api/v1/previews.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1astagd/api/v1/compute.proto\x1a\x18stagd/api/v1/model.proto\x1a\x1cstagd/config/v1/config.proto\"\x8f\x03\n" +
 	"\rPreviewPolicy\x12\x1e\n" +
 	"\n" +
 	"repository\x18\x01 \x01(\tR\n" +
@@ -4401,7 +4412,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\fAppComponent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
 	"\rbuild_context\x18\x02 \x01(\tR\fbuildContext\x12\x14\n" +
-	"\x05image\x18\x03 \x01(\tR\x05image\"\xf3\x01\n" +
+	"\x05image\x18\x03 \x01(\tR\x05image\"\xa4\x02\n" +
 	"\x13ValidateAppResponse\x12\x1c\n" +
 	"\trequested\x18\x01 \x03(\tR\trequested\x12\x14\n" +
 	"\x05files\x18\x02 \x03(\tR\x05files\x12\x1a\n" +
@@ -4410,7 +4421,8 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\n" +
 	"components\x18\x05 \x03(\v2\x1a.stagd.api.v1.AppComponentR\n" +
 	"components\x12:\n" +
-	"\tingresses\x18\x06 \x03(\v2\x1c.stagd.api.v1.PreviewIngressR\tingresses\"{\n" +
+	"\tingresses\x18\x06 \x03(\v2\x1c.stagd.api.v1.PreviewIngressR\tingresses\x12/\n" +
+	"\x06config\x18\a \x01(\v2\x17.stagd.config.v1.ConfigR\x06config\"{\n" +
 	"\x18ListPreviewEventsRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12'\n" +
 	"\tpage_size\x18\x02 \x01(\x05B\n" +
@@ -4742,6 +4754,7 @@ var file_stagd_api_v1_previews_proto_goTypes = []any{
 	(*ChangeRequest)(nil),               // 70: stagd.api.v1.ChangeRequest
 	(*timestamppb.Timestamp)(nil),       // 71: google.protobuf.Timestamp
 	(ComputeProvider)(0),                // 72: stagd.api.v1.ComputeProvider
+	(*v1.Config)(nil),                   // 73: stagd.config.v1.Config
 }
 var file_stagd_api_v1_previews_proto_depIdxs = []int32{
 	0,  // 0: stagd.api.v1.PreviewPolicy.access:type_name -> stagd.api.v1.PreviewAccess
@@ -4775,89 +4788,90 @@ var file_stagd_api_v1_previews_proto_depIdxs = []int32{
 	67, // 28: stagd.api.v1.ValidateAppRequest.files:type_name -> stagd.api.v1.ValidateAppRequest.FilesEntry
 	32, // 29: stagd.api.v1.ValidateAppResponse.components:type_name -> stagd.api.v1.AppComponent
 	9,  // 30: stagd.api.v1.ValidateAppResponse.ingresses:type_name -> stagd.api.v1.PreviewIngress
-	71, // 31: stagd.api.v1.PreviewEvent.time:type_name -> google.protobuf.Timestamp
-	1,  // 32: stagd.api.v1.PreviewEvent.status:type_name -> stagd.api.v1.PreviewStatus
-	35, // 33: stagd.api.v1.ListPreviewEventsResponse.events:type_name -> stagd.api.v1.PreviewEvent
-	38, // 34: stagd.api.v1.MailSummary.from:type_name -> stagd.api.v1.MailAddress
-	38, // 35: stagd.api.v1.MailSummary.to:type_name -> stagd.api.v1.MailAddress
-	71, // 36: stagd.api.v1.MailSummary.receive_time:type_name -> google.protobuf.Timestamp
-	39, // 37: stagd.api.v1.ListMailResponse.messages:type_name -> stagd.api.v1.MailSummary
-	39, // 38: stagd.api.v1.MailMessage.summary:type_name -> stagd.api.v1.MailSummary
-	38, // 39: stagd.api.v1.MailMessage.cc:type_name -> stagd.api.v1.MailAddress
-	42, // 40: stagd.api.v1.MailMessage.headers:type_name -> stagd.api.v1.MailHeader
-	43, // 41: stagd.api.v1.GetMailResponse.message:type_name -> stagd.api.v1.MailMessage
-	68, // 42: stagd.api.v1.GetServiceUsageRequest.window:type_name -> google.protobuf.Duration
-	51, // 43: stagd.api.v1.GetServiceUsageResponse.services:type_name -> stagd.api.v1.ServiceUsage
-	52, // 44: stagd.api.v1.ServiceUsage.points:type_name -> stagd.api.v1.UsagePoint
-	71, // 45: stagd.api.v1.ServiceUsage.sampled_at:type_name -> google.protobuf.Timestamp
-	71, // 46: stagd.api.v1.ServiceUsage.started_at:type_name -> google.protobuf.Timestamp
-	71, // 47: stagd.api.v1.UsagePoint.time:type_name -> google.protobuf.Timestamp
-	55, // 48: stagd.api.v1.ListBuildLogsResponse.builds:type_name -> stagd.api.v1.BuildLog
-	71, // 49: stagd.api.v1.ListLogsRequest.since:type_name -> google.protobuf.Timestamp
-	58, // 50: stagd.api.v1.ListLogsResponse.lines:type_name -> stagd.api.v1.LogLine
-	71, // 51: stagd.api.v1.LogLine.time:type_name -> google.protobuf.Timestamp
-	4,  // 52: stagd.api.v1.LogLine.level:type_name -> stagd.api.v1.LogLevel
-	59, // 53: stagd.api.v1.LogLine.fields:type_name -> stagd.api.v1.LogField
-	5,  // 54: stagd.api.v1.LogLine.format:type_name -> stagd.api.v1.LogFormat
-	71, // 55: stagd.api.v1.ListTracesRequest.since:type_name -> google.protobuf.Timestamp
-	71, // 56: stagd.api.v1.ListTracesRequest.until:type_name -> google.protobuf.Timestamp
-	68, // 57: stagd.api.v1.ListTracesRequest.min_duration:type_name -> google.protobuf.Duration
-	62, // 58: stagd.api.v1.ListTracesResponse.traces:type_name -> stagd.api.v1.TraceSummary
-	71, // 59: stagd.api.v1.TraceSummary.start_time:type_name -> google.protobuf.Timestamp
-	68, // 60: stagd.api.v1.TraceSummary.duration:type_name -> google.protobuf.Duration
-	65, // 61: stagd.api.v1.GetTraceResponse.spans:type_name -> stagd.api.v1.Span
-	6,  // 62: stagd.api.v1.Span.kind:type_name -> stagd.api.v1.SpanKind
-	71, // 63: stagd.api.v1.Span.start_time:type_name -> google.protobuf.Timestamp
-	68, // 64: stagd.api.v1.Span.duration:type_name -> google.protobuf.Duration
-	59, // 65: stagd.api.v1.Span.attributes:type_name -> stagd.api.v1.LogField
-	66, // 66: stagd.api.v1.Span.events:type_name -> stagd.api.v1.SpanEvent
-	71, // 67: stagd.api.v1.SpanEvent.time:type_name -> google.protobuf.Timestamp
-	59, // 68: stagd.api.v1.SpanEvent.attributes:type_name -> stagd.api.v1.LogField
-	15, // 69: stagd.api.v1.PreviewService.CreatePreview:input_type -> stagd.api.v1.CreatePreviewRequest
-	13, // 70: stagd.api.v1.PreviewService.ListSources:input_type -> stagd.api.v1.ListSourcesRequest
-	17, // 71: stagd.api.v1.PreviewService.GetPreview:input_type -> stagd.api.v1.GetPreviewRequest
-	19, // 72: stagd.api.v1.PreviewService.ListPreviews:input_type -> stagd.api.v1.ListPreviewsRequest
-	21, // 73: stagd.api.v1.PreviewService.WatchPreview:input_type -> stagd.api.v1.WatchPreviewRequest
-	34, // 74: stagd.api.v1.PreviewService.ListPreviewEvents:input_type -> stagd.api.v1.ListPreviewEventsRequest
-	23, // 75: stagd.api.v1.PreviewService.WakePreview:input_type -> stagd.api.v1.WakePreviewRequest
-	25, // 76: stagd.api.v1.PreviewService.DestroyPreview:input_type -> stagd.api.v1.DestroyPreviewRequest
-	27, // 77: stagd.api.v1.PreviewService.GetPreviewPolicy:input_type -> stagd.api.v1.GetPreviewPolicyRequest
-	29, // 78: stagd.api.v1.PreviewService.UpdatePreviewPolicy:input_type -> stagd.api.v1.UpdatePreviewPolicyRequest
-	31, // 79: stagd.api.v1.PreviewService.ValidateApp:input_type -> stagd.api.v1.ValidateAppRequest
-	37, // 80: stagd.api.v1.PreviewService.ListMail:input_type -> stagd.api.v1.ListMailRequest
-	41, // 81: stagd.api.v1.PreviewService.GetMail:input_type -> stagd.api.v1.GetMailRequest
-	45, // 82: stagd.api.v1.PreviewService.ClearMail:input_type -> stagd.api.v1.ClearMailRequest
-	47, // 83: stagd.api.v1.PreviewService.DeleteMail:input_type -> stagd.api.v1.DeleteMailRequest
-	49, // 84: stagd.api.v1.PreviewService.GetServiceUsage:input_type -> stagd.api.v1.GetServiceUsageRequest
-	56, // 85: stagd.api.v1.PreviewService.ListLogs:input_type -> stagd.api.v1.ListLogsRequest
-	53, // 86: stagd.api.v1.PreviewService.ListBuildLogs:input_type -> stagd.api.v1.ListBuildLogsRequest
-	60, // 87: stagd.api.v1.PreviewService.ListTraces:input_type -> stagd.api.v1.ListTracesRequest
-	63, // 88: stagd.api.v1.PreviewService.GetTrace:input_type -> stagd.api.v1.GetTraceRequest
-	16, // 89: stagd.api.v1.PreviewService.CreatePreview:output_type -> stagd.api.v1.CreatePreviewResponse
-	14, // 90: stagd.api.v1.PreviewService.ListSources:output_type -> stagd.api.v1.ListSourcesResponse
-	18, // 91: stagd.api.v1.PreviewService.GetPreview:output_type -> stagd.api.v1.GetPreviewResponse
-	20, // 92: stagd.api.v1.PreviewService.ListPreviews:output_type -> stagd.api.v1.ListPreviewsResponse
-	22, // 93: stagd.api.v1.PreviewService.WatchPreview:output_type -> stagd.api.v1.WatchPreviewResponse
-	36, // 94: stagd.api.v1.PreviewService.ListPreviewEvents:output_type -> stagd.api.v1.ListPreviewEventsResponse
-	24, // 95: stagd.api.v1.PreviewService.WakePreview:output_type -> stagd.api.v1.WakePreviewResponse
-	26, // 96: stagd.api.v1.PreviewService.DestroyPreview:output_type -> stagd.api.v1.DestroyPreviewResponse
-	28, // 97: stagd.api.v1.PreviewService.GetPreviewPolicy:output_type -> stagd.api.v1.GetPreviewPolicyResponse
-	30, // 98: stagd.api.v1.PreviewService.UpdatePreviewPolicy:output_type -> stagd.api.v1.UpdatePreviewPolicyResponse
-	33, // 99: stagd.api.v1.PreviewService.ValidateApp:output_type -> stagd.api.v1.ValidateAppResponse
-	40, // 100: stagd.api.v1.PreviewService.ListMail:output_type -> stagd.api.v1.ListMailResponse
-	44, // 101: stagd.api.v1.PreviewService.GetMail:output_type -> stagd.api.v1.GetMailResponse
-	46, // 102: stagd.api.v1.PreviewService.ClearMail:output_type -> stagd.api.v1.ClearMailResponse
-	48, // 103: stagd.api.v1.PreviewService.DeleteMail:output_type -> stagd.api.v1.DeleteMailResponse
-	50, // 104: stagd.api.v1.PreviewService.GetServiceUsage:output_type -> stagd.api.v1.GetServiceUsageResponse
-	57, // 105: stagd.api.v1.PreviewService.ListLogs:output_type -> stagd.api.v1.ListLogsResponse
-	54, // 106: stagd.api.v1.PreviewService.ListBuildLogs:output_type -> stagd.api.v1.ListBuildLogsResponse
-	61, // 107: stagd.api.v1.PreviewService.ListTraces:output_type -> stagd.api.v1.ListTracesResponse
-	64, // 108: stagd.api.v1.PreviewService.GetTrace:output_type -> stagd.api.v1.GetTraceResponse
-	89, // [89:109] is the sub-list for method output_type
-	69, // [69:89] is the sub-list for method input_type
-	69, // [69:69] is the sub-list for extension type_name
-	69, // [69:69] is the sub-list for extension extendee
-	0,  // [0:69] is the sub-list for field type_name
+	73, // 31: stagd.api.v1.ValidateAppResponse.config:type_name -> stagd.config.v1.Config
+	71, // 32: stagd.api.v1.PreviewEvent.time:type_name -> google.protobuf.Timestamp
+	1,  // 33: stagd.api.v1.PreviewEvent.status:type_name -> stagd.api.v1.PreviewStatus
+	35, // 34: stagd.api.v1.ListPreviewEventsResponse.events:type_name -> stagd.api.v1.PreviewEvent
+	38, // 35: stagd.api.v1.MailSummary.from:type_name -> stagd.api.v1.MailAddress
+	38, // 36: stagd.api.v1.MailSummary.to:type_name -> stagd.api.v1.MailAddress
+	71, // 37: stagd.api.v1.MailSummary.receive_time:type_name -> google.protobuf.Timestamp
+	39, // 38: stagd.api.v1.ListMailResponse.messages:type_name -> stagd.api.v1.MailSummary
+	39, // 39: stagd.api.v1.MailMessage.summary:type_name -> stagd.api.v1.MailSummary
+	38, // 40: stagd.api.v1.MailMessage.cc:type_name -> stagd.api.v1.MailAddress
+	42, // 41: stagd.api.v1.MailMessage.headers:type_name -> stagd.api.v1.MailHeader
+	43, // 42: stagd.api.v1.GetMailResponse.message:type_name -> stagd.api.v1.MailMessage
+	68, // 43: stagd.api.v1.GetServiceUsageRequest.window:type_name -> google.protobuf.Duration
+	51, // 44: stagd.api.v1.GetServiceUsageResponse.services:type_name -> stagd.api.v1.ServiceUsage
+	52, // 45: stagd.api.v1.ServiceUsage.points:type_name -> stagd.api.v1.UsagePoint
+	71, // 46: stagd.api.v1.ServiceUsage.sampled_at:type_name -> google.protobuf.Timestamp
+	71, // 47: stagd.api.v1.ServiceUsage.started_at:type_name -> google.protobuf.Timestamp
+	71, // 48: stagd.api.v1.UsagePoint.time:type_name -> google.protobuf.Timestamp
+	55, // 49: stagd.api.v1.ListBuildLogsResponse.builds:type_name -> stagd.api.v1.BuildLog
+	71, // 50: stagd.api.v1.ListLogsRequest.since:type_name -> google.protobuf.Timestamp
+	58, // 51: stagd.api.v1.ListLogsResponse.lines:type_name -> stagd.api.v1.LogLine
+	71, // 52: stagd.api.v1.LogLine.time:type_name -> google.protobuf.Timestamp
+	4,  // 53: stagd.api.v1.LogLine.level:type_name -> stagd.api.v1.LogLevel
+	59, // 54: stagd.api.v1.LogLine.fields:type_name -> stagd.api.v1.LogField
+	5,  // 55: stagd.api.v1.LogLine.format:type_name -> stagd.api.v1.LogFormat
+	71, // 56: stagd.api.v1.ListTracesRequest.since:type_name -> google.protobuf.Timestamp
+	71, // 57: stagd.api.v1.ListTracesRequest.until:type_name -> google.protobuf.Timestamp
+	68, // 58: stagd.api.v1.ListTracesRequest.min_duration:type_name -> google.protobuf.Duration
+	62, // 59: stagd.api.v1.ListTracesResponse.traces:type_name -> stagd.api.v1.TraceSummary
+	71, // 60: stagd.api.v1.TraceSummary.start_time:type_name -> google.protobuf.Timestamp
+	68, // 61: stagd.api.v1.TraceSummary.duration:type_name -> google.protobuf.Duration
+	65, // 62: stagd.api.v1.GetTraceResponse.spans:type_name -> stagd.api.v1.Span
+	6,  // 63: stagd.api.v1.Span.kind:type_name -> stagd.api.v1.SpanKind
+	71, // 64: stagd.api.v1.Span.start_time:type_name -> google.protobuf.Timestamp
+	68, // 65: stagd.api.v1.Span.duration:type_name -> google.protobuf.Duration
+	59, // 66: stagd.api.v1.Span.attributes:type_name -> stagd.api.v1.LogField
+	66, // 67: stagd.api.v1.Span.events:type_name -> stagd.api.v1.SpanEvent
+	71, // 68: stagd.api.v1.SpanEvent.time:type_name -> google.protobuf.Timestamp
+	59, // 69: stagd.api.v1.SpanEvent.attributes:type_name -> stagd.api.v1.LogField
+	15, // 70: stagd.api.v1.PreviewService.CreatePreview:input_type -> stagd.api.v1.CreatePreviewRequest
+	13, // 71: stagd.api.v1.PreviewService.ListSources:input_type -> stagd.api.v1.ListSourcesRequest
+	17, // 72: stagd.api.v1.PreviewService.GetPreview:input_type -> stagd.api.v1.GetPreviewRequest
+	19, // 73: stagd.api.v1.PreviewService.ListPreviews:input_type -> stagd.api.v1.ListPreviewsRequest
+	21, // 74: stagd.api.v1.PreviewService.WatchPreview:input_type -> stagd.api.v1.WatchPreviewRequest
+	34, // 75: stagd.api.v1.PreviewService.ListPreviewEvents:input_type -> stagd.api.v1.ListPreviewEventsRequest
+	23, // 76: stagd.api.v1.PreviewService.WakePreview:input_type -> stagd.api.v1.WakePreviewRequest
+	25, // 77: stagd.api.v1.PreviewService.DestroyPreview:input_type -> stagd.api.v1.DestroyPreviewRequest
+	27, // 78: stagd.api.v1.PreviewService.GetPreviewPolicy:input_type -> stagd.api.v1.GetPreviewPolicyRequest
+	29, // 79: stagd.api.v1.PreviewService.UpdatePreviewPolicy:input_type -> stagd.api.v1.UpdatePreviewPolicyRequest
+	31, // 80: stagd.api.v1.PreviewService.ValidateApp:input_type -> stagd.api.v1.ValidateAppRequest
+	37, // 81: stagd.api.v1.PreviewService.ListMail:input_type -> stagd.api.v1.ListMailRequest
+	41, // 82: stagd.api.v1.PreviewService.GetMail:input_type -> stagd.api.v1.GetMailRequest
+	45, // 83: stagd.api.v1.PreviewService.ClearMail:input_type -> stagd.api.v1.ClearMailRequest
+	47, // 84: stagd.api.v1.PreviewService.DeleteMail:input_type -> stagd.api.v1.DeleteMailRequest
+	49, // 85: stagd.api.v1.PreviewService.GetServiceUsage:input_type -> stagd.api.v1.GetServiceUsageRequest
+	56, // 86: stagd.api.v1.PreviewService.ListLogs:input_type -> stagd.api.v1.ListLogsRequest
+	53, // 87: stagd.api.v1.PreviewService.ListBuildLogs:input_type -> stagd.api.v1.ListBuildLogsRequest
+	60, // 88: stagd.api.v1.PreviewService.ListTraces:input_type -> stagd.api.v1.ListTracesRequest
+	63, // 89: stagd.api.v1.PreviewService.GetTrace:input_type -> stagd.api.v1.GetTraceRequest
+	16, // 90: stagd.api.v1.PreviewService.CreatePreview:output_type -> stagd.api.v1.CreatePreviewResponse
+	14, // 91: stagd.api.v1.PreviewService.ListSources:output_type -> stagd.api.v1.ListSourcesResponse
+	18, // 92: stagd.api.v1.PreviewService.GetPreview:output_type -> stagd.api.v1.GetPreviewResponse
+	20, // 93: stagd.api.v1.PreviewService.ListPreviews:output_type -> stagd.api.v1.ListPreviewsResponse
+	22, // 94: stagd.api.v1.PreviewService.WatchPreview:output_type -> stagd.api.v1.WatchPreviewResponse
+	36, // 95: stagd.api.v1.PreviewService.ListPreviewEvents:output_type -> stagd.api.v1.ListPreviewEventsResponse
+	24, // 96: stagd.api.v1.PreviewService.WakePreview:output_type -> stagd.api.v1.WakePreviewResponse
+	26, // 97: stagd.api.v1.PreviewService.DestroyPreview:output_type -> stagd.api.v1.DestroyPreviewResponse
+	28, // 98: stagd.api.v1.PreviewService.GetPreviewPolicy:output_type -> stagd.api.v1.GetPreviewPolicyResponse
+	30, // 99: stagd.api.v1.PreviewService.UpdatePreviewPolicy:output_type -> stagd.api.v1.UpdatePreviewPolicyResponse
+	33, // 100: stagd.api.v1.PreviewService.ValidateApp:output_type -> stagd.api.v1.ValidateAppResponse
+	40, // 101: stagd.api.v1.PreviewService.ListMail:output_type -> stagd.api.v1.ListMailResponse
+	44, // 102: stagd.api.v1.PreviewService.GetMail:output_type -> stagd.api.v1.GetMailResponse
+	46, // 103: stagd.api.v1.PreviewService.ClearMail:output_type -> stagd.api.v1.ClearMailResponse
+	48, // 104: stagd.api.v1.PreviewService.DeleteMail:output_type -> stagd.api.v1.DeleteMailResponse
+	50, // 105: stagd.api.v1.PreviewService.GetServiceUsage:output_type -> stagd.api.v1.GetServiceUsageResponse
+	57, // 106: stagd.api.v1.PreviewService.ListLogs:output_type -> stagd.api.v1.ListLogsResponse
+	54, // 107: stagd.api.v1.PreviewService.ListBuildLogs:output_type -> stagd.api.v1.ListBuildLogsResponse
+	61, // 108: stagd.api.v1.PreviewService.ListTraces:output_type -> stagd.api.v1.ListTracesResponse
+	64, // 109: stagd.api.v1.PreviewService.GetTrace:output_type -> stagd.api.v1.GetTraceResponse
+	90, // [90:110] is the sub-list for method output_type
+	70, // [70:90] is the sub-list for method input_type
+	70, // [70:70] is the sub-list for extension type_name
+	70, // [70:70] is the sub-list for extension extendee
+	0,  // [0:70] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_previews_proto_init() }
