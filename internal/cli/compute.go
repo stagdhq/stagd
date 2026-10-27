@@ -402,10 +402,24 @@ func computeList(ctx context.Context, cmd *cli.Command) error {
 			status += ": " + msg
 		}
 
-		rows = append(rows, []string{marker, conn.GetName(), computeLabel(conn.GetProvider()), conn.GetAccount(), status})
+		rows = append(rows, []string{marker, conn.GetName(), computeLabel(conn.GetProvider()), conn.GetAccount(), relayVersion(conn.GetRelay()), status})
 	}
 
-	return output.Table(w, []string{"", "name", "provider", "account", "status"}, rows)
+	return output.Table(w, []string{"", "name", "provider", "account", "relay", "status"}, rows)
+}
+
+// relayVersion is a connected relay's release, and the newer one when
+// there is: `stagd compute install <name>` updates it.
+func relayVersion(r *apiv1.StagdRelay) string {
+	switch {
+	case r == nil:
+		return ""
+
+	case r.GetLatestVersion() != "":
+		return fmt.Sprintf("%s (%s is out)", r.GetVersion(), r.GetLatestVersion())
+	}
+
+	return r.GetVersion()
 }
 
 // resolveConnection finds a connection by name or id.

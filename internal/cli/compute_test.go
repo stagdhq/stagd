@@ -311,3 +311,16 @@ func TestRelayImage(t *testing.T) {
 		}
 	}
 }
+
+// A connected relay's release shows in the list, with a newer one when it's out.
+func TestRelayVersion(t *testing.T) {
+	for want, r := range map[string]*apiv1.StagdRelay{
+		"":                       nil,
+		"v0.5.0":                 {Version: "v0.5.0"},
+		"v0.4.1 (v0.5.0 is out)": {Version: "v0.4.1", LatestVersion: "v0.5.0", UpdateRecommended: true},
+	} {
+		if got := relayVersion(r); got != want {
+			t.Errorf("relayVersion(%v) = %q, want %q", r, got, want)
+		}
+	}
+}
