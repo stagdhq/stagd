@@ -82,7 +82,8 @@ type ComputeServiceClient interface {
 	DeleteComputeConnection(context.Context, *connect.Request[v1.DeleteComputeConnectionRequest]) (*connect.Response[v1.DeleteComputeConnectionResponse], error)
 	// CreateRelayInstall gives a relay connection a new relay token: the old
 	// one stops working, and a relay using it is cut off. For a Docker host's
-	// `docker run`; Kubernetes uses CreateInstallManifest.
+	// relay (and cloudflared, with its tunnel's token); Kubernetes uses
+	// CreateInstallManifest.
 	CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error)
 	// CreateInstallManifest is everything a Kubernetes connection's cluster
 	// needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
@@ -238,7 +239,8 @@ type ComputeServiceHandler interface {
 	DeleteComputeConnection(context.Context, *connect.Request[v1.DeleteComputeConnectionRequest]) (*connect.Response[v1.DeleteComputeConnectionResponse], error)
 	// CreateRelayInstall gives a relay connection a new relay token: the old
 	// one stops working, and a relay using it is cut off. For a Docker host's
-	// `docker run`; Kubernetes uses CreateInstallManifest.
+	// relay (and cloudflared, with its tunnel's token); Kubernetes uses
+	// CreateInstallManifest.
 	CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error)
 	// CreateInstallManifest is everything a Kubernetes connection's cluster
 	// needs, as one manifest for `kubectl apply -f -`: Stagd's access, the

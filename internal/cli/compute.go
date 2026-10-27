@@ -342,7 +342,7 @@ func computeConnect(ctx context.Context, cmd *cli.Command) error {
 	if token := created.Msg.GetRelayToken(); token != "" && cmd.Bool("run") {
 		fmt.Fprintf(w, "Created %s as %q.\n", provider.GetName(), conn.GetName())
 
-		if err := runDockerRelay(ctx, w, cmd.String("api-url"), conn.GetId(), token, relayImage(cmd.Root().Version)); err != nil {
+		if err := runDockerRelay(ctx, w, cmd.String("api-url"), conn.GetId(), token, relayImage(cmd.Root().Version), created.Msg.GetTunnelToken()); err != nil {
 			return fmt.Errorf("%w\nThe connection is made: run its relay with `stagd compute install %s --run`", err, conn.GetName())
 		}
 
@@ -351,7 +351,7 @@ func computeConnect(ctx context.Context, cmd *cli.Command) error {
 		}
 	} else if token != "" {
 		fmt.Fprintf(w, "Created %s as %q; it works once its relay connects.\n\n", provider.GetName(), conn.GetName())
-		fmt.Fprint(w, relayInstructions(provider.GetProvider(), cmd.String("api-url"), token, conn.GetName(), relayImage(cmd.Root().Version), cmd.Bool("print")))
+		fmt.Fprint(w, relayInstructions(provider.GetProvider(), cmd.String("api-url"), token, conn.GetName(), relayImage(cmd.Root().Version), cmd.Bool("print"), created.Msg.GetTunnelToken()))
 
 		// A cluster's install is its own command, which waits itself.
 		if cmd.Bool("wait") && provider.GetProvider() != apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
@@ -594,7 +594,7 @@ func cleanup(provider apiv1.ComputeProvider) string {
 }
 
 // What removes a Docker host's relay, and its network once nothing else is on it.
-const dockerCleanup = "  docker rm -f " + relayContainer + "\n  docker network rm " + relayNetwork + "\n"
+const dockerCleanup = "  docker rm -f " + relayContainer + " " + tunnelContainer + "\n  docker network rm " + relayNetwork + "\n"
 
 // runElsewhere is what to run instead of --run, for a provider without it.
 func runElsewhere(provider apiv1.ComputeProvider) string {
@@ -608,7 +608,7 @@ func runElsewhere(provider apiv1.ComputeProvider) string {
 // relayInstructions is how to run a connection's relay next to its compute:
 // for a cluster, the install command to pipe to kubectl; for a Docker host,
 // the CLI's --run there, or docker's commands with the token (--print).
-func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, name, image string, print bool) string {
+func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, name, image string, print bool, tunnelToken string) string {
 	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
 		return "Install it in the cluster, with kubectl's access to it:\n\n" +
 			"  stagd compute install " + name + " | kubectl apply -f -\n\n" +
@@ -618,8 +618,8 @@ func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, name, im
 
 	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER && print {
 		return "Run the relay on the Docker host:\n\n" +
-			dockerRunCommand(stagdURL, token, image) + "\n" +
-			"The token is only shown now. `stagd compute list` shows when the relay is connected.\n"
+			dockerRunCommand(stagdURL, token, image, tunnelToken) + "\n" +
+			"The tokens are only shown now. `stagd compute list` shows when the relay is connected.\n"
 	}
 
 	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER {
@@ -633,22 +633,36 @@ func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, name, im
 
 // dockerRunCommand is the relay's docker run, to copy: its own network
 // first, then the relay on it, as --run does.
-func dockerRunCommand(stagdURL, token, image string) string {
+func dockerRunCommand(stagdURL, token, image, tunnelToken string) string {
 	relayURL, onHost := relayStagdURL(stagdURL)
-	addHost := ""
+	addHost, tunnelPort := "", ""
 
 	if onHost {
 		addHost = "    --add-host " + dockerHostName + ":host-gateway \\\n"
 	}
 
-	return "  docker network create " + relayNetwork + "\n" +
+	if tunnelToken != "" {
+		tunnelPort = "    -e STAGD_RELAY_HTTP=" + relayTunnelPort + " \\\n"
+	}
+
+	out := "  docker network create " + relayNetwork + "\n" +
 		"  docker run -d --name " + relayContainer + " --restart unless-stopped \\\n" +
 		"    --network " + relayNetwork + " --user root \\\n" +
 		"    -v /var/run/docker.sock:/var/run/docker.sock \\\n" +
-		addHost +
+		addHost + tunnelPort +
 		"    -e STAGD_URL=" + relayURL + " \\\n" +
 		"    -e STAGD_RELAY_TOKEN=" + token + " \\\n" +
 		"    " + image + " relay\n"
+
+	// cloudflared beside it, for the connection's Cloudflare Tunnel.
+	if tunnelToken != "" {
+		out += "  docker run -d --name " + tunnelContainer + " --restart unless-stopped \\\n" +
+			"    --network " + relayNetwork + " \\\n" +
+			"    -e TUNNEL_TOKEN=" + tunnelToken + " \\\n" +
+			"    " + tunnelImage + " tunnel --no-autoupdate run\n"
+	}
+
+	return out
 }
 
 // relayImage is the relay's image for this CLI's version: a release runs
@@ -777,7 +791,7 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 	if run {
 		fmt.Fprintf(w, "A new relay token for %s; the old one no longer works.\n", conn.GetName())
 
-		if err := runDockerRelay(ctx, w, cmd.String("api-url"), conn.GetId(), res.Msg.GetRelayToken(), relayImage(cmd.Root().Version)); err != nil {
+		if err := runDockerRelay(ctx, w, cmd.String("api-url"), conn.GetId(), res.Msg.GetRelayToken(), relayImage(cmd.Root().Version), res.Msg.GetTunnelToken()); err != nil {
 			return err
 		}
 
@@ -789,7 +803,7 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	fmt.Fprintf(w, "A new relay token for %s; the old one no longer works.\n\n", conn.GetName())
-	fmt.Fprint(w, relayInstructions(conn.GetProvider(), cmd.String("api-url"), res.Msg.GetRelayToken(), conn.GetName(), relayImage(cmd.Root().Version), true))
+	fmt.Fprint(w, relayInstructions(conn.GetProvider(), cmd.String("api-url"), res.Msg.GetRelayToken(), conn.GetName(), relayImage(cmd.Root().Version), true, res.Msg.GetTunnelToken()))
 
 	if cmd.Bool("wait") {
 		return waitForRelay(ctx, w, c, conn)

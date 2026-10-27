@@ -941,8 +941,12 @@ type CreateComputeConnectionResponse struct {
 	RelayInstallUrl string `protobuf:"bytes,3,opt,name=relay_install_url,json=relayInstallUrl,proto3" json:"relay_install_url,omitempty"`
 	// Deprecated: Marked as deprecated in stagd/api/v1/compute.proto.
 	RelayInstallExpireTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=relay_install_expire_time,json=relayInstallExpireTime,proto3" json:"relay_install_expire_time,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// For a Docker host, when Stagd reaches previews through a Cloudflare
+	// Tunnel of the connection's own: what cloudflared runs it with, next to
+	// the relay (stagd compute connect docker --run). Only ever shown here.
+	TunnelToken   string `protobuf:"bytes,5,opt,name=tunnel_token,json=tunnelToken,proto3" json:"tunnel_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateComputeConnectionResponse) Reset() {
@@ -1003,6 +1007,13 @@ func (x *CreateComputeConnectionResponse) GetRelayInstallExpireTime() *timestamp
 		return x.RelayInstallExpireTime
 	}
 	return nil
+}
+
+func (x *CreateComputeConnectionResponse) GetTunnelToken() string {
+	if x != nil {
+		return x.TunnelToken
+	}
+	return ""
 }
 
 type ListComputeConnectionsRequest struct {
@@ -1492,8 +1503,12 @@ type CreateRelayInstallResponse struct {
 	RelayInstallUrl string `protobuf:"bytes,2,opt,name=relay_install_url,json=relayInstallUrl,proto3" json:"relay_install_url,omitempty"`
 	// Deprecated: Marked as deprecated in stagd/api/v1/compute.proto.
 	RelayInstallExpireTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=relay_install_expire_time,json=relayInstallExpireTime,proto3" json:"relay_install_expire_time,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// When Stagd reaches the Docker host's previews through a Cloudflare Tunnel
+	// of the connection's own: what cloudflared runs it with, next to the
+	// relay (stagd compute install --run). Only ever shown here.
+	TunnelToken   string `protobuf:"bytes,4,opt,name=tunnel_token,json=tunnelToken,proto3" json:"tunnel_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateRelayInstallResponse) Reset() {
@@ -1547,6 +1562,13 @@ func (x *CreateRelayInstallResponse) GetRelayInstallExpireTime() *timestamppb.Ti
 		return x.RelayInstallExpireTime
 	}
 	return nil
+}
+
+func (x *CreateRelayInstallResponse) GetTunnelToken() string {
+	if x != nil {
+		return x.TunnelToken
+	}
+	return ""
 }
 
 type CreateInstallManifestRequest struct {
@@ -1714,7 +1736,7 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x06values\x18\x03 \x03(\v28.stagd.api.v1.CreateComputeConnectionRequest.ValuesEntryR\x06values\x1a9\n" +
 	"\vValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8e\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb1\x02\n" +
 	"\x1fCreateComputeConnectionResponse\x12?\n" +
 	"\n" +
 	"connection\x18\x01 \x01(\v2\x1f.stagd.api.v1.ComputeConnectionR\n" +
@@ -1722,7 +1744,8 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\vrelay_token\x18\x02 \x01(\tR\n" +
 	"relayToken\x12.\n" +
 	"\x11relay_install_url\x18\x03 \x01(\tB\x02\x18\x01R\x0frelayInstallUrl\x12Y\n" +
-	"\x19relay_install_expire_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x02\x18\x01R\x16relayInstallExpireTime\"\x1f\n" +
+	"\x19relay_install_expire_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x02\x18\x01R\x16relayInstallExpireTime\x12!\n" +
+	"\ftunnel_token\x18\x05 \x01(\tR\vtunnelToken\"\x1f\n" +
 	"\x1dListComputeConnectionsRequest\"c\n" +
 	"\x1eListComputeConnectionsResponse\x12A\n" +
 	"\vconnections\x18\x01 \x03(\v2\x1f.stagd.api.v1.ComputeConnectionR\vconnections\"7\n" +
@@ -1752,12 +1775,13 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"!\n" +
 	"\x1fDeleteComputeConnectionResponse\"4\n" +
 	"\x19CreateRelayInstallRequest\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"\xc8\x01\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"\xeb\x01\n" +
 	"\x1aCreateRelayInstallResponse\x12\x1f\n" +
 	"\vrelay_token\x18\x01 \x01(\tR\n" +
 	"relayToken\x12.\n" +
 	"\x11relay_install_url\x18\x02 \x01(\tB\x02\x18\x01R\x0frelayInstallUrl\x12Y\n" +
-	"\x19relay_install_expire_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x02\x18\x01R\x16relayInstallExpireTime\"7\n" +
+	"\x19relay_install_expire_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x02\x18\x01R\x16relayInstallExpireTime\x12!\n" +
+	"\ftunnel_token\x18\x04 \x01(\tR\vtunnelToken\"7\n" +
 	"\x1cCreateInstallManifestRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\";\n" +
 	"\x1dCreateInstallManifestResponse\x12\x1a\n" +

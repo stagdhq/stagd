@@ -16,11 +16,21 @@ import (
 // with whatever context it has (Docker Desktop, OrbStack, a remote host).
 // It runs as the container stagd-relay on a network of its own: on
 // Docker's default bridge, it keeps the host's DNS after joining a
-// preview's network, and can't resolve the preview's services.
+// preview's network, and can't resolve the preview's services. When Stagd
+// reaches the host's previews through a Cloudflare Tunnel, cloudflared runs
+// beside it as stagd-tunnel, sending preview traffic to the relay's port
+// for it (:8081); Stagd's own traffic stays on the relay's connection.
 
 const (
-	relayContainer = "stagd-relay"
-	relayNetwork   = "stagd-relay"
+	relayContainer  = "stagd-relay"
+	relayNetwork    = "stagd-relay"
+	tunnelContainer = "stagd-tunnel"
+
+	// cloudflared's image: Cloudflare supports releases from about the last year, so keep it current.
+	tunnelImage = "cloudflare/cloudflared:2026.10.4"
+
+	// Where the relay takes preview traffic from the tunnel (Stagd's tunnel sends it to stagd-relay:8081).
+	relayTunnelPort = ":8081"
 
 	// Which connection a relay run by the CLI belongs to.
 	relayConnectionLabel = "dev.stagd.connection"
@@ -86,8 +96,9 @@ func relayStagdURL(stagdURL string) (string, bool) {
 
 // dockerRunArgs is docker run for the relay, without the token's value:
 // docker reads STAGD_RELAY_TOKEN from its own environment, so the token
-// isn't in the command line.
-func dockerRunArgs(stagdURL, connectionID, image string) []string {
+// isn't in the command line. With a tunnel, it takes preview traffic from
+// cloudflared too.
+func dockerRunArgs(stagdURL, connectionID, image string, tunnel bool) []string {
 	relayURL, onHost := relayStagdURL(stagdURL)
 
 	args := []string{
@@ -102,7 +113,22 @@ func dockerRunArgs(stagdURL, connectionID, image string) []string {
 		args = append(args, "--add-host", dockerHostName+":host-gateway")
 	}
 
+	if tunnel {
+		args = append(args, "-e", "STAGD_RELAY_HTTP="+relayTunnelPort)
+	}
+
 	return append(args, "-e", "STAGD_URL="+relayURL, "-e", "STAGD_RELAY_TOKEN", image, "relay")
+}
+
+// tunnelRunArgs is docker run for cloudflared, the tunnel's token in docker's environment only.
+func tunnelRunArgs(connectionID string) []string {
+	return []string{
+		"run", "-d", "--name", tunnelContainer, "--restart", "unless-stopped",
+		"--network", relayNetwork,
+		"--label", relayConnectionLabel + "=" + connectionID,
+		"-e", "TUNNEL_TOKEN",
+		tunnelImage, "tunnel", "--no-autoupdate", "run",
+	}
 }
 
 // relayOwner is which connection the stagd-relay container on this host
@@ -133,8 +159,9 @@ func relayOwner(ctx context.Context) (found bool, connectionID string) {
 
 // runDockerRelay starts the connection's relay on this host with its new
 // token: the network if it's missing, and the relay in place of one for
-// the same connection. A relay for another connection stays.
-func runDockerRelay(ctx context.Context, w io.Writer, stagdURL, connectionID, token, image string) error {
+// the same connection. A relay for another connection stays. With a tunnel
+// token, cloudflared runs beside it; without, one left from before goes.
+func runDockerRelay(ctx context.Context, w io.Writer, stagdURL, connectionID, token, image, tunnelToken string) error {
 	if found, owner := relayOwner(ctx); found {
 		if owner != connectionID {
 			return fmt.Errorf("a relay for another connection runs here as %s: remove it first with `stagd compute uninstall docker --run`", relayContainer)
@@ -155,17 +182,37 @@ func runDockerRelay(ctx context.Context, w io.Writer, stagdURL, connectionID, to
 		return err
 	}
 
-	if _, err := docker(ctx, []string{"STAGD_RELAY_TOKEN=" + token}, dockerRunArgs(stagdURL, connectionID, image)...); err != nil {
+	if _, err := docker(ctx, []string{"STAGD_RELAY_TOKEN=" + token}, dockerRunArgs(stagdURL, connectionID, image, tunnelToken != "")...); err != nil {
 		return err
 	}
 
-	_, err := fmt.Fprintf(w, "Started the relay on this Docker host, as the container %s (%s).\n", relayContainer, image)
+	fmt.Fprintf(w, "Started the relay on this Docker host, as the container %s (%s).\n", relayContainer, image)
+
+	// cloudflared, anew: its token may have changed with the tunnel.
+	if _, err := docker(ctx, nil, "rm", "-f", tunnelContainer); err != nil && !strings.Contains(err.Error(), "No such container") {
+		return err
+	}
+
+	if tunnelToken == "" {
+		return nil
+	}
+
+	if _, err := docker(ctx, nil, "pull", "--quiet", tunnelImage); err != nil {
+		return err
+	}
+
+	if _, err := docker(ctx, []string{"TUNNEL_TOKEN=" + tunnelToken}, tunnelRunArgs(connectionID)...); err != nil {
+		return err
+	}
+
+	_, err := fmt.Fprintf(w, "Started cloudflared beside it, as the container %s: previews are reached through the connection's Cloudflare Tunnel.\n", tunnelContainer)
 
 	return err
 }
 
-// removeDockerRelay removes the relay on this host, and its network once
-// nothing else is on it; nothing to remove isn't an error.
+// removeDockerRelay removes the relay on this host, cloudflared beside it,
+// and their network once nothing else is on it; nothing to remove isn't an
+// error.
 func removeDockerRelay(ctx context.Context, w io.Writer) error {
 	found, _ := relayOwner(ctx)
 
@@ -173,6 +220,10 @@ func removeDockerRelay(ctx context.Context, w io.Writer) error {
 		if _, err := docker(ctx, nil, "rm", "-f", relayContainer); err != nil {
 			return err
 		}
+	}
+
+	if _, err := docker(ctx, nil, "rm", "-f", tunnelContainer); err != nil && !strings.Contains(err.Error(), "No such container") {
+		return err
 	}
 
 	// In use by something else: it stays.

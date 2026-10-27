@@ -34,7 +34,8 @@ service ComputeService {
   rpc DeleteComputeConnection(DeleteComputeConnectionRequest) returns (DeleteComputeConnectionResponse);
   // CreateRelayInstall gives a relay connection a new relay token: the old
   // one stops working, and a relay using it is cut off. For a Docker host's
-  // `docker run`; Kubernetes uses CreateInstallManifest.
+  // relay (and cloudflared, with its tunnel's token); Kubernetes uses
+  // CreateInstallManifest.
   rpc CreateRelayInstall(CreateRelayInstallRequest) returns (CreateRelayInstallResponse);
   // CreateInstallManifest is everything a Kubernetes connection's cluster
   // needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
@@ -205,6 +206,10 @@ message CreateComputeConnectionResponse {
   // manifest, piped to kubectl, not a link.
   string relay_install_url = 3 [deprecated = true];
   google.protobuf.Timestamp relay_install_expire_time = 4 [deprecated = true];
+  // For a Docker host, when Stagd reaches previews through a Cloudflare
+  // Tunnel of the connection's own: what cloudflared runs it with, next to
+  // the relay (stagd compute connect docker --run). Only ever shown here.
+  string tunnel_token = 5;
 }
 
 message ListComputeConnectionsRequest {}
@@ -255,6 +260,10 @@ message CreateRelayInstallResponse {
   // Never set: Kubernetes uses CreateInstallManifest.
   string relay_install_url = 2 [deprecated = true];
   google.protobuf.Timestamp relay_install_expire_time = 3 [deprecated = true];
+  // When Stagd reaches the Docker host's previews through a Cloudflare Tunnel
+  // of the connection's own: what cloudflared runs it with, next to the
+  // relay (stagd compute install --run). Only ever shown here.
+  string tunnel_token = 4;
 }
 
 message CreateInstallManifestRequest {

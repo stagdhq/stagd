@@ -22,6 +22,7 @@ import (
 type fakeDocker struct {
 	network bool
 	owner   string // the relay container's label; "" without one
+	tunnel  bool   // whether cloudflared runs beside it
 	calls   [][]string
 	envs    [][]string
 }
@@ -51,8 +52,14 @@ func (d *fakeDocker) install(t *testing.T) {
 		case args[0] == "network" && args[1] == "rm":
 			d.network = false
 
+		case args[0] == "rm" && slices.Contains(args, tunnelContainer) && !slices.Contains(args, relayContainer):
+			d.tunnel = false
+
 		case args[0] == "rm":
 			d.owner = ""
+
+		case args[0] == "run" && slices.Contains(args, tunnelContainer):
+			d.tunnel = true
 
 		case args[0] == "run":
 			d.owner = args[slices.Index(args, "--label")+1][len(relayConnectionLabel)+1:]
@@ -86,6 +93,7 @@ type fakeDockerCompute struct {
 	installed bool
 	looks     int
 	deleted   string
+	tunnel    string // the tunnel token Stagd answers with; "" without tunnels
 }
 
 var dockerConn = &apiv1.ComputeConnection{
@@ -104,13 +112,13 @@ func (f *fakeDockerCompute) ListProviders(context.Context, *connect.Request[apiv
 func (f *fakeDockerCompute) CreateComputeConnection(context.Context, *connect.Request[apiv1.CreateComputeConnectionRequest]) (*connect.Response[apiv1.CreateComputeConnectionResponse], error) {
 	f.installed = true
 
-	return connect.NewResponse(&apiv1.CreateComputeConnectionResponse{Connection: dockerConn, RelayToken: dockerToken}), nil
+	return connect.NewResponse(&apiv1.CreateComputeConnectionResponse{Connection: dockerConn, RelayToken: dockerToken, TunnelToken: f.tunnel}), nil
 }
 
 func (f *fakeDockerCompute) CreateRelayInstall(context.Context, *connect.Request[apiv1.CreateRelayInstallRequest]) (*connect.Response[apiv1.CreateRelayInstallResponse], error) {
 	f.installed = true
 
-	return connect.NewResponse(&apiv1.CreateRelayInstallResponse{RelayToken: dockerToken}), nil
+	return connect.NewResponse(&apiv1.CreateRelayInstallResponse{RelayToken: dockerToken, TunnelToken: f.tunnel}), nil
 }
 
 func (f *fakeDockerCompute) ListComputeConnections(context.Context, *connect.Request[apiv1.ListComputeConnectionsRequest]) (*connect.Response[apiv1.ListComputeConnectionsResponse], error) {
@@ -159,11 +167,11 @@ func TestRelayStagdURL(t *testing.T) {
 		}
 	}
 
-	if args := strings.Join(dockerRunArgs("http://localhost:8792", "cc-1", "img"), " "); !strings.Contains(args, "--add-host host.docker.internal:host-gateway") || !strings.Contains(args, "STAGD_URL=http://host.docker.internal:8792") {
+	if args := strings.Join(dockerRunArgs("http://localhost:8792", "cc-1", "img", false), " "); !strings.Contains(args, "--add-host host.docker.internal:host-gateway") || !strings.Contains(args, "STAGD_URL=http://host.docker.internal:8792") {
 		t.Errorf("on the host: %s", args)
 	}
 
-	if args := strings.Join(dockerRunArgs("https://app.stagd.dev", "cc-1", "img"), " "); strings.Contains(args, "--add-host") {
+	if args := strings.Join(dockerRunArgs("https://app.stagd.dev", "cc-1", "img", false), " "); strings.Contains(args, "--add-host") {
 		t.Errorf("hosted: %s", args)
 	}
 }
@@ -181,11 +189,11 @@ func TestComputeInstallRunsTheDockerRelay(t *testing.T) {
 		t.Fatalf("install --run: %v\n%s", err, out)
 	}
 
-	if got := strings.Join(d.ran(), ", "); got != "inspect, network inspect, network create, pull, run" {
+	if got := strings.Join(d.ran(), ", "); got != "inspect, network inspect, network create, pull, run, rm" {
 		t.Errorf("ran %s", got)
 	}
 
-	runArgs := strings.Join(d.calls[len(d.calls)-1], " ")
+	runArgs := strings.Join(d.calls[4], " ")
 
 	for _, want := range []string{"--name stagd-relay", "--network stagd-relay", "--user root", "-e STAGD_RELAY_TOKEN ", "relay"} {
 		if !strings.Contains(runArgs, want) {
@@ -193,8 +201,8 @@ func TestComputeInstallRunsTheDockerRelay(t *testing.T) {
 		}
 	}
 
-	if strings.Contains(runArgs, "secret") || !slices.Contains(d.envs[len(d.envs)-1], "STAGD_RELAY_TOKEN="+dockerToken) {
-		t.Errorf("the token: in the arguments %q, or not in the environment %v", runArgs, d.envs[len(d.envs)-1])
+	if strings.Contains(runArgs, "secret") || !slices.Contains(d.envs[4], "STAGD_RELAY_TOKEN="+dockerToken) {
+		t.Errorf("the token: in the arguments %q, or not in the environment %v", runArgs, d.envs[4])
 	}
 
 	if strings.Contains(out, "stagd_relay.") || !strings.Contains(out, "Connected: orbstack (Docker 29.8.2)") {
@@ -208,7 +216,7 @@ func TestComputeInstallRunsTheDockerRelay(t *testing.T) {
 		t.Fatalf("again: %v\n%s", err, out)
 	}
 
-	if got := strings.Join(d.ran(), ", "); got != "inspect, rm, network inspect, pull, run" {
+	if got := strings.Join(d.ran(), ", "); got != "inspect, rm, network inspect, pull, run, rm" {
 		t.Errorf("again, ran %s", got)
 	}
 }
@@ -265,7 +273,7 @@ func TestComputeUninstallDocker(t *testing.T) {
 	}
 
 	out, err := run(t, srv, "compute", "uninstall", "docker", "--print")
-	if err != nil || out != "  docker rm -f stagd-relay\n  docker network rm stagd-relay\n" || len(d.calls) != 0 {
+	if err != nil || out != "  docker rm -f stagd-relay stagd-tunnel\n  docker network rm stagd-relay\n" || len(d.calls) != 0 {
 		t.Fatalf("print: %v, ran %v:\n%s", err, d.ran(), out)
 	}
 
@@ -334,5 +342,34 @@ func TestComputeDockerPrint(t *testing.T) {
 	out, err = run(t, srv, "--token", "tok-1", "compute", "install", "docker-desktop", "--print")
 	if err != nil || !strings.Contains(out, "docker network create stagd-relay") || !strings.Contains(out, "--network stagd-relay --user root") || !strings.Contains(out, dockerToken) || len(d.calls) != 0 {
 		t.Fatalf("install --print: %v, ran %v:\n%s", err, d.ran(), out)
+	}
+}
+
+// With a Cloudflare Tunnel, cloudflared runs beside the relay, on its network, its token in docker's
+// environment only; the relay takes preview traffic from it. Uninstalling removes both.
+func TestComputeInstallRunsCloudflared(t *testing.T) {
+	d := &fakeDocker{}
+	d.install(t)
+
+	srv := dockerServer(t, &fakeDockerCompute{tunnel: "cf-tunnel-secret"})
+
+	out, err := run(t, srv, "--token", "tok-1", "compute", "install", "docker-desktop", "--run")
+	if err != nil || !d.tunnel || !strings.Contains(out, "Cloudflare Tunnel") || strings.Contains(out, "cf-tunnel-secret") {
+		t.Fatalf("install --run: %v, cloudflared %v:\n%s", err, d.tunnel, out)
+	}
+
+	relayArgs := strings.Join(d.calls[4], " ")
+	tunnelArgs := strings.Join(d.calls[len(d.calls)-1], " ")
+
+	if !strings.Contains(relayArgs, "STAGD_RELAY_HTTP=:8081") {
+		t.Errorf("the relay takes no tunnel traffic: %s", relayArgs)
+	}
+
+	if !strings.Contains(tunnelArgs, "--name stagd-tunnel") || !strings.Contains(tunnelArgs, "--network stagd-relay") || strings.Contains(tunnelArgs, "cf-tunnel-secret") || !slices.Contains(d.envs[len(d.envs)-1], "TUNNEL_TOKEN=cf-tunnel-secret") {
+		t.Errorf("cloudflared: docker %s, environment %v", tunnelArgs, d.envs[len(d.envs)-1])
+	}
+
+	if _, err := run(t, srv, "compute", "uninstall", "docker", "--run"); err != nil || d.tunnel || d.owner != "" {
+		t.Errorf("uninstall: %v, cloudflared %v, relay %q", err, d.tunnel, d.owner)
 	}
 }
