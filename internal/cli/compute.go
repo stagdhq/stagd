@@ -46,6 +46,8 @@ func computeCommand() *cli.Command {
 					&cli.StringFlag{Name: "name", Usage: "a name for the connection (default: the provider's name)"},
 					&cli.StringSliceFlag{Name: "value", Usage: "a field value, key=value or key=@- (stdin)"},
 					&cli.BoolFlag{Name: "wait", Usage: "through a relay: wait until it connects"},
+					&cli.BoolFlag{Name: "run", Usage: "docker: run its relay on this Docker host, and wait until it connects"},
+					&cli.BoolFlag{Name: "print", Usage: "docker: print the docker commands that run the relay, with its token, instead"},
 				},
 				Action: computeConnect,
 			},
@@ -79,23 +81,35 @@ func computeCommand() *cli.Command {
 					"  stagd compute install <name> | kubectl apply -f -\n\n" +
 					"Stagd's access (its own stagd-* namespaces only), the relay with a new token, and what the\n" +
 					"connection chooses (the builder, the Cloudflare Tunnel). Run it again after changing those.\n" +
-					"For a Docker host, prints the docker run command. Either way the old token stops working:\n" +
-					"a relay still running with it is cut off (with its relay connected, pass --yes).",
+					"For a Docker host, on the host itself, --run runs the relay (--print prints docker's commands\n" +
+					"for it instead):\n\n" +
+					"  stagd compute install <name> --run\n\n" +
+					"Either way the old token stops working: a relay still running with it is cut off (with its\n" +
+					"relay connected, pass --yes).",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "don't ask for confirmation when its relay is connected"},
 					&cli.BoolFlag{Name: "wait", Usage: "wait until the relay connects"},
+					&cli.BoolFlag{Name: "run", Usage: "docker: run the relay on this Docker host, in place of the one there, and wait until it connects"},
+					&cli.BoolFlag{Name: "print", Usage: "docker: print the docker commands that run the relay, with its token, instead"},
 				},
 				Action: computeInstall,
 			},
 			{
 				Name:      "uninstall",
-				Usage:     "print what removes Stagd's install from your compute: kubernetes",
-				ArgsUsage: "kubernetes",
+				Usage:     "remove Stagd's install from your compute: kubernetes or docker",
+				ArgsUsage: "kubernetes | docker",
 				Description: "For a Kubernetes cluster, prints every manifest a Stagd install can bring, without its tokens:\n\n" +
 					"  stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -\n\n" +
 					"removes Stagd's account and rights, the relay, cloudflared, the builder and registry. Run it\n" +
 					"as a cluster admin, after deleting the connection in Stagd (which removes the Cloudflare\n" +
-					"Tunnel Stagd made for it). Stagd deletes a connection only when no previews run on it.",
+					"Tunnel Stagd made for it). Stagd deletes a connection only when no previews run on it.\n\n" +
+					"For a Docker host, on the host itself, --run removes the relay (--print prints docker's\n" +
+					"commands for it instead):\n\n" +
+					"  stagd compute uninstall docker --run",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "run", Usage: "docker: remove the relay from this Docker host"},
+					&cli.BoolFlag{Name: "print", Usage: "docker: print the docker commands that remove it instead"},
+				},
 				Action: computeUninstall,
 			},
 			{
@@ -296,6 +310,10 @@ func computeConnect(ctx context.Context, cmd *cli.Command) error {
 		return cli.Exit(err.Error(), 2)
 	}
 
+	if (cmd.Bool("run") || cmd.Bool("print")) && provider.GetProvider() != apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER {
+		return cli.Exit("--run and --print are for a Docker host: "+runElsewhere(provider.GetProvider()), 2)
+	}
+
 	if err := askMissing(ctx, provider, values); err != nil {
 		return err
 	}
@@ -321,13 +339,23 @@ func computeConnect(ctx context.Context, cmd *cli.Command) error {
 		return output.JSON(w, created.Msg)
 	}
 
-	if token := created.Msg.GetRelayToken(); token != "" {
+	if token := created.Msg.GetRelayToken(); token != "" && cmd.Bool("run") {
+		fmt.Fprintf(w, "Created %s as %q.\n", provider.GetName(), conn.GetName())
+
+		if err := runDockerRelay(ctx, w, cmd.String("api-url"), conn.GetId(), token, relayImage(cmd.Root().Version)); err != nil {
+			return fmt.Errorf("%w\nThe connection is made: run its relay with `stagd compute install %s --run`", err, conn.GetName())
+		}
+
+		if err := waitForRelay(ctx, w, c, conn); err != nil {
+			return err
+		}
+	} else if token != "" {
 		fmt.Fprintf(w, "Created %s as %q; it works once its relay connects.\n\n", provider.GetName(), conn.GetName())
-		fmt.Fprint(w, relayInstructions(provider.GetProvider(), cmd.String("api-url"), token, conn.GetName(), relayImage(cmd.Root().Version)))
+		fmt.Fprint(w, relayInstructions(provider.GetProvider(), cmd.String("api-url"), token, conn.GetName(), relayImage(cmd.Root().Version), cmd.Bool("print")))
 
 		// A cluster's install is its own command, which waits itself.
 		if cmd.Bool("wait") && provider.GetProvider() != apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
-			if err := waitForRelay(ctx, w, c, conn.GetId()); err != nil {
+			if err := waitForRelay(ctx, w, c, conn); err != nil {
 				return err
 			}
 		}
@@ -498,11 +526,35 @@ func computeDelete(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 
+	// Its relay on this host, if it runs here: asked about once it's deleted.
+	relayHere := false
+
+	if conn.GetProvider() == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER {
+		found, owner := relayOwner(ctx)
+		relayHere = found && owner == conn.GetId()
+	}
+
 	if _, err := c.Compute.DeleteComputeConnection(ctx, connect.NewRequest(&apiv1.DeleteComputeConnectionRequest{Id: conn.GetId()})); err != nil {
 		return err
 	}
 
-	_, err = fmt.Fprintf(cmd.Root().Writer, "Deleted %s.\n%s", conn.GetName(), cleanup(conn.GetProvider()))
+	w := cmd.Root().Writer
+
+	if relayHere && !cmd.Bool("yes") {
+		fmt.Fprintf(w, "Deleted %s.\n", conn.GetName())
+
+		if ok, err := confirm(cmd, "Remove its relay from this Docker host too?", fmt.Sprintf("Its relay still runs here, as the container %s.", relayContainer)); err != nil || !ok {
+			if err == nil {
+				_, err = fmt.Fprint(w, cleanup(conn.GetProvider()))
+			}
+
+			return err
+		}
+
+		return removeDockerRelay(ctx, w)
+	}
+
+	_, err = fmt.Fprintf(w, "Deleted %s.\n%s", conn.GetName(), cleanup(conn.GetProvider()))
 
 	return err
 }
@@ -521,16 +573,28 @@ func cleanup(provider apiv1.ComputeProvider) string {
 			"Stagd's account and its rights. To remove them, as a cluster admin:\n\n" + kubeCleanup
 
 	case apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER:
-		return "\nThe relay still runs on the Docker host. To remove it:\n\n  docker rm -f stagd-relay\n"
+		return "\nThe relay still runs on the Docker host. To remove it, there:\n\n  stagd compute uninstall docker --run\n"
 	}
 
 	return ""
 }
 
+// What removes a Docker host's relay, and its network once nothing else is on it.
+const dockerCleanup = "  docker rm -f " + relayContainer + "\n  docker network rm " + relayNetwork + "\n"
+
+// runElsewhere is what to run instead of --run, for a provider without it.
+func runElsewhere(provider apiv1.ComputeProvider) string {
+	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
+		return "for a cluster, pipe the install to kubectl (stagd compute install <name> | kubectl apply -f -)"
+	}
+
+	return "this compute has no relay to run"
+}
+
 // relayInstructions is how to run a connection's relay next to its compute:
 // for a cluster, the install command to pipe to kubectl; for a Docker host,
-// docker run with the token.
-func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, name, image string) string {
+// the CLI's --run there, or docker's commands with the token (--print).
+func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, name, image string, print bool) string {
 	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
 		return "Install it in the cluster, with kubectl's access to it:\n\n" +
 			"  stagd compute install " + name + " | kubectl apply -f -\n\n" +
@@ -538,17 +602,39 @@ func relayInstructions(provider apiv1.ComputeProvider, stagdURL, token, name, im
 			"the relay to connect; `stagd compute list` shows it too.\n"
 	}
 
-	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER {
+	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER && print {
 		return "Run the relay on the Docker host:\n\n" +
-			"  docker run -d --name stagd-relay --restart unless-stopped \\\n" +
-			"    -v /var/run/docker.sock:/var/run/docker.sock \\\n" +
-			"    -e STAGD_URL=" + stagdURL + " \\\n" +
-			"    -e STAGD_RELAY_TOKEN=" + token + " \\\n" +
-			"    " + image + " relay\n\n" +
+			dockerRunCommand(stagdURL, token, image) + "\n" +
 			"The token is only shown now. `stagd compute list` shows when the relay is connected.\n"
 	}
 
+	if provider == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER {
+		return "Run the relay on the Docker host, with the CLI there signed in:\n\n" +
+			"  stagd compute install " + name + " --run\n\n" +
+			"It gives the relay a new token and waits until it connects.\n"
+	}
+
 	return ""
+}
+
+// dockerRunCommand is the relay's docker run, to copy: its own network
+// first, then the relay on it, as --run does.
+func dockerRunCommand(stagdURL, token, image string) string {
+	relayURL, onHost := relayStagdURL(stagdURL)
+	addHost := ""
+
+	if onHost {
+		addHost = "    --add-host " + dockerHostName + ":host-gateway \\\n"
+	}
+
+	return "  docker network create " + relayNetwork + "\n" +
+		"  docker run -d --name " + relayContainer + " --restart unless-stopped \\\n" +
+		"    --network " + relayNetwork + " --user root \\\n" +
+		"    -v /var/run/docker.sock:/var/run/docker.sock \\\n" +
+		addHost +
+		"    -e STAGD_URL=" + relayURL + " \\\n" +
+		"    -e STAGD_RELAY_TOKEN=" + token + " \\\n" +
+		"    " + image + " relay\n"
 }
 
 // relayImage is the relay's image for this CLI's version: a release runs
@@ -566,7 +652,14 @@ var relayWait = 10 * time.Minute
 
 // waitForRelay waits until a relay connection's relay has connected and the
 // connection works.
-func waitForRelay(ctx context.Context, w io.Writer, c *api.Clients, id string) error {
+func waitForRelay(ctx context.Context, w io.Writer, c *api.Clients, relayed *apiv1.ComputeConnection) error {
+	id := relayed.GetId()
+	logs := "kubectl -n stagd-system logs deploy/stagd-relay"
+
+	if relayed.GetProvider() == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER {
+		logs = "docker logs " + relayContainer
+	}
+
 	fmt.Fprintln(w, "\nWaiting for the relay to connect…")
 
 	ctx, cancel := context.WithTimeout(ctx, relayWait)
@@ -588,7 +681,7 @@ func waitForRelay(ctx context.Context, w io.Writer, c *api.Clients, id string) e
 
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("the relay didn't connect within %s: check it's running (kubectl -n stagd-system logs deploy/stagd-relay)", relayWait)
+			return fmt.Errorf("the relay didn't connect within %s: check it's running (%s)", relayWait, logs)
 
 		case <-time.After(relayPoll):
 		}
@@ -608,13 +701,31 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	// A relay running now is cut off: ask first.
+	run, print := cmd.Bool("run"), cmd.Bool("print")
+	docker := conn.GetProvider() == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER
+
+	if (run || print) && !docker {
+		return cli.Exit("--run and --print are for a Docker host: "+runElsewhere(conn.GetProvider()), 2)
+	}
+
+	// A Docker host's relay is run here, or its commands printed: which, before a new token.
+	if docker && !run && !print && !cmd.Bool("json") {
+		return cli.Exit("on the Docker host, --run runs the relay; --print prints docker's commands for it instead", 2)
+	}
+
+	// A relay running now is cut off: ask first. One run here is replaced at once.
 	if conn.GetStatus() == apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE && !cmd.Bool("yes") {
 		if !interactive() {
 			return cli.Exit("its relay is connected: pass --yes to give it a new token anyway", 2)
 		}
 
-		if ok, err := confirm(cmd, fmt.Sprintf("A new relay token for %s?", conn.GetName()), "The relay running now is cut off until the new install runs."); err != nil || !ok {
+		detail := "The relay running now is cut off until the new install runs."
+
+		if run {
+			detail = "The relay running now is cut off; the one started here takes over."
+		}
+
+		if ok, err := confirm(cmd, fmt.Sprintf("A new relay token for %s?", conn.GetName()), detail); err != nil || !ok {
 			return err
 		}
 	}
@@ -641,7 +752,7 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 			f.Close()
 		}
 
-		return waitForRelay(ctx, cmd.Root().ErrWriter, c, conn.GetId())
+		return waitForRelay(ctx, cmd.Root().ErrWriter, c, conn)
 	}
 
 	res, err := c.Compute.CreateRelayInstall(ctx, connect.NewRequest(&apiv1.CreateRelayInstallRequest{Id: conn.GetId()}))
@@ -649,34 +760,61 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
+	if run {
+		fmt.Fprintf(w, "A new relay token for %s; the old one no longer works.\n", conn.GetName())
+
+		if err := runDockerRelay(ctx, w, cmd.String("api-url"), conn.GetId(), res.Msg.GetRelayToken(), relayImage(cmd.Root().Version)); err != nil {
+			return err
+		}
+
+		return waitForRelay(ctx, w, c, conn)
+	}
+
 	if cmd.Bool("json") {
 		return output.JSON(w, res.Msg)
 	}
 
 	fmt.Fprintf(w, "A new relay token for %s; the old one no longer works.\n\n", conn.GetName())
-	fmt.Fprint(w, relayInstructions(conn.GetProvider(), cmd.String("api-url"), res.Msg.GetRelayToken(), conn.GetName(), relayImage(cmd.Root().Version)))
+	fmt.Fprint(w, relayInstructions(conn.GetProvider(), cmd.String("api-url"), res.Msg.GetRelayToken(), conn.GetName(), relayImage(cmd.Root().Version), true))
 
 	if cmd.Bool("wait") {
-		return waitForRelay(ctx, w, c, conn.GetId())
+		return waitForRelay(ctx, w, c, conn)
 	}
 
 	return nil
 }
 
 // computeUninstall prints every manifest an install can bring, for kubectl
-// delete; it needs no connection, so it works after Stagd forgets it.
-func computeUninstall(_ context.Context, cmd *cli.Command) error {
+// delete, or removes a Docker host's relay; it needs no connection, so it
+// works after Stagd forgets it.
+func computeUninstall(ctx context.Context, cmd *cli.Command) error {
+	w := cmd.Root().Writer
+
 	switch kind := strings.ToLower(cmd.Args().First()); kind {
 	case "kubernetes":
+		if cmd.Bool("run") || cmd.Bool("print") {
+			return cli.Exit("--run and --print are for a Docker host: for a cluster, pipe this to kubectl delete --ignore-not-found -f -", 2)
+		}
+
+	case "docker":
+		switch {
+		case cmd.Bool("run"):
+			return removeDockerRelay(ctx, w)
+
+		case cmd.Bool("print"):
+			_, err := io.WriteString(w, dockerCleanup)
+
+			return err
+		}
+
+		return cli.Exit("on the Docker host, --run removes the relay; --print prints docker's commands for it instead", 2)
 
 	case "":
-		return cli.Exit("usage: stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -", 2)
+		return cli.Exit("usage: stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -, or stagd compute uninstall docker --run", 2)
 
 	default:
-		return cli.Exit(fmt.Sprintf("nothing to uninstall for %q: Stagd removes what it made there itself (only kubernetes has an install to remove)", kind), 2)
+		return cli.Exit(fmt.Sprintf("nothing to uninstall for %q: Stagd removes what it made there itself (only kubernetes and docker have an install to remove)", kind), 2)
 	}
-
-	w := cmd.Root().Writer
 
 	for i, name := range kubernetes.Uninstall {
 		raw, err := kubernetes.Files.ReadFile(name)

@@ -170,7 +170,8 @@ func slugFrom(name string) string {
 	return strings.Trim(b.String(), "-")
 }
 
-func interactive() bool {
+// interactive is whether someone is at the keyboard; replaced in tests.
+var interactive = func() bool {
 	return term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd()))
 }
 

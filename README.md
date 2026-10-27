@@ -81,11 +81,13 @@ It prints everything an install can bring, without tokens. Stagd can't do this i
 
 ### Docker
 
+On the Docker host, signed in:
+
 ```bash
-stagd compute connect docker --name build-box
+stagd compute connect docker --name build-box --run
 ```
 
-prints the `docker run` command for the host, with the relay's token. Whoever reaches the Docker API controls the host, so use a host meant for previews. To remove it: `docker rm -f stagd-relay`.
+makes the connection, starts its relay as the container `stagd-relay` on a network of its own, and waits until it connects. For a connection made elsewhere (in the dashboard, say), `stagd compute install build-box --run` gives the relay a new token and starts it the same way. With `--print` instead, both print docker's commands for the relay, with its token, to run yourself. Whoever reaches the Docker API controls the host, so use a host meant for previews. To remove the relay, on the host: `stagd compute uninstall docker --run`.
 
 ## Develop
 

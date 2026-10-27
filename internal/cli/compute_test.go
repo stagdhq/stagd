@@ -146,7 +146,7 @@ func TestComputeCleanup(t *testing.T) {
 		}
 	}
 
-	if docker := cleanup(apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER); !strings.Contains(docker, "docker rm -f stagd-relay") {
+	if docker := cleanup(apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER); !strings.Contains(docker, "stagd compute uninstall docker --run") {
 		t.Errorf("docker: %s", docker)
 	}
 

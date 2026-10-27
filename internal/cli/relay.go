@@ -23,12 +23,18 @@ func relayCommand(version string) *cli.Command {
 			"In a Kubernetes pod it fronts the cluster, as the pod's service account\n" +
 			"(see deploy/kubernetes/stagd-relay.yaml), and only connects Stagd to\n" +
 			"services in stagd-* namespaces.\n\n" +
-			"In a container with the Docker socket, it fronts that Docker host:\n\n" +
+			"In a container with the Docker socket, it fronts that Docker host. On the host,\n" +
+			"`stagd compute install <name> --run` starts it (with --print, it prints what\n" +
+			"follows instead, with the token):\n\n" +
+			"  docker network create stagd-relay\n" +
 			"  docker run -d --name stagd-relay --restart unless-stopped \\\n" +
+			"    --network stagd-relay --user root \\\n" +
 			"    -v /var/run/docker.sock:/var/run/docker.sock \\\n" +
 			"    -e STAGD_URL=https://stagd.example.com -e STAGD_RELAY_TOKEN=stagd_relay.... \\\n" +
 			"    ghcr.io/stagdhq/stagd:latest relay\n\n" +
-			"Whoever reaches the Docker API controls the host: use a host meant for previews.",
+			"On a network of its own, it resolves the previews' services once it joins their\n" +
+			"networks; root reaches the socket. Whoever reaches the Docker API controls the\n" +
+			"host: use a host meant for previews.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "url",
