@@ -247,6 +247,10 @@ message Preview {
   // The compute it runs on: the org's default when it started, or the one
   // its stagd.yaml names (compute:). Unset once that connection is deleted.
   PreviewCompute compute = 19;
+  // When Stagd last took a picture of its primary ingress, as it went live;
+  // unset while it has none. The dashboard shows it on the preview's card,
+  // from /thumbnails/<id>.jpg on the server, for people in the preview's org.
+  google.protobuf.Timestamp thumbnail_time = 20;
 }
 
 // PreviewCompute is the compute connection a preview runs on.
