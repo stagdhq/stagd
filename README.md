@@ -49,6 +49,16 @@ stagd preview list
 
 `stagd <command> --help` explains each one. `--json` prints JSON for scripts, and `--api-url` (`STAGD_API_URL`) points the CLI at another Stagd server.
 
+## For coding agents
+
+`stagd mcp` is Stagd's MCP server for Claude Code, Cursor and other MCP clients, signed in as you (`stagd login`). Its tools make a preview of a pull request or branch, wait for it, look at it (its screenshot, logs and mail), and check stagd.yaml before a push. The tools run on Stagd's server; `stagd mcp` carries the client's calls there.
+
+```bash
+claude mcp add stagd -- stagd mcp
+```
+
+Or in an `mcp.json`: `{ "mcpServers": { "stagd": { "command": "stagd", "args": ["mcp"] } } }`.
+
 ## The relay
 
 Some compute can't be reached from the internet, and shouldn't be. `stagd relay` runs next to it and opens one outbound connection to Stagd (a WebSocket over HTTPS); Stagd manages the compute and reaches previews through it. Nothing next to the relay needs to accept connections, and no cluster credentials leave it.
