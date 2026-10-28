@@ -81,7 +81,12 @@ type IntegrationField struct {
 	Secret   bool `protobuf:"varint,4,opt,name=secret,proto3" json:"secret,omitempty"`
 	Required bool `protobuf:"varint,5,opt,name=required,proto3" json:"required,omitempty"`
 	// Several lines, e.g. a list.
-	Multiline     bool `protobuf:"varint,6,opt,name=multiline,proto3" json:"multiline,omitempty"`
+	Multiline bool `protobuf:"varint,6,opt,name=multiline,proto3" json:"multiline,omitempty"`
+	// A yes or no: its value is "true", or empty for no.
+	Checkbox bool `protobuf:"varint,7,opt,name=checkbox,proto3" json:"checkbox,omitempty"`
+	// The key of a checkbox field this one belongs to: shown, and asked for,
+	// only while that one is ticked.
+	ShownWith     string `protobuf:"bytes,8,opt,name=shown_with,json=shownWith,proto3" json:"shown_with,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -156,6 +161,20 @@ func (x *IntegrationField) GetMultiline() bool {
 		return x.Multiline
 	}
 	return false
+}
+
+func (x *IntegrationField) GetCheckbox() bool {
+	if x != nil {
+		return x.Checkbox
+	}
+	return false
+}
+
+func (x *IntegrationField) GetShownWith() string {
+	if x != nil {
+		return x.ShownWith
+	}
+	return ""
 }
 
 type IntegrationKind struct {
@@ -881,14 +900,17 @@ var File_stagd_api_v1_integrations_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_integrations_proto_rawDesc = "" +
 	"\n" +
-	"\x1fstagd/api/v1/integrations.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa0\x01\n" +
+	"\x1fstagd/api/v1/integrations.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdb\x01\n" +
 	"\x10IntegrationField\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
 	"\x04help\x18\x03 \x01(\tR\x04help\x12\x16\n" +
 	"\x06secret\x18\x04 \x01(\bR\x06secret\x12\x1a\n" +
 	"\brequired\x18\x05 \x01(\bR\brequired\x12\x1c\n" +
-	"\tmultiline\x18\x06 \x01(\bR\tmultiline\"\x8f\x01\n" +
+	"\tmultiline\x18\x06 \x01(\bR\tmultiline\x12\x1a\n" +
+	"\bcheckbox\x18\a \x01(\bR\bcheckbox\x12\x1d\n" +
+	"\n" +
+	"shown_with\x18\b \x01(\tR\tshownWith\"\x8f\x01\n" +
 	"\x0fIntegrationKind\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +

@@ -32,6 +32,11 @@ message IntegrationField {
   bool required = 5;
   // Several lines, e.g. a list.
   bool multiline = 6;
+  // A yes or no: its value is "true", or empty for no.
+  bool checkbox = 7;
+  // The key of a checkbox field this one belongs to: shown, and asked for,
+  // only while that one is ticked.
+  string shown_with = 8;
 }
 
 message IntegrationKind {
