@@ -27,6 +27,9 @@ services:
       protocol: grpc
       headers: { Authorization: "Bearer ${DASH0_TOKEN}" }
     ignore: [/healthz, /internal/*]
+  postgres:
+    version: "16"
+    seed: "https://seeds.example.com/app.dump?${SEED_TOKEN}"
 
 database:
   neon:

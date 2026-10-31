@@ -1,0 +1,9 @@
+# services.postgres: what it takes, and what it says about the rest.
+version: 1
+
+services:
+  postgres:
+    version: 15
+    database: My-App
+    seed: http://seeds.example.com/app.sql
+    size: 10Gi

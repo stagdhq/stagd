@@ -46,6 +46,10 @@
           "/healthz",
           "/internal/*"
         ]
+      },
+      "postgres": {
+        "version": "16",
+        "seed": "https://seeds.example.com/app.dump?${SEED_TOKEN}"
       }
     },
     "env": {

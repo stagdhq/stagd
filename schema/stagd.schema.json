@@ -353,6 +353,30 @@
       },
       "type": "object"
     },
+    "Postgres": {
+      "additionalProperties": false,
+      "properties": {
+        "database": {
+          "description": "The database the app uses: app when left out.",
+          "pattern": "^[a-z_][a-z0-9_]{0,62}$",
+          "type": "string"
+        },
+        "seed": {
+          "description": "What the database starts with: an https URL of a pg_dump, plain SQL, custom or tar format, compressed with gzip or zstd or not. Restored once, when the preview is made; redeploys keep the data. It may use variables and secrets, e.g. https://example.com/seed.dump?${SEED_TOKEN}.",
+          "pattern": "^https://",
+          "type": "string"
+        },
+        "version": {
+          "description": "The major version: 16, or 17 (the default). A seed made with a newer pg_dump than this doesn't restore.",
+          "enum": [
+            "16",
+            "17"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Previews": {
       "anyOf": [
         {
@@ -425,6 +449,10 @@
         "otel": {
           "$ref": "#/$defs/OTel",
           "description": "An OpenTelemetry endpoint for the app's traces, with a viewer (Jaeger)."
+        },
+        "postgres": {
+          "$ref": "#/$defs/Postgres",
+          "description": "A Postgres database for the preview, started from a seed when there is one. The app gets its URL in DATABASE_URL."
         }
       },
       "type": "object"
