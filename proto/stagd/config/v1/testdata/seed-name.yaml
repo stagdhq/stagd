@@ -1,0 +1,6 @@
+# services.postgres.seed: a seed's name, as on the Seeds page.
+version: 1
+
+services:
+  postgres:
+    seed: app-anonymized

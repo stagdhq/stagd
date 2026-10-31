@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+// SeedService keeps the org's seeds: the data a preview's database starts
+// with, a pg_dump in a blob store one of the org's integrations reaches
+// (Azure Blob Storage now). stagd.yaml names a seed
+// (services: { postgres: { seed: <name> } }); what it is, only the org's
+// admins say, so a pull request can't point its preview at other data.
+service SeedService {
+  rpc ListSeeds(ListSeedsRequest) returns (ListSeedsResponse);
+  // CreateSeed saves a seed once its integration finds a file at its path.
+  rpc CreateSeed(CreateSeedRequest) returns (CreateSeedResponse);
+  // UpdateSeed changes where a seed is; the file is looked up again.
+  rpc UpdateSeed(UpdateSeedRequest) returns (UpdateSeedResponse);
+  rpc DeleteSeed(DeleteSeedRequest) returns (DeleteSeedResponse);
+  // FindSeedFile says which file a path finds now, without saving
+  // anything: for a form, before the seed is saved.
+  rpc FindSeedFile(FindSeedFileRequest) returns (FindSeedFileResponse);
+}
+
+// A file a seed restores.
+message SeedFile {
+  // Its name in the store, e.g. seeds/platform/2026-10-28.dump.
+  string name = 1;
+  int64 size_bytes = 2;
+  google.protobuf.Timestamp modify_time = 3;
+}
+
+message Seed {
+  string id = 1;
+  // As stagd.yaml names it, e.g. app-anonymized.
+  string name = 2;
+  // The integration whose store it's in: its id and name.
+  string integration_id = 3;
+  string integration_name = 4;
+  // A file's name, or a prefix ending in / for the newest file under it.
+  string path = 5;
+  // The file the path found at the last look.
+  SeedFile file = 6;
+  // Why the last look found nothing, when it didn't.
+  string problem = 7;
+  // Who made it, by email.
+  string created_by = 8;
+  google.protobuf.Timestamp create_time = 9;
+  google.protobuf.Timestamp check_time = 10;
+}
+
+message ListSeedsRequest {}
+
+message ListSeedsResponse {
+  repeated Seed seeds = 1;
+}
+
+message CreateSeedRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+  }];
+  // An id or a name.
+  string integration = 2 [(buf.validate.field).string.min_len = 1];
+  string path = 3 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 1024
+  }];
+}
+
+message CreateSeedResponse {
+  Seed seed = 1;
+}
+
+message UpdateSeedRequest {
+  // An id or a name.
+  string seed = 1 [(buf.validate.field).string.min_len = 1];
+  // Left empty, it stays as it is.
+  string integration = 2;
+  string path = 3 [(buf.validate.field).string.max_len = 1024];
+}
+
+message UpdateSeedResponse {
+  Seed seed = 1;
+}
+
+message DeleteSeedRequest {
+  string seed = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteSeedResponse {}
+
+message FindSeedFileRequest {
+  string integration = 1 [(buf.validate.field).string.min_len = 1];
+  string path = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 1024
+  }];
+}
+
+message FindSeedFileResponse {
+  SeedFile file = 1;
+}

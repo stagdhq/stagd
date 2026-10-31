@@ -362,8 +362,8 @@
           "type": "string"
         },
         "seed": {
-          "description": "What the database starts with: an https URL of a pg_dump, plain SQL, custom or tar format, compressed with gzip or zstd or not. Restored once, when the preview is made; redeploys keep the data. It may use variables and secrets, e.g. https://example.com/seed.dump?${SEED_TOKEN}.",
-          "pattern": "^https://",
+          "description": "What the database starts with, a pg_dump (plain SQL, custom or tar format, compressed with gzip or zstd or not): a seed's name, as on the org's Seeds page, whose file is in a blob store the org's integrations reach; or an https URL, which may use variables and secrets, e.g. https://example.com/seed.dump?${SEED_TOKEN}. Restored once, when the preview is made; redeploys keep the data.",
+          "pattern": "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$",
           "type": "string"
         },
         "version": {

@@ -1,0 +1,17 @@
+{
+  "config": {
+    "version": 1,
+    "app": {},
+    "services": {
+      "postgres": {
+        "seed": "app-anonymized"
+      }
+    },
+    "previews": {
+      "when": "on-demand"
+    },
+    "commands": {
+      "handled": "delete"
+    }
+  }
+}

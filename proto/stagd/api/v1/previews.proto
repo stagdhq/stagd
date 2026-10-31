@@ -7,6 +7,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/compute.proto";
 import "stagd/api/v1/model.proto";
+import "stagd/api/v1/seeds.proto";
 import "stagd/config/v1/config.proto";
 
 // PreviewService starts, watches and tears down preview environments.
@@ -155,12 +156,21 @@ enum PreviewTrigger {
 }
 
 // One part of the app: a service from the compose file.
+// A seed a preview's database started from: its name in Stagd (empty for
+// a URL in stagd.yaml), and the file.
+message PreviewSeed {
+  string name = 1;
+  SeedFile file = 2;
+}
+
 message PreviewComponent {
   // The service name, e.g. "web", "api", "db".
   string name = 1;
   ComponentPhase phase = 2;
   // What it's doing or why it failed, e.g. "building (2/3)".
   string message = 3;
+  // Set when Stagd runs it itself: mail, otel or postgres.
+  string builtin = 4;
 }
 
 enum ComponentPhase {
@@ -251,6 +261,9 @@ message Preview {
   // unset while it has none. The dashboard shows it on the preview's card,
   // from /thumbnails/<id>.jpg on the server, for people in the preview's org.
   google.protobuf.Timestamp thumbnail_time = 20;
+  // The seed its database started from, and the file, as of its last
+  // deploy: stagd.yaml's services: { postgres: { seed } }.
+  PreviewSeed seed = 21;
 }
 
 // PreviewCompute is the compute connection a preview runs on.

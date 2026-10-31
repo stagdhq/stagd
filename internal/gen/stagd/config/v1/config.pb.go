@@ -554,10 +554,12 @@ type Postgres struct {
 	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	// The database the app uses: postgres when left out.
 	Database string `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
-	// What the database starts with: an https URL of a pg_dump, plain SQL,
-	// custom or tar format, compressed with gzip or zstd or not. Restored once,
-	// when the preview is made; redeploys keep the data. It may use variables
-	// and secrets, e.g. https://example.com/seed.dump?${SEED_TOKEN}.
+	// What the database starts with, a pg_dump (plain SQL, custom or tar
+	// format, compressed with gzip or zstd or not): a seed's name, as on the
+	// org's Seeds page, whose file is in a blob store the org's integrations
+	// reach; or an https URL, which may use variables and secrets, e.g.
+	// https://example.com/seed.dump?${SEED_TOKEN}. Restored once, when the
+	// preview is made; redeploys keep the data.
 	Seed          string `protobuf:"bytes,3,opt,name=seed,proto3" json:"seed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1246,11 +1248,11 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\x04mail\x18\x01 \x01(\v2\x15.stagd.config.v1.MailR\x04mail\x12)\n" +
 	"\x04otel\x18\x02 \x01(\v2\x15.stagd.config.v1.OTelR\x04otel\x125\n" +
 	"\bpostgres\x18\x03 \x01(\v2\x19.stagd.config.v1.PostgresR\bpostgres\"\x06\n" +
-	"\x04Mail\"\xa6\x01\n" +
+	"\x04Mail\"\xc9\x01\n" +
 	"\bPostgres\x122\n" +
 	"\aversion\x18\x01 \x01(\tB\x18\xbaH\x15\xd8\x01\x01r\x10R\x0216R\x0217R\x0218R\x0219R\aversion\x12=\n" +
-	"\bdatabase\x18\x02 \x01(\tB!\xbaH\x1e\xd8\x01\x01r\x192\x17^[a-z_][a-z0-9_]{0,62}$R\bdatabase\x12'\n" +
-	"\x04seed\x18\x03 \x01(\tB\x13\xbaH\x10\xd8\x01\x01r\v2\t^https://R\x04seed\"k\n" +
+	"\bdatabase\x18\x02 \x01(\tB!\xbaH\x1e\xd8\x01\x01r\x192\x17^[a-z_][a-z0-9_]{0,62}$R\bdatabase\x12J\n" +
+	"\x04seed\x18\x03 \x01(\tB6\xbaH3\xd8\x01\x01r.2,^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$R\x04seed\"k\n" +
 	"\x04OTel\x123\n" +
 	"\x06export\x18\x01 \x01(\v2\x1b.stagd.config.v1.OTelExportR\x06export\x12.\n" +
 	"\x06ignore\x18\x02 \x03(\tB\x16\xbaH\x13\x92\x01\x10\"\x0er\f2\n" +
