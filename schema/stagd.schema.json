@@ -367,10 +367,12 @@
           "type": "string"
         },
         "version": {
-          "description": "The major version: 16, or 17 (the default). A seed made with a newer pg_dump than this doesn't restore.",
+          "description": "The major version: 16, 17, 18 (the default) or 19. A seed made with a newer pg_dump than this doesn't restore.",
           "enum": [
             "16",
-            "17"
+            "17",
+            "18",
+            "19"
           ],
           "type": "string"
         }

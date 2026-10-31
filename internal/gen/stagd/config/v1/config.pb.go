@@ -549,7 +549,7 @@ func (*Mail) Descriptor() ([]byte, []int) {
 
 type Postgres struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The major version: 16, or 17 (the default). A seed made with a newer
+	// The major version: 16, 17, 18 (the default) or 19. A seed made with a newer
 	// pg_dump than this doesn't restore.
 	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	// The database the app uses: app when left out.
@@ -1246,9 +1246,9 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\x04mail\x18\x01 \x01(\v2\x15.stagd.config.v1.MailR\x04mail\x12)\n" +
 	"\x04otel\x18\x02 \x01(\v2\x15.stagd.config.v1.OTelR\x04otel\x125\n" +
 	"\bpostgres\x18\x03 \x01(\v2\x19.stagd.config.v1.PostgresR\bpostgres\"\x06\n" +
-	"\x04Mail\"\x9e\x01\n" +
-	"\bPostgres\x12*\n" +
-	"\aversion\x18\x01 \x01(\tB\x10\xbaH\r\xd8\x01\x01r\bR\x0216R\x0217R\aversion\x12=\n" +
+	"\x04Mail\"\xa6\x01\n" +
+	"\bPostgres\x122\n" +
+	"\aversion\x18\x01 \x01(\tB\x18\xbaH\x15\xd8\x01\x01r\x10R\x0216R\x0217R\x0218R\x0219R\aversion\x12=\n" +
 	"\bdatabase\x18\x02 \x01(\tB!\xbaH\x1e\xd8\x01\x01r\x192\x17^[a-z_][a-z0-9_]{0,62}$R\bdatabase\x12'\n" +
 	"\x04seed\x18\x03 \x01(\tB\x13\xbaH\x10\xd8\x01\x01r\v2\t^https://R\x04seed\"k\n" +
 	"\x04OTel\x123\n" +

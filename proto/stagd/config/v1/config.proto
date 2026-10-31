@@ -144,14 +144,16 @@ message Services {
 message Mail {}
 
 message Postgres {
-  // The major version: 16, or 17 (the default). A seed made with a newer
+  // The major version: 16, 17, 18 (the default) or 19. A seed made with a newer
   // pg_dump than this doesn't restore.
   string version = 1 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string = {
       in: [
         "16",
-        "17"
+        "17",
+        "18",
+        "19"
       ]
     }
   ];

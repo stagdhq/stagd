@@ -1,6 +1,6 @@
 {
   "problems": [
-    "services.postgres.version: Stagd runs Postgres 16 and 17, not \"15\"",
+    "services.postgres.version: Stagd runs Postgres 16, 17, 18 and 19, not \"15\"",
     "services.postgres.database: \"My-App\" isn't a name Stagd makes: lower-case letters, digits and underscores",
     "services.postgres.seed should be an https URL of a pg_dump, e.g. seed: \"https://seeds.example.com/app.dump?${SEED_TOKEN}\"",
     "services.postgres: unknown setting \"size\"; it takes version, database and seed"
