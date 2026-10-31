@@ -6,10 +6,11 @@ import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 // SeedService keeps the org's seeds: the data a preview's database starts
-// with, a pg_dump in a blob store one of the org's integrations reaches
-// (Azure Blob Storage now). stagd.yaml names a seed
-// (services: { postgres: { seed: <name> } }); what it is, only the org's
-// admins say, so a pull request can't point its preview at other data.
+// with, a database dump (pg_dump's now; MySQL's and others' as Stagd runs
+// those databases) in a blob store one of the org's integrations reaches:
+// Azure Blob Storage, or S3 and the stores that speak it. stagd.yaml names
+// a seed (services: { postgres: { seed: <name> } }); what it is, only the
+// org's admins say, so a pull request can't point its preview at other data.
 service SeedService {
   rpc ListSeeds(ListSeedsRequest) returns (ListSeedsResponse);
   // CreateSeed saves a seed once its integration finds a file at its path.
