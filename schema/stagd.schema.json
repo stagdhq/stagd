@@ -357,7 +357,7 @@
       "additionalProperties": false,
       "properties": {
         "database": {
-          "description": "The database the app uses: app when left out.",
+          "description": "The database the app uses: postgres when left out.",
           "pattern": "^[a-z_][a-z0-9_]{0,62}$",
           "type": "string"
         },

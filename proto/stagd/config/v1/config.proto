@@ -158,7 +158,7 @@ message Postgres {
     }
   ];
 
-  // The database the app uses: app when left out.
+  // The database the app uses: postgres when left out.
   string database = 2 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.pattern = "^[a-z_][a-z0-9_]{0,62}$"

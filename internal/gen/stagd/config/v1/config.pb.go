@@ -552,7 +552,7 @@ type Postgres struct {
 	// The major version: 16, 17, 18 (the default) or 19. A seed made with a newer
 	// pg_dump than this doesn't restore.
 	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	// The database the app uses: app when left out.
+	// The database the app uses: postgres when left out.
 	Database string `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
 	// What the database starts with: an https URL of a pg_dump, plain SQL,
 	// custom or tar format, compressed with gzip or zstd or not. Restored once,
