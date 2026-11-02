@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package stagd.api.v1;
+
+// AiService is the org's AI settings: whether a model explains a failed
+// deploy that no rule of Stagd's knows, with which of the org's model
+// provider integrations (Anthropic, OpenAI, Azure OpenAI), and which model.
+// One model per org, so its explanations are never written by several.
+service AiService {
+  // GetAiSettings answers the settings, and the org's provider
+  // integrations with the models each offers.
+  rpc GetAiSettings(GetAiSettingsRequest) returns (GetAiSettingsResponse);
+  // UpdateAiSettings saves them, once the integration is a provider's and
+  // the model one it offers; no model means its recommended one.
+  rpc UpdateAiSettings(UpdateAiSettingsRequest) returns (UpdateAiSettingsResponse);
+}
+
+message AiSettings {
+  FailureExplanations failure_explanations = 1;
+}
+
+// Explaining a failed deploy with a model, when no rule knows why: the
+// error, the stage and the failing service's last lines, secrets masked,
+// are sent to the model.
+message FailureExplanations {
+  bool enabled = 1;
+  // One of the org's provider integrations; empty when none is picked, or
+  // it was deleted.
+  string integration_id = 2;
+  // One of the integration's models, e.g. claude-haiku-5-5.
+  string model = 3;
+}
+
+message AiModel {
+  string id = 1;
+  string name = 2;
+  // What it's good for and what it costs.
+  string description = 3;
+  // The one Stagd suggests for explaining failures.
+  bool recommended = 4;
+}
+
+// One of the org's integrations that's a model provider, and the models it
+// offers: Azure OpenAI's is its deployment.
+message AiProvider {
+  string integration_id = 1;
+  string integration_name = 2;
+  // The integration kind: anthropic, openai, azure_openai.
+  string kind = 3;
+  repeated AiModel models = 4;
+}
+
+message GetAiSettingsRequest {}
+
+message GetAiSettingsResponse {
+  AiSettings settings = 1;
+  repeated AiProvider providers = 2;
+}
+
+message UpdateAiSettingsRequest {
+  AiSettings settings = 1;
+}
+
+message UpdateAiSettingsResponse {
+  AiSettings settings = 1;
+}
