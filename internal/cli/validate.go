@@ -11,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 
+	"github.com/stagdhq/stagd/internal/client/api"
 	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
 	"github.com/stagdhq/stagd/internal/output"
 )
@@ -64,6 +65,31 @@ func validate(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
+	res, err := appFiles(ctx, c, root)
+	if err != nil {
+		return err
+	}
+
+	w := cmd.Root().Writer
+
+	if cmd.Bool("json") {
+		if err := output.JSON(w, res); err != nil {
+			return err
+		}
+	} else {
+		printValidation(w, res)
+	}
+
+	if n := len(res.GetProblems()); n > 0 {
+		return cli.Exit("", 1)
+	}
+
+	return nil
+}
+
+// appFiles sends the checkout's stagd.yaml and compose files to Stagd, and
+// those it asks for next, until it answers how previews would read them.
+func appFiles(ctx context.Context, c *api.Clients, root string) (*apiv1.ValidateAppResponse, error) {
 	req := &apiv1.ValidateAppRequest{Files: map[string]string{}}
 	add := func(path string) error {
 		text, ok, err := readRepoFile(root, path)
@@ -82,50 +108,30 @@ func validate(ctx context.Context, cmd *cli.Command) error {
 
 	for _, path := range rootFiles {
 		if err := add(path); err != nil {
-			return err
+			return nil, err
 		}
 	}
-
-	var res *apiv1.ValidateAppResponse
 
 	for round := 0; ; round++ {
 		r, err := c.Previews.ValidateApp(ctx, connect.NewRequest(req))
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		res = r.Msg
-
-		if len(res.GetRequested()) == 0 {
-			break
+		if len(r.Msg.GetRequested()) == 0 {
+			return r.Msg, nil
 		}
 
 		if round == maxRounds {
-			return errors.New("Stagd kept asking for more files; check the paths in stagd.yaml")
+			return nil, errors.New("Stagd kept asking for more files; check the paths in stagd.yaml")
 		}
 
-		for _, path := range res.GetRequested() {
+		for _, path := range r.Msg.GetRequested() {
 			if err := add(path); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
-
-	w := cmd.Root().Writer
-
-	if cmd.Bool("json") {
-		if err := output.JSON(w, res); err != nil {
-			return err
-		}
-	} else {
-		printValidation(w, res)
-	}
-
-	if n := len(res.GetProblems()); n > 0 {
-		return cli.Exit("", 1)
-	}
-
-	return nil
 }
 
 func printValidation(w interface{ Write([]byte) (int, error) }, res *apiv1.ValidateAppResponse) {

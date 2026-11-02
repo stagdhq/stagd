@@ -52,6 +52,7 @@ func New(version string) *cli.Command {
 			seedsCommand(),
 			activityCommand(),
 			previewCommand(),
+			initCommand(),
 			validateCommand(),
 			mcpCommand(),
 			relayCommand(version),

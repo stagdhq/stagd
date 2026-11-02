@@ -2200,7 +2200,11 @@ type ValidateAppResponse struct {
 	Ingresses []*PreviewIngress `protobuf:"bytes,6,rep,name=ingresses,proto3" json:"ingresses,omitempty"`
 	// stagd.yaml as previews read it, defaults filled in: unset when it has
 	// problems, empty when there's no stagd.yaml.
-	Config        *v1.Config `protobuf:"bytes,7,opt,name=config,proto3" json:"config,omitempty"`
+	Config *v1.Config `protobuf:"bytes,7,opt,name=config,proto3" json:"config,omitempty"`
+	// A stagd.yaml to start from, made from the compose file, as a
+	// repository's page offers it: set when there's no stagd.yaml. stagd init
+	// writes it.
+	Starter       string `protobuf:"bytes,8,opt,name=starter,proto3" json:"starter,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2282,6 +2286,13 @@ func (x *ValidateAppResponse) GetConfig() *v1.Config {
 		return x.Config
 	}
 	return nil
+}
+
+func (x *ValidateAppResponse) GetStarter() string {
+	if x != nil {
+		return x.Starter
+	}
+	return ""
 }
 
 type ListPreviewEventsRequest struct {
@@ -5337,7 +5348,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\fAppComponent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
 	"\rbuild_context\x18\x02 \x01(\tR\fbuildContext\x12\x14\n" +
-	"\x05image\x18\x03 \x01(\tR\x05image\"\xa4\x02\n" +
+	"\x05image\x18\x03 \x01(\tR\x05image\"\xbe\x02\n" +
 	"\x13ValidateAppResponse\x12\x1c\n" +
 	"\trequested\x18\x01 \x03(\tR\trequested\x12\x14\n" +
 	"\x05files\x18\x02 \x03(\tR\x05files\x12\x1a\n" +
@@ -5347,7 +5358,8 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"components\x18\x05 \x03(\v2\x1a.stagd.api.v1.AppComponentR\n" +
 	"components\x12:\n" +
 	"\tingresses\x18\x06 \x03(\v2\x1c.stagd.api.v1.PreviewIngressR\tingresses\x12/\n" +
-	"\x06config\x18\a \x01(\v2\x17.stagd.config.v1.ConfigR\x06config\"{\n" +
+	"\x06config\x18\a \x01(\v2\x17.stagd.config.v1.ConfigR\x06config\x12\x18\n" +
+	"\astarter\x18\b \x01(\tR\astarter\"{\n" +
 	"\x18ListPreviewEventsRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12'\n" +
 	"\tpage_size\x18\x02 \x01(\x05B\n" +

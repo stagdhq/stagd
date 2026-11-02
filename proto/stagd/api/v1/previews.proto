@@ -424,6 +424,10 @@ message ValidateAppResponse {
   // stagd.yaml as previews read it, defaults filled in: unset when it has
   // problems, empty when there's no stagd.yaml.
   stagd.config.v1.Config config = 7;
+  // A stagd.yaml to start from, made from the compose file, as a
+  // repository's page offers it: set when there's no stagd.yaml. stagd init
+  // writes it.
+  string starter = 8;
 }
 
 message ListPreviewEventsRequest {
