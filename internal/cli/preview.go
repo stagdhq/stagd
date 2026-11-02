@@ -56,6 +56,7 @@ func previewCommand() *cli.Command {
 			previewMailCommand(),
 			previewTextsCommand(),
 			previewLogsCommand(),
+			previewUsageCommand(),
 			{
 				Name:  "policy",
 				Usage: "who may open previews, and how their URLs look",
