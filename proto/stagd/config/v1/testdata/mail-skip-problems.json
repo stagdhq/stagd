@@ -1,0 +1,7 @@
+{
+  "problems": [
+    "services.mail.skip: Stagd doesn't catch \"postmark\"; it catches smtp, resend and ses",
+    "services.mail.skip names every way Stagd catches mail, so nothing would be: leave one out, or turn mail off with mail: false",
+    "services.sms: unknown setting \"skip\"; it has none: sms: {} catches Amazon SNS"
+  ]
+}

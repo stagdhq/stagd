@@ -1,0 +1,7 @@
+# services.mail.skip: names Stagd doesn't catch, skipping every way (then
+# nothing is caught), and sms, which has no settings.
+version: 1
+
+services:
+  mail: { skip: [smtp, resend, ses, postmark] }
+  sms: { skip: [sns] }

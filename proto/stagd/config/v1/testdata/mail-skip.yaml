@@ -1,0 +1,7 @@
+# services.mail.skip: every way of sending mail is caught except those named.
+# A name listed twice counts once.
+version: 1
+
+services:
+  mail: { skip: [ses, ses] }
+  sms: {}

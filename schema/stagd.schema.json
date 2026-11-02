@@ -222,10 +222,10 @@
       "anyOf": [
         {
           "additionalProperties": false,
-          "description": "Captures mail in Mailpit, the preview's inbox.",
+          "description": "Captures mail in Mailpit, the preview's inbox, every way Stagd catches pointed at it: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST, EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Ways added later are caught too.",
           "properties": {
-            "mock": {
-              "description": "How the app's services send it, each pointed at Stagd by the variables it reads: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST, EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Left out, every one. Listing only what the app uses keeps the rest as they are, e.g. a real SES elsewhere.",
+            "skip": {
+              "description": "Ways the app's services aren't pointed at Stagd: they reach the real vendor, e.g. ses for an app whose own SES calls the mock doesn't answer. Not every one: then nothing is caught.",
               "items": {
                 "enum": [
                   "smtp",
@@ -234,6 +234,7 @@
                 ],
                 "type": "string"
               },
+              "maxItems": 2,
               "type": "array"
             }
           },
@@ -571,19 +572,8 @@
     },
     "Sms": {
       "additionalProperties": false,
-      "description": "Catches text messages: Amazon SNS, pointed at Stagd's mock.",
-      "properties": {
-        "mock": {
-          "description": "Which vendors' APIs the app's services are pointed at, by the variables their SDKs read: sns (AWS_ENDPOINT_URL_SNS). Left out, every one.",
-          "items": {
-            "enum": [
-              "sns"
-            ],
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
+      "description": "Catches text messages: Amazon SNS, pointed at Stagd's mock (AWS_ENDPOINT_URL_SNS).",
+      "properties": {},
       "type": "object"
     },
     "Wait": {

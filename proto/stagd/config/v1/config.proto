@@ -157,29 +157,30 @@ message Services {
   Sms sms = 7;
 }
 
-// Catches text messages: Amazon SNS, pointed at Stagd's mock.
+// Catches text messages: Amazon SNS, pointed at Stagd's mock
+// (AWS_ENDPOINT_URL_SNS).
 message Sms {
-  // Which vendors' APIs the app's services are pointed at, by the variables
-  // their SDKs read: sns (AWS_ENDPOINT_URL_SNS). Left out, every one.
-  repeated string mock = 1 [(buf.validate.field).repeated = {
-    unique: true
-    items: {
-      string: {
-        in: ["sns"]
-      }
-    }
-  }];
+  // mock, which listed what was caught, briefly: everything is now.
+  reserved 1;
+  reserved "mock";
 }
 
-// Captures mail in Mailpit, the preview's inbox.
+// Captures mail in Mailpit, the preview's inbox, every way Stagd catches
+// pointed at it: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST,
+// EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses
+// (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Ways added later are
+// caught too.
 message Mail {
-  // How the app's services send it, each pointed at Stagd by the variables
-  // it reads: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST, EMAIL_HOST),
-  // resend (RESEND_BASE_URL, RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES,
-  // AWS_ENDPOINT_URL_SESV2). Left out, every one. Listing only what the app
-  // uses keeps the rest as they are, e.g. a real SES elsewhere.
-  repeated string mock = 1 [(buf.validate.field).repeated = {
+  // mock, which listed what was caught, briefly: skip names the exceptions.
+  reserved 1;
+  reserved "mock";
+
+  // Ways the app's services aren't pointed at Stagd: they reach the real
+  // vendor, e.g. ses for an app whose own SES calls the mock doesn't answer.
+  // Not every one: then nothing is caught.
+  repeated string skip = 2 [(buf.validate.field).repeated = {
     unique: true
+    max_items: 2
     items: {
       string: {
         in: [

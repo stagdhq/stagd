@@ -1,6 +1,0 @@
-{
-  "problems": [
-    "services.mail.mock: Stagd doesn't catch \"postmark\"; it catches smtp, resend and ses",
-    "services.sms.mock should be a list of what the app uses, e.g. mock: [sns]; Stagd catches sns"
-  ]
-}

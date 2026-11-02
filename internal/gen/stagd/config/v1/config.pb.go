@@ -551,12 +551,10 @@ func (x *Services) GetSms() *Sms {
 	return nil
 }
 
-// Catches text messages: Amazon SNS, pointed at Stagd's mock.
+// Catches text messages: Amazon SNS, pointed at Stagd's mock
+// (AWS_ENDPOINT_URL_SNS).
 type Sms struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Which vendors' APIs the app's services are pointed at, by the variables
-	// their SDKs read: sns (AWS_ENDPOINT_URL_SNS). Left out, every one.
-	Mock          []string `protobuf:"bytes,1,rep,name=mock,proto3" json:"mock,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -591,22 +589,17 @@ func (*Sms) Descriptor() ([]byte, []int) {
 	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *Sms) GetMock() []string {
-	if x != nil {
-		return x.Mock
-	}
-	return nil
-}
-
-// Captures mail in Mailpit, the preview's inbox.
+// Captures mail in Mailpit, the preview's inbox, every way Stagd catches
+// pointed at it: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST,
+// EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses
+// (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Ways added later are
+// caught too.
 type Mail struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// How the app's services send it, each pointed at Stagd by the variables
-	// it reads: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST, EMAIL_HOST),
-	// resend (RESEND_BASE_URL, RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES,
-	// AWS_ENDPOINT_URL_SESV2). Left out, every one. Listing only what the app
-	// uses keeps the rest as they are, e.g. a real SES elsewhere.
-	Mock          []string `protobuf:"bytes,1,rep,name=mock,proto3" json:"mock,omitempty"`
+	// Ways the app's services aren't pointed at Stagd: they reach the real
+	// vendor, e.g. ses for an app whose own SES calls the mock doesn't answer.
+	// Not every one: then nothing is caught.
+	Skip          []string `protobuf:"bytes,2,rep,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -641,9 +634,9 @@ func (*Mail) Descriptor() ([]byte, []int) {
 	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *Mail) GetMock() []string {
+func (x *Mail) GetSkip() []string {
 	if x != nil {
-		return x.Mock
+		return x.Skip
 	}
 	return nil
 }
@@ -1567,11 +1560,10 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\x05mysql\x18\x04 \x01(\v2\x16.stagd.config.v1.MySQLR\x05mysql\x122\n" +
 	"\amariadb\x18\x05 \x01(\v2\x18.stagd.config.v1.MariaDBR\amariadb\x122\n" +
 	"\amongodb\x18\x06 \x01(\v2\x18.stagd.config.v1.MongoDBR\amongodb\x12&\n" +
-	"\x03sms\x18\a \x01(\v2\x14.stagd.config.v1.SmsR\x03sms\",\n" +
-	"\x03Sms\x12%\n" +
-	"\x04mock\x18\x01 \x03(\tB\x11\xbaH\x0e\x92\x01\v\x18\x01\"\ar\x05R\x03snsR\x04mock\";\n" +
-	"\x04Mail\x123\n" +
-	"\x04mock\x18\x01 \x03(\tB\x1f\xbaH\x1c\x92\x01\x19\x18\x01\"\x15r\x13R\x04smtpR\x06resendR\x03sesR\x04mock\"\x91\x02\n" +
+	"\x03sms\x18\a \x01(\v2\x14.stagd.config.v1.SmsR\x03sms\"\x11\n" +
+	"\x03SmsJ\x04\b\x01\x10\x02R\x04mock\"I\n" +
+	"\x04Mail\x125\n" +
+	"\x04skip\x18\x02 \x03(\tB!\xbaH\x1e\x92\x01\x1b\x10\x02\x18\x01\"\x15r\x13R\x04smtpR\x06resendR\x03sesR\x04skipJ\x04\b\x01\x10\x02R\x04mock\"\x91\x02\n" +
 	"\bPostgres\x122\n" +
 	"\aversion\x18\x01 \x01(\tB\x18\xbaH\x15\xd8\x01\x01r\x10R\x0216R\x0217R\x0218R\x0219R\aversion\x12=\n" +
 	"\bdatabase\x18\x02 \x01(\tB!\xbaH\x1e\xd8\x01\x01r\x192\x17^[a-z_][a-z0-9_]{0,62}$R\bdatabase\x12J\n" +

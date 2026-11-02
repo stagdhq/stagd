@@ -4,16 +4,11 @@
     "app": {},
     "services": {
       "mail": {
-        "mock": [
-          "resend",
-          "smtp"
+        "skip": [
+          "ses"
         ]
       },
-      "sms": {
-        "mock": [
-          "sns"
-        ]
-      }
+      "sms": {}
     },
     "previews": {
       "when": "on-demand"

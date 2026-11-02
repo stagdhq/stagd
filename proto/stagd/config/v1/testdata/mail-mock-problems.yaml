@@ -1,7 +1,0 @@
-# services.mail.mock and services.sms.mock: names Stagd doesn't catch, and
-# something that isn't a list.
-version: 1
-
-services:
-  mail: { mock: [resend, postmark] }
-  sms: { mock: sns }
