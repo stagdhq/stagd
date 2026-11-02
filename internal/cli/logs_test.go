@@ -119,7 +119,7 @@ func TestPreviewLogsPrintsLinesToPaste(t *testing.T) {
 func TestPreviewLogsAsksForServicesAndSince(t *testing.T) {
 	f := &fakeLogs{}
 
-	out, err := run(t, logsServer(t, f), "--token", "tok-1", "preview", "logs", "p-1", "-s", "stagd-postgres", "--since", "10m", "--errors", "-n", "5")
+	out, err := run(t, logsServer(t, f), "--token", "tok-1", "preview", "logs", "p-1", "-s", "stagd-postgres", "--since", "2026-11-02T13:00:00Z", "--errors", "-n", "5")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,8 +139,27 @@ func TestPreviewLogsAsksForServicesAndSince(t *testing.T) {
 		t.Errorf("limit: %d", got.GetLimit())
 	}
 
-	if ago := time.Since(got.GetSince().AsTime()); ago < 9*time.Minute || ago > 11*time.Minute {
-		t.Errorf("since: %s ago", ago)
+	if !got.GetSince().AsTime().Equal(time.Date(2026, 11, 2, 13, 0, 0, 0, time.UTC)) {
+		t.Errorf("since: %s", got.GetSince().AsTime())
+	}
+}
+
+func TestLogsSinceTakesADurationOrATime(t *testing.T) {
+	now := time.Date(2026, 11, 2, 13, 30, 0, 0, time.UTC)
+
+	for given, want := range map[string]time.Time{
+		"10m":                  now.Add(-10 * time.Minute),
+		"2h":                   now.Add(-2 * time.Hour),
+		"2026-11-02T13:10:00Z": time.Date(2026, 11, 2, 13, 10, 0, 0, time.UTC),
+	} {
+		got, err := logsSince(given, now)
+		if err != nil || !got.AsTime().Equal(want) {
+			t.Errorf("%s: %v, %v", given, got.AsTime(), err)
+		}
+	}
+
+	if got, err := logsSince("", now); got != nil || err != nil {
+		t.Errorf("empty: %v, %v", got, err)
 	}
 }
 
