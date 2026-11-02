@@ -6,4 +6,5 @@ services:
     version: 15
     database: My-App
     seed: http://seeds.example.com/app.sql
+    extensions: [vector, "Bad Name"]
     size: 10Gi

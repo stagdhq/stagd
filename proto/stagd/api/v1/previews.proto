@@ -165,6 +165,8 @@ enum PreviewTrigger {
 message PreviewSeed {
   string name = 1;
   SeedFile file = 2;
+  // The database it seeded: postgres, mysql, mariadb or mongodb.
+  string database = 3;
 }
 
 message PreviewComponent {
@@ -265,9 +267,12 @@ message Preview {
   // unset while it has none. The dashboard shows it on the preview's card,
   // from /thumbnails/<id>.jpg on the server, for people in the preview's org.
   google.protobuf.Timestamp thumbnail_time = 20;
-  // The seed its database started from, and the file, as of its last
-  // deploy: stagd.yaml's services: { postgres: { seed } }.
+  // The first of seeds, for clients from before there could be several.
   PreviewSeed seed = 21;
+  // The seeds its databases started from, and their files, as of its last
+  // deploy on a new instance: stagd.yaml's services: { postgres: { seed } },
+  // and mysql, mariadb, mongodb.
+  repeated PreviewSeed seeds = 22;
 }
 
 // PreviewCompute is the compute connection a preview runs on.

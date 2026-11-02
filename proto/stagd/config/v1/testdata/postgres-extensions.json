@@ -1,0 +1,22 @@
+{
+  "config": {
+    "version": 1,
+    "app": {},
+    "services": {
+      "postgres": {
+        "extensions": [
+          "vector",
+          "postgis",
+          "pg_trgm",
+          "uuid-ossp"
+        ]
+      }
+    },
+    "previews": {
+      "when": "on-demand"
+    },
+    "commands": {
+      "handled": "delete"
+    }
+  }
+}

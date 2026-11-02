@@ -192,6 +192,15 @@ message Postgres {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.pattern = "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$"
   ];
+
+  // Extensions made in the database as it's created, before the seed
+  // restores, by the name CREATE EXTENSION takes: Postgres's own (contrib:
+  // pg_trgm, pgcrypto, uuid-ossp, citext, hstore …) and any the PostgreSQL
+  // apt repository packages (vector, postgis, pg_cron, h3, hypopg …), which
+  // Stagd installs as the database starts, on Debian's image of the version.
+  // Those that load at start (pg_cron, pg_stat_statements, timescaledb …) are
+  // preloaded.
+  repeated string extensions = 4 [(buf.validate.field).repeated.items.string.pattern = "^[a-z0-9][a-z0-9_-]{0,62}$"];
 }
 
 message MySQL {

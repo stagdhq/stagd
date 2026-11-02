@@ -433,6 +433,14 @@
           "pattern": "^[a-z_][a-z0-9_]{0,62}$",
           "type": "string"
         },
+        "extensions": {
+          "description": "Extensions made in the database as it's created, before the seed restores, by the name CREATE EXTENSION takes: Postgres's own (contrib: pg_trgm, pgcrypto, uuid-ossp, citext, hstore …) and any the PostgreSQL apt repository packages (vector, postgis, pg_cron, h3, hypopg …), which Stagd installs as the database starts, on Debian's image of the version. Those that load at start (pg_cron, pg_stat_statements, timescaledb …) are preloaded.",
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,62}$",
+            "type": "string"
+          },
+          "type": "array"
+        },
         "seed": {
           "description": "What the database starts with, a pg_dump (plain SQL, custom or tar format, compressed with gzip or zstd or not): a seed's name, as on the org's Seeds page, whose file is in a blob store the org's integrations reach; or an https URL, which may use variables and secrets, e.g. https://example.com/seed.dump?${SEED_TOKEN}. Restored once, when the preview is made; redeploys keep the data.",
           "pattern": "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$",

@@ -1,0 +1,7 @@
+# services.postgres.extensions: contrib's, and packaged ones Stagd installs
+# as the database starts. A name listed twice counts once.
+version: 1
+
+services:
+  postgres:
+    extensions: [vector, postgis, pg_trgm, uuid-ossp, vector]

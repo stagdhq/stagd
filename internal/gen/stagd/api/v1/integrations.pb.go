@@ -258,9 +258,12 @@ type Integration struct {
 	Status        IntegrationStatus `protobuf:"varint,6,opt,name=status,proto3,enum=stagd.api.v1.IntegrationStatus" json:"status,omitempty"`
 	StatusMessage string            `protobuf:"bytes,7,opt,name=status_message,json=statusMessage,proto3" json:"status_message,omitempty"`
 	// Who connected it, by email.
-	CreatedBy     string                 `protobuf:"bytes,8,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	CheckTime     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
+	CreatedBy  string                 `protobuf:"bytes,8,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	CheckTime  *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
+	// When its credentials stop working, as the service says, e.g. an Azure
+	// SAS token's expiry; unset when they don't.
+	ExpireTime    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -361,6 +364,13 @@ func (x *Integration) GetCreateTime() *timestamppb.Timestamp {
 func (x *Integration) GetCheckTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CheckTime
+	}
+	return nil
+}
+
+func (x *Integration) GetExpireTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpireTime
 	}
 	return nil
 }
@@ -915,7 +925,7 @@ const file_stagd_api_v1_integrations_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x126\n" +
-	"\x06fields\x18\x04 \x03(\v2\x1e.stagd.api.v1.IntegrationFieldR\x06fields\"\xd8\x03\n" +
+	"\x06fields\x18\x04 \x03(\v2\x1e.stagd.api.v1.IntegrationFieldR\x06fields\"\x95\x04\n" +
 	"\vIntegration\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x12\n" +
@@ -930,7 +940,9 @@ const file_stagd_api_v1_integrations_proto_rawDesc = "" +
 	"createTime\x129\n" +
 	"\n" +
 	"check_time\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\x1a;\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\x12;\n" +
+	"\vexpire_time\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"expireTime\x1a;\n" +
 	"\rSettingsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x1d\n" +
@@ -1019,30 +1031,31 @@ var file_stagd_api_v1_integrations_proto_depIdxs = []int32{
 	0,  // 2: stagd.api.v1.Integration.status:type_name -> stagd.api.v1.IntegrationStatus
 	19, // 3: stagd.api.v1.Integration.create_time:type_name -> google.protobuf.Timestamp
 	19, // 4: stagd.api.v1.Integration.check_time:type_name -> google.protobuf.Timestamp
-	2,  // 5: stagd.api.v1.ListIntegrationKindsResponse.kinds:type_name -> stagd.api.v1.IntegrationKind
-	17, // 6: stagd.api.v1.CreateIntegrationRequest.values:type_name -> stagd.api.v1.CreateIntegrationRequest.ValuesEntry
-	3,  // 7: stagd.api.v1.CreateIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
-	3,  // 8: stagd.api.v1.ListIntegrationsResponse.integrations:type_name -> stagd.api.v1.Integration
-	18, // 9: stagd.api.v1.UpdateIntegrationRequest.values:type_name -> stagd.api.v1.UpdateIntegrationRequest.ValuesEntry
-	3,  // 10: stagd.api.v1.UpdateIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
-	3,  // 11: stagd.api.v1.TestIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
-	4,  // 12: stagd.api.v1.IntegrationService.ListIntegrationKinds:input_type -> stagd.api.v1.ListIntegrationKindsRequest
-	6,  // 13: stagd.api.v1.IntegrationService.CreateIntegration:input_type -> stagd.api.v1.CreateIntegrationRequest
-	8,  // 14: stagd.api.v1.IntegrationService.ListIntegrations:input_type -> stagd.api.v1.ListIntegrationsRequest
-	10, // 15: stagd.api.v1.IntegrationService.UpdateIntegration:input_type -> stagd.api.v1.UpdateIntegrationRequest
-	12, // 16: stagd.api.v1.IntegrationService.TestIntegration:input_type -> stagd.api.v1.TestIntegrationRequest
-	14, // 17: stagd.api.v1.IntegrationService.DeleteIntegration:input_type -> stagd.api.v1.DeleteIntegrationRequest
-	5,  // 18: stagd.api.v1.IntegrationService.ListIntegrationKinds:output_type -> stagd.api.v1.ListIntegrationKindsResponse
-	7,  // 19: stagd.api.v1.IntegrationService.CreateIntegration:output_type -> stagd.api.v1.CreateIntegrationResponse
-	9,  // 20: stagd.api.v1.IntegrationService.ListIntegrations:output_type -> stagd.api.v1.ListIntegrationsResponse
-	11, // 21: stagd.api.v1.IntegrationService.UpdateIntegration:output_type -> stagd.api.v1.UpdateIntegrationResponse
-	13, // 22: stagd.api.v1.IntegrationService.TestIntegration:output_type -> stagd.api.v1.TestIntegrationResponse
-	15, // 23: stagd.api.v1.IntegrationService.DeleteIntegration:output_type -> stagd.api.v1.DeleteIntegrationResponse
-	18, // [18:24] is the sub-list for method output_type
-	12, // [12:18] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	19, // 5: stagd.api.v1.Integration.expire_time:type_name -> google.protobuf.Timestamp
+	2,  // 6: stagd.api.v1.ListIntegrationKindsResponse.kinds:type_name -> stagd.api.v1.IntegrationKind
+	17, // 7: stagd.api.v1.CreateIntegrationRequest.values:type_name -> stagd.api.v1.CreateIntegrationRequest.ValuesEntry
+	3,  // 8: stagd.api.v1.CreateIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
+	3,  // 9: stagd.api.v1.ListIntegrationsResponse.integrations:type_name -> stagd.api.v1.Integration
+	18, // 10: stagd.api.v1.UpdateIntegrationRequest.values:type_name -> stagd.api.v1.UpdateIntegrationRequest.ValuesEntry
+	3,  // 11: stagd.api.v1.UpdateIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
+	3,  // 12: stagd.api.v1.TestIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
+	4,  // 13: stagd.api.v1.IntegrationService.ListIntegrationKinds:input_type -> stagd.api.v1.ListIntegrationKindsRequest
+	6,  // 14: stagd.api.v1.IntegrationService.CreateIntegration:input_type -> stagd.api.v1.CreateIntegrationRequest
+	8,  // 15: stagd.api.v1.IntegrationService.ListIntegrations:input_type -> stagd.api.v1.ListIntegrationsRequest
+	10, // 16: stagd.api.v1.IntegrationService.UpdateIntegration:input_type -> stagd.api.v1.UpdateIntegrationRequest
+	12, // 17: stagd.api.v1.IntegrationService.TestIntegration:input_type -> stagd.api.v1.TestIntegrationRequest
+	14, // 18: stagd.api.v1.IntegrationService.DeleteIntegration:input_type -> stagd.api.v1.DeleteIntegrationRequest
+	5,  // 19: stagd.api.v1.IntegrationService.ListIntegrationKinds:output_type -> stagd.api.v1.ListIntegrationKindsResponse
+	7,  // 20: stagd.api.v1.IntegrationService.CreateIntegration:output_type -> stagd.api.v1.CreateIntegrationResponse
+	9,  // 21: stagd.api.v1.IntegrationService.ListIntegrations:output_type -> stagd.api.v1.ListIntegrationsResponse
+	11, // 22: stagd.api.v1.IntegrationService.UpdateIntegration:output_type -> stagd.api.v1.UpdateIntegrationResponse
+	13, // 23: stagd.api.v1.IntegrationService.TestIntegration:output_type -> stagd.api.v1.TestIntegrationResponse
+	15, // 24: stagd.api.v1.IntegrationService.DeleteIntegration:output_type -> stagd.api.v1.DeleteIntegrationResponse
+	19, // [19:25] is the sub-list for method output_type
+	13, // [13:19] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_integrations_proto_init() }

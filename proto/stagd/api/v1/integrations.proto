@@ -67,6 +67,9 @@ message Integration {
   string created_by = 8;
   google.protobuf.Timestamp create_time = 9;
   google.protobuf.Timestamp check_time = 10;
+  // When its credentials stop working, as the service says, e.g. an Azure
+  // SAS token's expiry; unset when they don't.
+  google.protobuf.Timestamp expire_time = 11;
 }
 
 message ListIntegrationKindsRequest {}

@@ -636,7 +636,15 @@ type Postgres struct {
 	// reach; or an https URL, which may use variables and secrets, e.g.
 	// https://example.com/seed.dump?${SEED_TOKEN}. Restored once, when the
 	// preview is made; redeploys keep the data.
-	Seed          string `protobuf:"bytes,3,opt,name=seed,proto3" json:"seed,omitempty"`
+	Seed string `protobuf:"bytes,3,opt,name=seed,proto3" json:"seed,omitempty"`
+	// Extensions made in the database as it's created, before the seed
+	// restores, by the name CREATE EXTENSION takes: Postgres's own (contrib:
+	// pg_trgm, pgcrypto, uuid-ossp, citext, hstore …) and any the PostgreSQL
+	// apt repository packages (vector, postgis, pg_cron, h3, hypopg …), which
+	// Stagd installs as the database starts, on Debian's image of the version.
+	// Those that load at start (pg_cron, pg_stat_statements, timescaledb …) are
+	// preloaded.
+	Extensions    []string `protobuf:"bytes,4,rep,name=extensions,proto3" json:"extensions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -690,6 +698,13 @@ func (x *Postgres) GetSeed() string {
 		return x.Seed
 	}
 	return ""
+}
+
+func (x *Postgres) GetExtensions() []string {
+	if x != nil {
+		return x.Extensions
+	}
+	return nil
 }
 
 type MySQL struct {
@@ -1529,11 +1544,14 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\amongodb\x18\x06 \x01(\v2\x18.stagd.config.v1.MongoDBR\amongodb\x12&\n" +
 	"\x03sms\x18\a \x01(\v2\x14.stagd.config.v1.SmsR\x03sms\"\x05\n" +
 	"\x03Sms\"\x06\n" +
-	"\x04Mail\"\xc9\x01\n" +
+	"\x04Mail\"\x91\x02\n" +
 	"\bPostgres\x122\n" +
 	"\aversion\x18\x01 \x01(\tB\x18\xbaH\x15\xd8\x01\x01r\x10R\x0216R\x0217R\x0218R\x0219R\aversion\x12=\n" +
 	"\bdatabase\x18\x02 \x01(\tB!\xbaH\x1e\xd8\x01\x01r\x192\x17^[a-z_][a-z0-9_]{0,62}$R\bdatabase\x12J\n" +
-	"\x04seed\x18\x03 \x01(\tB6\xbaH3\xd8\x01\x01r.2,^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$R\x04seed\"\xbe\x01\n" +
+	"\x04seed\x18\x03 \x01(\tB6\xbaH3\xd8\x01\x01r.2,^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$R\x04seed\x12F\n" +
+	"\n" +
+	"extensions\x18\x04 \x03(\tB&\xbaH#\x92\x01 \"\x1er\x1c2\x1a^[a-z0-9][a-z0-9_-]{0,62}$R\n" +
+	"extensions\"\xbe\x01\n" +
 	"\x05MySQL\x12*\n" +
 	"\aversion\x18\x01 \x01(\tB\x10\xbaH\r\xd8\x01\x01r\bR\x038.4R\x019R\aversion\x12=\n" +
 	"\bdatabase\x18\x02 \x01(\tB!\xbaH\x1e\xd8\x01\x01r\x192\x17^[a-z_][a-z0-9_]{0,62}$R\bdatabase\x12J\n" +
