@@ -41,9 +41,13 @@ func computeCommand() *cli.Command {
 				Usage:     "connect a compute account to your org",
 				ArgsUsage: "<provider>",
 				Description: "Asks for each value the provider needs. In scripts, pass them with --value key=value;\n" +
-					"use key=@- to read a secret from stdin instead of leaving it in your shell history.",
+					"use key=@- to read a secret from stdin instead of leaving it in your shell history.\n\n" +
+					"For Namespace, with its CLI (nsc) signed in to your workspace, --new-token makes the\n" +
+					"workspace token with exactly the grants Stagd uses (it's offered when you're asked):\n\n" +
+					"  stagd compute connect namespace --new-token --value region=eu",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "name", Usage: "a name for the connection (default: the provider's name)"},
+					&cli.BoolFlag{Name: "new-token", Usage: "namespace: make the workspace token with nsc"},
 					&cli.StringSliceFlag{Name: "value", Usage: "a field value, key=value or key=@- (stdin)"},
 					&cli.BoolFlag{Name: "wait", Usage: "through a relay: wait until it connects"},
 					&cli.BoolFlag{Name: "run", Usage: "docker: run its relay on this Docker host, and wait until it connects"},
@@ -67,9 +71,13 @@ func computeCommand() *cli.Command {
 				Usage:     "change a connection's settings, or give it a new secret",
 				ArgsUsage: nameArg,
 				Description: "Only the values given change; a secret not given stays as it was. Stagd checks the result\n" +
-					"with the provider before saving it. For a new token: --value token=@- reads it from stdin.",
+					"with the provider before saving it. For a new token: --value token=@- reads it from stdin.\n\n" +
+					"For Namespace, --new-token makes a new workspace token with nsc, gives it to Stagd, and\n" +
+					"revokes the ones it made for the connection before:\n\n" +
+					"  stagd compute update namespace --new-token",
 				Flags: []cli.Flag{
 					&cli.StringSliceFlag{Name: "value", Usage: "a field value, key=value or key=@- (stdin)"},
+					&cli.BoolFlag{Name: "new-token", Usage: "namespace: make a new workspace token with nsc, and revoke the old ones it made"},
 				},
 				Action: computeUpdate,
 			},
@@ -314,13 +322,18 @@ func computeConnect(ctx context.Context, cmd *cli.Command) error {
 		return cli.Exit("--run and --print are for a Docker host: "+runElsewhere(provider.GetProvider()), 2)
 	}
 
-	if err := askMissing(ctx, provider, values); err != nil {
-		return err
-	}
-
 	name := cmd.String("name")
 	if name == "" {
 		name = computeLabel(provider.GetProvider())
+	}
+
+	madeToken, err := namespaceTokenFor(ctx, cmd, provider.GetProvider(), name, values)
+	if err != nil {
+		return err
+	}
+
+	if err := askMissing(ctx, provider, values); err != nil {
+		return err
 	}
 
 	created, err := c.Compute.CreateComputeConnection(ctx, connect.NewRequest(&apiv1.CreateComputeConnectionRequest{
@@ -329,6 +342,11 @@ func computeConnect(ctx context.Context, cmd *cli.Command) error {
 		Values:   values,
 	}))
 	if err != nil {
+		// A token nobody will use: gone again.
+		if madeToken != "" {
+			revokeToken(ctx, madeToken)
+		}
+
 		return err
 	}
 
@@ -470,8 +488,8 @@ func computeTest(ctx context.Context, cmd *cli.Command) error {
 }
 
 func computeUpdate(ctx context.Context, cmd *cli.Command) error {
-	if len(cmd.StringSlice("value")) == 0 {
-		return cli.Exit("usage: stagd compute update <name> --value key=value …", 2)
+	if len(cmd.StringSlice("value")) == 0 && !cmd.Bool("new-token") {
+		return cli.Exit("usage: stagd compute update <name> --value key=value … (or --new-token, for Namespace)", 2)
 	}
 
 	values, err := parseValues(cmd.StringSlice("value"))
@@ -489,14 +507,100 @@ func computeUpdate(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
+	madeToken := ""
+
+	if cmd.Bool("new-token") {
+		if conn.GetProvider() != apiv1.ComputeProvider_COMPUTE_PROVIDER_NAMESPACE {
+			return cli.Exit("--new-token is for a Namespace connection", 2)
+		}
+
+		if !hasNsc() {
+			return cli.Exit("--new-token needs Namespace's CLI, nsc, signed in to your workspace: https://namespace.so/docs/reference/cli/installation", 2)
+		}
+
+		token, made, err := newNamespaceToken(ctx, conn.GetName())
+		if err != nil {
+			return err
+		}
+
+		values["token"], madeToken = token, made
+	}
+
 	res, err := c.Compute.UpdateComputeConnection(ctx, connect.NewRequest(&apiv1.UpdateComputeConnectionRequest{Id: conn.GetId(), Values: values}))
 	if err != nil {
+		if madeToken != "" {
+			revokeToken(ctx, madeToken)
+		}
+
 		return err
 	}
 
-	_, err = fmt.Fprintf(cmd.Root().Writer, "Updated %s (%s)\n", res.Msg.GetConnection().GetName(), res.Msg.GetConnection().GetAccount())
+	w := cmd.Root().Writer
 
-	return err
+	if _, err := fmt.Fprintf(w, "Updated %s (%s)\n", res.Msg.GetConnection().GetName(), res.Msg.GetConnection().GetAccount()); err != nil {
+		return err
+	}
+
+	if madeToken == "" {
+		return nil
+	}
+
+	revoked, err := revokeOlderTokens(ctx, conn.GetName(), madeToken)
+	if err != nil {
+		return fmt.Errorf("the new token %s is in use; revoking the old ones failed: %w", madeToken, err)
+	}
+
+	fmt.Fprintf(w, "Its new token is %s, valid for a year.\n", madeToken)
+
+	if len(revoked) > 0 {
+		fmt.Fprintf(w, "Revoked the old ones: %s.\n", strings.Join(revoked, ", "))
+	} else {
+		fmt.Fprintln(w, "A token you made yourself before is still valid: revoke it with nsc token list, then nsc token revoke --token_id <id>.")
+	}
+
+	return nil
+}
+
+// namespaceTokenFor fills in a new Namespace connection's token, made with nsc: when --new-token says so, or
+// when someone at a terminal says yes to it. Answers the token's name, or "" when none was made.
+func namespaceTokenFor(ctx context.Context, cmd *cli.Command, provider apiv1.ComputeProvider, connection string, values map[string]string) (string, error) {
+	if provider != apiv1.ComputeProvider_COMPUTE_PROVIDER_NAMESPACE || values["token"] != "" {
+		if cmd.Bool("new-token") && provider != apiv1.ComputeProvider_COMPUTE_PROVIDER_NAMESPACE {
+			return "", cli.Exit("--new-token is for Namespace", 2)
+		}
+
+		return "", nil
+	}
+
+	want := cmd.Bool("new-token")
+
+	if !want && interactive() && hasNsc() {
+		want = true
+
+		if err := newForm(huh.NewGroup(huh.NewConfirm().
+			Title("Make the workspace token with nsc?").
+			Description("A token for your current nsc workspace, with only the grants Stagd uses, valid for a year.").
+			Value(&want))).RunWithContext(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	if !want {
+		return "", nil
+	}
+
+	if !hasNsc() {
+		return "", cli.Exit("--new-token needs Namespace's CLI, nsc, signed in to your workspace: https://namespace.so/docs/reference/cli/installation", 2)
+	}
+
+	token, name, err := newNamespaceToken(ctx, connection)
+	if err != nil {
+		return "", err
+	}
+
+	values["token"] = token
+
+	return name, nil
 }
 
 func computeDefault(ctx context.Context, cmd *cli.Command) error {
