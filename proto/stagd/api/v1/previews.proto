@@ -309,6 +309,9 @@ message PreviewFailure {
   // The model that explained it, as people read it, e.g. Claude Haiku 5.5;
   // empty when Stagd's rules did.
   string model_name = 9;
+  // The integration kind of the model's provider: anthropic, openai,
+  // azure_openai; empty when Stagd's rules explained it.
+  string model_provider = 10;
 }
 
 enum PreviewFailureConfidence {

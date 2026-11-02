@@ -1197,7 +1197,10 @@ type PreviewFailure struct {
 	CreateTime  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// The model that explained it, as people read it, e.g. Claude Haiku 5.5;
 	// empty when Stagd's rules did.
-	ModelName     string `protobuf:"bytes,9,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	ModelName string `protobuf:"bytes,9,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	// The integration kind of the model's provider: anthropic, openai,
+	// azure_openai; empty when Stagd's rules explained it.
+	ModelProvider string `protobuf:"bytes,10,opt,name=model_provider,json=modelProvider,proto3" json:"model_provider,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1291,6 +1294,13 @@ func (x *PreviewFailure) GetCreateTime() *timestamppb.Timestamp {
 func (x *PreviewFailure) GetModelName() string {
 	if x != nil {
 		return x.ModelName
+	}
+	return ""
+}
+
+func (x *PreviewFailure) GetModelProvider() string {
+	if x != nil {
+		return x.ModelProvider
 	}
 	return ""
 }
@@ -5511,7 +5521,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x0ethumbnail_time\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\rthumbnailTime\x12-\n" +
 	"\x04seed\x18\x15 \x01(\v2\x19.stagd.api.v1.PreviewSeedR\x04seed\x12/\n" +
 	"\x05seeds\x18\x16 \x03(\v2\x19.stagd.api.v1.PreviewSeedR\x05seeds\x126\n" +
-	"\afailure\x18\x17 \x01(\v2\x1c.stagd.api.v1.PreviewFailureR\afailure\"\xf1\x02\n" +
+	"\afailure\x18\x17 \x01(\v2\x1c.stagd.api.v1.PreviewFailureR\afailure\"\x98\x03\n" +
 	"\x0ePreviewFailure\x12\x14\n" +
 	"\x05stage\x18\x01 \x01(\tR\x05stage\x12\x18\n" +
 	"\aservice\x18\x02 \x01(\tR\aservice\x12\x14\n" +
@@ -5525,7 +5535,9 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\vcreate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12\x1d\n" +
 	"\n" +
-	"model_name\x18\t \x01(\tR\tmodelName\"D\n" +
+	"model_name\x18\t \x01(\tR\tmodelName\x12%\n" +
+	"\x0emodel_provider\x18\n" +
+	" \x01(\tR\rmodelProvider\"D\n" +
 	"\x16PreviewFailureEvidence\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\"o\n" +
