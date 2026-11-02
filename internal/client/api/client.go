@@ -30,6 +30,7 @@ type Clients struct {
 	Activity apiv1connect.ActivityServiceClient
 
 	Integrations apiv1connect.IntegrationServiceClient
+	Seeds        apiv1connect.SeedServiceClient
 }
 
 // ErrNoToken means the command needs a signed-in user.
@@ -63,6 +64,7 @@ func New(cfg Config) (*Clients, error) {
 		Activity: apiv1connect.NewActivityServiceClient(httpClient, cfg.BaseURL, opts...),
 
 		Integrations: apiv1connect.NewIntegrationServiceClient(httpClient, cfg.BaseURL, opts...),
+		Seeds:        apiv1connect.NewSeedServiceClient(httpClient, cfg.BaseURL, opts...),
 	}, nil
 }
 

@@ -49,6 +49,7 @@ func New(version string) *cli.Command {
 			computeCommand(),
 			secretsCommand(),
 			integrationsCommand(),
+			seedsCommand(),
 			activityCommand(),
 			previewCommand(),
 			validateCommand(),
