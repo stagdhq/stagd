@@ -127,6 +127,7 @@ func TestPreviewCreateSaysWhyItFailed(t *testing.T) {
 			Cause:      "migrate couldn't reach its database: the address it connects to has nothing listening.",
 			Fix:        "In a preview the database is the compose service's name (`db:5432`, not `localhost:5432`).",
 			Confidence: apiv1.PreviewFailureConfidence_PREVIEW_FAILURE_CONFIDENCE_LIKELY,
+			ModelName:  "Claude Haiku 5.5",
 			Evidence: []*apiv1.PreviewFailureEvidence{
 				{Source: "migrate logs", Text: "PostgresError: Connection closed"},
 				{Source: "error", Text: `service "migrate" didn't complete successfully: exit 1`},
@@ -139,7 +140,7 @@ func TestPreviewCreateSaysWhyItFailed(t *testing.T) {
 		t.Fatal("expected an error")
 	}
 
-	for _, want := range []string{"Likely cause: migrate couldn't reach its database", "Fix: In a preview", "  migrate logs | PostgresError: Connection closed"} {
+	for _, want := range []string{"Likely cause: migrate couldn't reach its database", "Fix: In a preview", "Explained by Claude Haiku 5.5", "  migrate logs | PostgresError: Connection closed"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output misses %q:\n%s", want, out)
 		}

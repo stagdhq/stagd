@@ -454,6 +454,10 @@ func printFailure(w io.Writer, f *apiv1.PreviewFailure) {
 	fmt.Fprintf(w, "\n%s: %s\n", cause, f.GetCause())
 	fmt.Fprintf(w, "Fix: %s\n", f.GetFix())
 
+	if name := f.GetModelName(); name != "" {
+		fmt.Fprintf(w, "Explained by %s\n", name)
+	}
+
 	for _, e := range f.GetEvidence() {
 		if e.GetSource() == "error" {
 			continue

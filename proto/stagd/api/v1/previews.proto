@@ -302,9 +302,13 @@ message PreviewFailure {
   PreviewFailureConfidence confidence = 5;
   // The lines that show it, at most five.
   repeated PreviewFailureEvidence evidence = 6;
-  // What explained it: a rule's id, e.g. rule:seed-download.
+  // What explained it: a rule's id, e.g. rule:seed-download, or a model's,
+  // e.g. model:claude-haiku-5-5.
   string explained_by = 7;
   google.protobuf.Timestamp create_time = 8;
+  // The model that explained it, as people read it, e.g. Claude Haiku 5.5;
+  // empty when Stagd's rules did.
+  string model_name = 9;
 }
 
 enum PreviewFailureConfidence {

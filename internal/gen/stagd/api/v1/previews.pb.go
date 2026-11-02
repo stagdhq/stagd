@@ -1191,9 +1191,13 @@ type PreviewFailure struct {
 	Confidence PreviewFailureConfidence `protobuf:"varint,5,opt,name=confidence,proto3,enum=stagd.api.v1.PreviewFailureConfidence" json:"confidence,omitempty"`
 	// The lines that show it, at most five.
 	Evidence []*PreviewFailureEvidence `protobuf:"bytes,6,rep,name=evidence,proto3" json:"evidence,omitempty"`
-	// What explained it: a rule's id, e.g. rule:seed-download.
-	ExplainedBy   string                 `protobuf:"bytes,7,opt,name=explained_by,json=explainedBy,proto3" json:"explained_by,omitempty"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// What explained it: a rule's id, e.g. rule:seed-download, or a model's,
+	// e.g. model:claude-haiku-5-5.
+	ExplainedBy string                 `protobuf:"bytes,7,opt,name=explained_by,json=explainedBy,proto3" json:"explained_by,omitempty"`
+	CreateTime  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// The model that explained it, as people read it, e.g. Claude Haiku 5.5;
+	// empty when Stagd's rules did.
+	ModelName     string `protobuf:"bytes,9,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1282,6 +1286,13 @@ func (x *PreviewFailure) GetCreateTime() *timestamppb.Timestamp {
 		return x.CreateTime
 	}
 	return nil
+}
+
+func (x *PreviewFailure) GetModelName() string {
+	if x != nil {
+		return x.ModelName
+	}
+	return ""
 }
 
 // One line that shows why, and where it's from: "error", "<service> logs"
@@ -5500,7 +5511,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x0ethumbnail_time\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\rthumbnailTime\x12-\n" +
 	"\x04seed\x18\x15 \x01(\v2\x19.stagd.api.v1.PreviewSeedR\x04seed\x12/\n" +
 	"\x05seeds\x18\x16 \x03(\v2\x19.stagd.api.v1.PreviewSeedR\x05seeds\x126\n" +
-	"\afailure\x18\x17 \x01(\v2\x1c.stagd.api.v1.PreviewFailureR\afailure\"\xd2\x02\n" +
+	"\afailure\x18\x17 \x01(\v2\x1c.stagd.api.v1.PreviewFailureR\afailure\"\xf1\x02\n" +
 	"\x0ePreviewFailure\x12\x14\n" +
 	"\x05stage\x18\x01 \x01(\tR\x05stage\x12\x18\n" +
 	"\aservice\x18\x02 \x01(\tR\aservice\x12\x14\n" +
@@ -5512,7 +5523,9 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\bevidence\x18\x06 \x03(\v2$.stagd.api.v1.PreviewFailureEvidenceR\bevidence\x12!\n" +
 	"\fexplained_by\x18\a \x01(\tR\vexplainedBy\x12;\n" +
 	"\vcreate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\"D\n" +
+	"createTime\x12\x1d\n" +
+	"\n" +
+	"model_name\x18\t \x01(\tR\tmodelName\"D\n" +
 	"\x16PreviewFailureEvidence\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\"o\n" +
