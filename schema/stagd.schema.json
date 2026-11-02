@@ -233,6 +233,78 @@
         }
       ]
     },
+    "MariaDB": {
+      "additionalProperties": false,
+      "properties": {
+        "database": {
+          "description": "The database the app uses: preview when left out.",
+          "pattern": "^[a-z_][a-z0-9_]{0,62}$",
+          "type": "string"
+        },
+        "seed": {
+          "description": "What the database starts with: a seed's name, as on the org's Seeds page, or an https URL of a dump, which may use variables and secrets. Restored once, when the preview is made; redeploys keep the data. A mariadb-dump's (or mysqldump's) SQL, compressed with gzip, zstd or xz or not.",
+          "pattern": "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$",
+          "type": "string"
+        },
+        "version": {
+          "description": "The version: 11.4 or 11.8; 11.8 when left out.",
+          "enum": [
+            "11.4",
+            "11.8"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MongoDB": {
+      "additionalProperties": false,
+      "properties": {
+        "database": {
+          "description": "The database the app uses: preview when left out.",
+          "pattern": "^[a-z_][a-z0-9_]{0,62}$",
+          "type": "string"
+        },
+        "seed": {
+          "description": "What the database starts with: a seed's name, as on the org's Seeds page, or an https URL of a dump, which may use variables and secrets. Restored once, when the preview is made; redeploys keep the data. A mongodump archive (mongodump --archive), gzipped or not; its collections are restored into the database.",
+          "pattern": "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$",
+          "type": "string"
+        },
+        "version": {
+          "description": "The version: 7.0 or 8.0; 8.0 when left out.",
+          "enum": [
+            "7.0",
+            "8.0"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MySQL": {
+      "additionalProperties": false,
+      "properties": {
+        "database": {
+          "description": "The database the app uses: preview when left out.",
+          "pattern": "^[a-z_][a-z0-9_]{0,62}$",
+          "type": "string"
+        },
+        "seed": {
+          "description": "What the database starts with: a seed's name, as on the org's Seeds page, or an https URL of a dump, which may use variables and secrets. Restored once, when the preview is made; redeploys keep the data. A mysqldump's SQL, compressed with gzip, zstd or xz or not.",
+          "pattern": "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$",
+          "type": "string"
+        },
+        "version": {
+          "description": "The version: 8.4 or 9; 8.4 when left out.",
+          "enum": [
+            "8.4",
+            "9"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Neon": {
       "additionalProperties": false,
       "description": "A Neon branch per preview, forked from a parent branch. Which parents may be forked is the org's Neon integration's to say: a pull request that could name any parent could fork production into its preview.",
@@ -447,6 +519,18 @@
         "mail": {
           "$ref": "#/$defs/Mail",
           "description": "Captures the mail the app sends (Mailpit), for the dashboard and the preview's own inbox."
+        },
+        "mariadb": {
+          "$ref": "#/$defs/MariaDB",
+          "description": "A MariaDB database, as mysql is: MYSQL_URL and DATABASE_URL."
+        },
+        "mongodb": {
+          "$ref": "#/$defs/MongoDB",
+          "description": "A MongoDB database for the preview, started from a seed (a mongodump archive) when there is one. The app gets its URL in MONGODB_URI."
+        },
+        "mysql": {
+          "$ref": "#/$defs/MySQL",
+          "description": "A MySQL database for the preview, started from a seed (a mysqldump) when there is one. The app gets its URL in MYSQL_URL, and in DATABASE_URL unless another database has it."
         },
         "otel": {
           "$ref": "#/$defs/OTel",

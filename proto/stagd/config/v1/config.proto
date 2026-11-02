@@ -139,6 +139,18 @@ message Services {
   // A Postgres database for the preview, started from a seed when there is
   // one. The app gets its URL in DATABASE_URL.
   Postgres postgres = 3;
+
+  // A MySQL database for the preview, started from a seed (a mysqldump)
+  // when there is one. The app gets its URL in MYSQL_URL, and in
+  // DATABASE_URL unless another database has it.
+  MySQL mysql = 4;
+
+  // A MariaDB database, as mysql is: MYSQL_URL and DATABASE_URL.
+  MariaDB mariadb = 5;
+
+  // A MongoDB database for the preview, started from a seed (a mongodump
+  // archive) when there is one. The app gets its URL in MONGODB_URI.
+  MongoDB mongodb = 6;
 }
 
 message Mail {}
@@ -170,6 +182,92 @@ message Postgres {
   // reach; or an https URL, which may use variables and secrets, e.g.
   // https://example.com/seed.dump?${SEED_TOKEN}. Restored once, when the
   // preview is made; redeploys keep the data.
+  string seed = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$"
+  ];
+}
+
+message MySQL {
+  // The version: 8.4 or 9; 8.4 when left out.
+  string version = 1 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string = {
+      in: [
+        "8.4",
+        "9"
+      ]
+    }
+  ];
+
+  // The database the app uses: preview when left out.
+  string database = 2 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[a-z_][a-z0-9_]{0,62}$"
+  ];
+
+  // What the database starts with: a seed's name, as on the org's Seeds
+  // page, or an https URL of a dump, which may use variables and secrets.
+  // Restored once, when the preview is made; redeploys keep the data.
+  // A mysqldump's SQL, compressed with gzip, zstd or xz or not.
+  string seed = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$"
+  ];
+}
+
+message MariaDB {
+  // The version: 11.4 or 11.8; 11.8 when left out.
+  string version = 1 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string = {
+      in: [
+        "11.4",
+        "11.8"
+      ]
+    }
+  ];
+
+  // The database the app uses: preview when left out.
+  string database = 2 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[a-z_][a-z0-9_]{0,62}$"
+  ];
+
+  // What the database starts with: a seed's name, as on the org's Seeds
+  // page, or an https URL of a dump, which may use variables and secrets.
+  // Restored once, when the preview is made; redeploys keep the data.
+  // A mariadb-dump's (or mysqldump's) SQL, compressed with gzip, zstd or
+  // xz or not.
+  string seed = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$"
+  ];
+}
+
+message MongoDB {
+  // The version: 7.0 or 8.0; 8.0 when left out.
+  string version = 1 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string = {
+      in: [
+        "7.0",
+        "8.0"
+      ]
+    }
+  ];
+
+  // The database the app uses: preview when left out.
+  string database = 2 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.pattern = "^[a-z_][a-z0-9_]{0,62}$"
+  ];
+
+  // What the database starts with: a seed's name, as on the org's Seeds
+  // page, or an https URL of a dump, which may use variables and secrets.
+  // Restored once, when the preview is made; redeploys keep the data.
+  // A mongodump archive (mongodump --archive), gzipped or not; its
+  // collections are restored into the database.
   string seed = 3 [
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.pattern = "^(https://.*|[a-z0-9]([a-z0-9-]*[a-z0-9])?)$"

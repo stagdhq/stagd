@@ -1,0 +1,8 @@
+# Databases besides Postgres: mysql, mariadb and mongodb. Versions are
+# strings, as the editor schema has them (Stagd also reads version: 11.4).
+version: 1
+
+services:
+  mysql: { version: "9", seed: shop }
+  mariadb: { version: "11.4", database: legacy }
+  mongodb: { version: "8.0", seed: "https://seeds.example.com/catalog.archive.gz" }
