@@ -337,6 +337,13 @@ func follow(ctx context.Context, cmd *cli.Command, c *api.Clients, id string) er
 
 		return nil
 	case apiv1.PreviewStatus_PREVIEW_STATUS_FAILED:
+		// The watch doesn't carry why; the preview itself does.
+		if !cmd.Bool("json") {
+			if res, err := c.Previews.GetPreview(ctx, connect.NewRequest(&apiv1.GetPreviewRequest{Id: id})); err == nil {
+				printFailure(w, res.Msg.GetPreview().GetFailure())
+			}
+		}
+
 		return fmt.Errorf("the preview failed: %s", last.GetError())
 	case apiv1.PreviewStatus_PREVIEW_STATUS_SLEEPING, apiv1.PreviewStatus_PREVIEW_STATUS_DESTROYED:
 		return nil
@@ -406,6 +413,7 @@ func previewGet(ctx context.Context, cmd *cli.Command) error {
 
 	if e := p.GetError(); e != "" {
 		fmt.Fprintf(w, "error:   %s\n", e)
+		printFailure(w, p.GetFailure())
 	}
 
 	fmt.Fprintf(w, "expires: %s\n", p.GetExpireTime().AsTime().Local().Format("2006-01-02 15:04"))
@@ -429,6 +437,32 @@ func previewGet(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	return nil
+}
+
+// printFailure says why a preview failed, as far as Stagd could tell: the
+// cause, the fix and the lines that show it. Nothing when it couldn't.
+func printFailure(w io.Writer, f *apiv1.PreviewFailure) {
+	if f.GetCause() == "" {
+		return
+	}
+
+	cause := "Cause"
+	if f.GetConfidence() != apiv1.PreviewFailureConfidence_PREVIEW_FAILURE_CONFIDENCE_HIGH {
+		cause = "Likely cause"
+	}
+
+	fmt.Fprintf(w, "\n%s: %s\n", cause, f.GetCause())
+	fmt.Fprintf(w, "Fix: %s\n", f.GetFix())
+
+	for _, e := range f.GetEvidence() {
+		if e.GetSource() == "error" {
+			continue
+		}
+
+		fmt.Fprintf(w, "  %s | %s\n", e.GetSource(), e.GetText())
+	}
+
+	fmt.Fprintln(w)
 }
 
 // printIngresses lists a preview's URLs, the primary one first and marked.

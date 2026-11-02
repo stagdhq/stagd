@@ -19,6 +19,7 @@ type fakePreviews struct {
 	created *apiv1.CreatePreviewRequest
 	steps   []apiv1.PreviewStatus
 	failure string
+	why     *apiv1.PreviewFailure
 }
 
 func (f *fakePreviews) preview(s apiv1.PreviewStatus) *apiv1.Preview {
@@ -40,6 +41,17 @@ func (f *fakePreviews) preview(s apiv1.PreviewStatus) *apiv1.Preview {
 	}
 
 	return p
+}
+
+// GetPreview answers the last step, with why when it failed.
+func (f *fakePreviews) GetPreview(_ context.Context, _ *connect.Request[apiv1.GetPreviewRequest]) (*connect.Response[apiv1.GetPreviewResponse], error) {
+	p := f.preview(f.steps[len(f.steps)-1])
+
+	if p.GetStatus() == apiv1.PreviewStatus_PREVIEW_STATUS_FAILED {
+		p.Failure = f.why
+	}
+
+	return connect.NewResponse(&apiv1.GetPreviewResponse{Preview: p}), nil
 }
 
 func (f *fakePreviews) CreatePreview(_ context.Context, req *connect.Request[apiv1.CreatePreviewRequest]) (*connect.Response[apiv1.CreatePreviewResponse], error) {
@@ -102,6 +114,39 @@ func TestPreviewCreateFailsWhenThePreviewFails(t *testing.T) {
 	_, err := run(t, srv, "--token", "tok-1", "preview", "create", "--repo", "acme-inc/web", "--branch", "main")
 	if err == nil || !strings.Contains(err.Error(), "out of capacity") {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestPreviewCreateSaysWhyItFailed(t *testing.T) {
+	srv := previewServer(t, &fakePreviews{
+		steps:   []apiv1.PreviewStatus{apiv1.PreviewStatus_PREVIEW_STATUS_DEPLOYING, apiv1.PreviewStatus_PREVIEW_STATUS_FAILED},
+		failure: `Starting the containers failed: service "migrate" didn't complete successfully: exit 1`,
+		why: &apiv1.PreviewFailure{
+			Stage:      "start",
+			Service:    "migrate",
+			Cause:      "migrate couldn't reach its database: the address it connects to has nothing listening.",
+			Fix:        "In a preview the database is the compose service's name (`db:5432`, not `localhost:5432`).",
+			Confidence: apiv1.PreviewFailureConfidence_PREVIEW_FAILURE_CONFIDENCE_LIKELY,
+			Evidence: []*apiv1.PreviewFailureEvidence{
+				{Source: "migrate logs", Text: "PostgresError: Connection closed"},
+				{Source: "error", Text: `service "migrate" didn't complete successfully: exit 1`},
+			},
+		},
+	})
+
+	out, err := run(t, srv, "--token", "tok-1", "preview", "create", "--repo", "acme-inc/web", "--branch", "main")
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+
+	for _, want := range []string{"Likely cause: migrate couldn't reach its database", "Fix: In a preview", "  migrate logs | PostgresError: Connection closed"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output misses %q:\n%s", want, out)
+		}
+	}
+
+	if strings.Contains(out, "error |") {
+		t.Errorf("the error is printed twice:\n%s", out)
 	}
 }
 
