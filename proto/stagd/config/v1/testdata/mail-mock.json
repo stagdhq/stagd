@@ -1,0 +1,25 @@
+{
+  "config": {
+    "version": 1,
+    "app": {},
+    "services": {
+      "mail": {
+        "mock": [
+          "resend",
+          "smtp"
+        ]
+      },
+      "sms": {
+        "mock": [
+          "sns"
+        ]
+      }
+    },
+    "previews": {
+      "when": "on-demand"
+    },
+    "commands": {
+      "handled": "delete"
+    }
+  }
+}

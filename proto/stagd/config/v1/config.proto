@@ -157,9 +157,40 @@ message Services {
   Sms sms = 7;
 }
 
-message Sms {}
+// Catches text messages: Amazon SNS, pointed at Stagd's mock.
+message Sms {
+  // Which vendors' APIs the app's services are pointed at, by the variables
+  // their SDKs read: sns (AWS_ENDPOINT_URL_SNS). Left out, every one.
+  repeated string mock = 1 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      string: {
+        in: ["sns"]
+      }
+    }
+  }];
+}
 
-message Mail {}
+// Captures mail in Mailpit, the preview's inbox.
+message Mail {
+  // How the app's services send it, each pointed at Stagd by the variables
+  // it reads: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST, EMAIL_HOST),
+  // resend (RESEND_BASE_URL, RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES,
+  // AWS_ENDPOINT_URL_SESV2). Left out, every one. Listing only what the app
+  // uses keeps the rest as they are, e.g. a real SES elsewhere.
+  repeated string mock = 1 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      string: {
+        in: [
+          "smtp",
+          "resend",
+          "ses"
+        ]
+      }
+    }
+  }];
+}
 
 message Postgres {
   // The major version: 16, 17, 18 (the default) or 19. A seed made with a newer

@@ -222,7 +222,21 @@
       "anyOf": [
         {
           "additionalProperties": false,
-          "properties": {},
+          "description": "Captures mail in Mailpit, the preview's inbox.",
+          "properties": {
+            "mock": {
+              "description": "How the app's services send it, each pointed at Stagd by the variables it reads: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST, EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Left out, every one. Listing only what the app uses keeps the rest as they are, e.g. a real SES elsewhere.",
+              "items": {
+                "enum": [
+                  "smtp",
+                  "resend",
+                  "ses"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
           "type": "object"
         },
         {
@@ -557,7 +571,19 @@
     },
     "Sms": {
       "additionalProperties": false,
-      "properties": {},
+      "description": "Catches text messages: Amazon SNS, pointed at Stagd's mock.",
+      "properties": {
+        "mock": {
+          "description": "Which vendors' APIs the app's services are pointed at, by the variables their SDKs read: sns (AWS_ENDPOINT_URL_SNS). Left out, every one.",
+          "items": {
+            "enum": [
+              "sns"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
       "type": "object"
     },
     "Wait": {

@@ -1,0 +1,7 @@
+# services.mail.mock and services.sms.mock: only the vendors the app uses are
+# pointed at Stagd. A name listed twice counts once.
+version: 1
+
+services:
+  mail: { mock: [resend, smtp, resend] }
+  sms: { mock: [sns] }
