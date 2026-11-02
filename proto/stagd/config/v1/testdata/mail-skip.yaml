@@ -1,4 +1,5 @@
-# services.mail.skip: every way of sending mail is caught except those named.
+# services.mail.skip, which catch replaced: every way of sending mail is caught
+# except those named, read as catch.
 # A name listed twice counts once.
 version: 1
 

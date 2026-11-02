@@ -1,0 +1,6 @@
+{
+  "problems": [
+    "services.mail.catch: Stagd doesn't catch \"postmark\"; it catches smtp, resend and ses",
+    "services.mail: catch and skip both say what's caught: use catch alone"
+  ]
+}

@@ -238,10 +238,23 @@
       "anyOf": [
         {
           "additionalProperties": false,
-          "description": "Captures mail in Mailpit, the preview's inbox, every way Stagd catches pointed at it: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST, EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Ways added later are caught too.",
+          "description": "Captures mail in Mailpit, the preview's inbox. Every way Stagd catches is pointed at it unless catch names some: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST, EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Without catch, ways added later are caught too, so a preview never sends real mail by surprise; with it, only those named.",
           "properties": {
+            "catch": {
+              "description": "Only these ways are pointed at the inbox, e.g. [smtp] for Mailpit alone: stagd-mock runs only for resend or ses. The rest reach the real vendor.",
+              "items": {
+                "enum": [
+                  "smtp",
+                  "resend",
+                  "ses"
+                ],
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
             "skip": {
-              "description": "Ways the app's services aren't pointed at Stagd: they reach the real vendor, e.g. ses for an app whose own SES calls the mock doesn't answer. Not every one: then nothing is caught.",
+              "description": "Deprecated: the ways left alone, the rest caught. Read as catch with those taken out; use catch.",
               "items": {
                 "enum": [
                   "smtp",

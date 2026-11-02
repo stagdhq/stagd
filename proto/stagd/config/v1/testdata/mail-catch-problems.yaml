@@ -1,0 +1,6 @@
+# What services.mail.catch refuses: a name Stagd doesn't catch, and catch and
+# skip together.
+version: 1
+
+services:
+  mail: { catch: [smtp, postmark], skip: [ses] }

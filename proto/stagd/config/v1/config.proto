@@ -203,32 +203,54 @@ message Sms {
   reserved "mock";
 }
 
-// Captures mail in Mailpit, the preview's inbox, every way Stagd catches
-// pointed at it: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST,
-// EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses
-// (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Ways added later are
-// caught too.
+// Captures mail in Mailpit, the preview's inbox. Every way Stagd catches is
+// pointed at it unless catch names some: smtp (SMTP_HOST, SMTP_PORT,
+// SMTP_URL, MAIL_HOST, EMAIL_HOST), resend (RESEND_BASE_URL,
+// RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2).
+// Without catch, ways added later are caught too, so a preview never sends
+// real mail by surprise; with it, only those named.
 message Mail {
-  // mock, which listed what was caught, briefly: skip names the exceptions.
+  // mock, which listed what was caught, briefly: catch does now.
   reserved 1;
   reserved "mock";
 
-  // Ways the app's services aren't pointed at Stagd: they reach the real
-  // vendor, e.g. ses for an app whose own SES calls the mock doesn't answer.
-  // Not every one: then nothing is caught.
-  repeated string skip = 2 [(buf.validate.field).repeated = {
-    unique: true
-    max_items: 2
-    items: {
-      string: {
-        in: [
-          "smtp",
-          "resend",
-          "ses"
-        ]
+  // Deprecated: the ways left alone, the rest caught. Read as catch with
+  // those taken out; use catch.
+  repeated string skip = 2 [
+    deprecated = true,
+    (buf.validate.field).repeated = {
+      unique: true
+      max_items: 2
+      items: {
+        string: {
+          in: [
+            "smtp",
+            "resend",
+            "ses"
+          ]
+        }
       }
     }
-  }];
+  ];
+
+  // Only these ways are pointed at the inbox, e.g. [smtp] for Mailpit alone:
+  // stagd-mock runs only for resend or ses. The rest reach the real vendor.
+  repeated string catch = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).repeated = {
+      min_items: 1
+      unique: true
+      items: {
+        string: {
+          in: [
+            "smtp",
+            "resend",
+            "ses"
+          ]
+        }
+      }
+    }
+  ];
 }
 
 message Postgres {

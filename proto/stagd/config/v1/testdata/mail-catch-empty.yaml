@@ -1,0 +1,5 @@
+# services.mail.catch naming nothing would catch nothing.
+version: 1
+
+services:
+  mail: { catch: [] }

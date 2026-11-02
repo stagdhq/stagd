@@ -707,17 +707,22 @@ func (*Sms) Descriptor() ([]byte, []int) {
 	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{7}
 }
 
-// Captures mail in Mailpit, the preview's inbox, every way Stagd catches
-// pointed at it: smtp (SMTP_HOST, SMTP_PORT, SMTP_URL, MAIL_HOST,
-// EMAIL_HOST), resend (RESEND_BASE_URL, RESEND_API_URL) and ses
-// (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2). Ways added later are
-// caught too.
+// Captures mail in Mailpit, the preview's inbox. Every way Stagd catches is
+// pointed at it unless catch names some: smtp (SMTP_HOST, SMTP_PORT,
+// SMTP_URL, MAIL_HOST, EMAIL_HOST), resend (RESEND_BASE_URL,
+// RESEND_API_URL) and ses (AWS_ENDPOINT_URL_SES, AWS_ENDPOINT_URL_SESV2).
+// Without catch, ways added later are caught too, so a preview never sends
+// real mail by surprise; with it, only those named.
 type Mail struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Ways the app's services aren't pointed at Stagd: they reach the real
-	// vendor, e.g. ses for an app whose own SES calls the mock doesn't answer.
-	// Not every one: then nothing is caught.
-	Skip          []string `protobuf:"bytes,2,rep,name=skip,proto3" json:"skip,omitempty"`
+	// Deprecated: the ways left alone, the rest caught. Read as catch with
+	// those taken out; use catch.
+	//
+	// Deprecated: Marked as deprecated in stagd/config/v1/config.proto.
+	Skip []string `protobuf:"bytes,2,rep,name=skip,proto3" json:"skip,omitempty"`
+	// Only these ways are pointed at the inbox, e.g. [smtp] for Mailpit alone:
+	// stagd-mock runs only for resend or ses. The rest reach the real vendor.
+	Catch         []string `protobuf:"bytes,3,rep,name=catch,proto3" json:"catch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -752,9 +757,17 @@ func (*Mail) Descriptor() ([]byte, []int) {
 	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{8}
 }
 
+// Deprecated: Marked as deprecated in stagd/config/v1/config.proto.
 func (x *Mail) GetSkip() []string {
 	if x != nil {
 		return x.Skip
+	}
+	return nil
+}
+
+func (x *Mail) GetCatch() []string {
+	if x != nil {
+		return x.Catch
 	}
 	return nil
 }
@@ -1686,9 +1699,10 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\x04from\x18\x01 \x03(\tB/\xbaH,\x92\x01)\b\x01\x18\x01\"#r!2\x1f^[a-z0-9]([a-z0-9-]*[a-z0-9])?$R\x04from\"I\n" +
 	"\x02S3\x12C\n" +
 	"\x04from\x18\x01 \x03(\tB/\xbaH,\x92\x01)\b\x01\x18\x01\"#r!2\x1f^[a-z0-9]([a-z0-9-]*[a-z0-9])?$R\x04from\"\x11\n" +
-	"\x03SmsJ\x04\b\x01\x10\x02R\x04mock\"I\n" +
-	"\x04Mail\x125\n" +
-	"\x04skip\x18\x02 \x03(\tB!\xbaH\x1e\x92\x01\x1b\x10\x02\x18\x01\"\x15r\x13R\x04smtpR\x06resendR\x03sesR\x04skipJ\x04\b\x01\x10\x02R\x04mock\"\x91\x02\n" +
+	"\x03SmsJ\x04\b\x01\x10\x02R\x04mock\"\x87\x01\n" +
+	"\x04Mail\x127\n" +
+	"\x04skip\x18\x02 \x03(\tB#\xbaH\x1e\x92\x01\x1b\x10\x02\x18\x01\"\x15r\x13R\x04smtpR\x06resendR\x03ses\x18\x01R\x04skip\x12:\n" +
+	"\x05catch\x18\x03 \x03(\tB$\xbaH!\xd8\x01\x01\x92\x01\x1b\b\x01\x18\x01\"\x15r\x13R\x04smtpR\x06resendR\x03sesR\x05catchJ\x04\b\x01\x10\x02R\x04mock\"\x91\x02\n" +
 	"\bPostgres\x122\n" +
 	"\aversion\x18\x01 \x01(\tB\x18\xbaH\x15\xd8\x01\x01r\x10R\x0216R\x0217R\x0218R\x0219R\aversion\x12=\n" +
 	"\bdatabase\x18\x02 \x01(\tB!\xbaH\x1e\xd8\x01\x01r\x192\x17^[a-z_][a-z0-9_]{0,62}$R\bdatabase\x12J\n" +

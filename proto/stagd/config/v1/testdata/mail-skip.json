@@ -4,8 +4,9 @@
     "app": {},
     "services": {
       "mail": {
-        "skip": [
-          "ses"
+        "catch": [
+          "smtp",
+          "resend"
         ]
       },
       "sms": {}

@@ -1,0 +1,6 @@
+# services.mail.catch: only the ways named are caught, Mailpit alone for
+# smtp. A name listed twice counts once.
+version: 1
+
+services:
+  mail: { catch: [smtp, smtp] }

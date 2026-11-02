@@ -1,0 +1,19 @@
+{
+  "config": {
+    "version": 1,
+    "app": {},
+    "services": {
+      "mail": {
+        "catch": [
+          "smtp"
+        ]
+      }
+    },
+    "previews": {
+      "when": "on-demand"
+    },
+    "commands": {
+      "handled": "delete"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "problems": [
+    "services.mail.catch names nothing, so nothing would be caught: name a way, e.g. catch: [smtp], or turn mail off with mail: false"
+  ]
+}
