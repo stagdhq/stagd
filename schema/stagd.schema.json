@@ -539,8 +539,17 @@
         "postgres": {
           "$ref": "#/$defs/Postgres",
           "description": "A Postgres database for the preview, started from a seed when there is one. The app gets its URL in DATABASE_URL."
+        },
+        "sms": {
+          "$ref": "#/$defs/Sms",
+          "description": "Catches the text messages (SMS) the app sends through Amazon SNS, for the dashboard's Messages tab: SNS is pointed at Stagd's mock in previews."
         }
       },
+      "type": "object"
+    },
+    "Sms": {
+      "additionalProperties": false,
+      "properties": {},
       "type": "object"
     },
     "Wait": {

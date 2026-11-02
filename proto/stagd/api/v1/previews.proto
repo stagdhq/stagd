@@ -59,6 +59,10 @@ service PreviewService {
   rpc ClearMail(ClearMailRequest) returns (ClearMailResponse);
   // DeleteMail deletes one message a preview captured.
   rpc DeleteMail(DeleteMailRequest) returns (DeleteMailResponse);
+  // ListTexts lists the text messages (SMS) a preview's app sent, newest
+  // first, caught by Stagd's mock of the vendors' APIs. Only for previews
+  // with text capture on (stagd.yaml `services: { sms: {} }`) and running.
+  rpc ListTexts(ListTextsRequest) returns (ListTextsResponse);
 
   // GetServiceUsage returns CPU and memory per service of a preview over a
   // window up to 24 hours. Stagd samples them every 30 seconds while a
@@ -434,6 +438,31 @@ message ListPreviewEventsResponse {
   repeated PreviewEvent events = 1;
   // Set when there are older events; empty on the last page and without a page size.
   string next_page_token = 2;
+}
+
+message ListTextsRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  // At most this many, newest first; 0 means 50.
+  int32 limit = 2 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 500
+  }];
+}
+
+// A text message the app sent, as the vendor's API was asked to send it.
+message TextMessage {
+  string id = 1;
+  // The API it went through, e.g. "sns".
+  string vendor = 2;
+  // A phone number, e.g. +4791234567.
+  string to = 3;
+  string from = 4;
+  string body = 5;
+  google.protobuf.Timestamp send_time = 6;
+}
+
+message ListTextsResponse {
+  repeated TextMessage texts = 1;
 }
 
 message ListMailRequest {

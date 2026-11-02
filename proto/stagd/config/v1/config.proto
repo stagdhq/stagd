@@ -151,7 +151,13 @@ message Services {
   // A MongoDB database for the preview, started from a seed (a mongodump
   // archive) when there is one. The app gets its URL in MONGODB_URI.
   MongoDB mongodb = 6;
+
+  // Catches the text messages (SMS) the app sends through Amazon SNS, for the
+  // dashboard's Messages tab: SNS is pointed at Stagd's mock in previews.
+  Sms sms = 7;
 }
+
+message Sms {}
 
 message Mail {}
 

@@ -464,7 +464,10 @@ type Services struct {
 	Mariadb *MariaDB `protobuf:"bytes,5,opt,name=mariadb,proto3" json:"mariadb,omitempty"`
 	// A MongoDB database for the preview, started from a seed (a mongodump
 	// archive) when there is one. The app gets its URL in MONGODB_URI.
-	Mongodb       *MongoDB `protobuf:"bytes,6,opt,name=mongodb,proto3" json:"mongodb,omitempty"`
+	Mongodb *MongoDB `protobuf:"bytes,6,opt,name=mongodb,proto3" json:"mongodb,omitempty"`
+	// Catches the text messages (SMS) the app sends through Amazon SNS, for the
+	// dashboard's Messages tab: SNS is pointed at Stagd's mock in previews.
+	Sms           *Sms `protobuf:"bytes,7,opt,name=sms,proto3" json:"sms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -541,6 +544,49 @@ func (x *Services) GetMongodb() *MongoDB {
 	return nil
 }
 
+func (x *Services) GetSms() *Sms {
+	if x != nil {
+		return x.Sms
+	}
+	return nil
+}
+
+type Sms struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Sms) Reset() {
+	*x = Sms{}
+	mi := &file_stagd_config_v1_config_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Sms) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Sms) ProtoMessage() {}
+
+func (x *Sms) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_config_v1_config_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Sms.ProtoReflect.Descriptor instead.
+func (*Sms) Descriptor() ([]byte, []int) {
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{5}
+}
+
 type Mail struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -549,7 +595,7 @@ type Mail struct {
 
 func (x *Mail) Reset() {
 	*x = Mail{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[5]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +607,7 @@ func (x *Mail) String() string {
 func (*Mail) ProtoMessage() {}
 
 func (x *Mail) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[5]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +620,7 @@ func (x *Mail) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Mail.ProtoReflect.Descriptor instead.
 func (*Mail) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{5}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{6}
 }
 
 type Postgres struct {
@@ -597,7 +643,7 @@ type Postgres struct {
 
 func (x *Postgres) Reset() {
 	*x = Postgres{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[6]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -609,7 +655,7 @@ func (x *Postgres) String() string {
 func (*Postgres) ProtoMessage() {}
 
 func (x *Postgres) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[6]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -622,7 +668,7 @@ func (x *Postgres) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Postgres.ProtoReflect.Descriptor instead.
 func (*Postgres) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{6}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Postgres) GetVersion() string {
@@ -663,7 +709,7 @@ type MySQL struct {
 
 func (x *MySQL) Reset() {
 	*x = MySQL{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[7]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -675,7 +721,7 @@ func (x *MySQL) String() string {
 func (*MySQL) ProtoMessage() {}
 
 func (x *MySQL) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[7]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -688,7 +734,7 @@ func (x *MySQL) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MySQL.ProtoReflect.Descriptor instead.
 func (*MySQL) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{7}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *MySQL) GetVersion() string {
@@ -730,7 +776,7 @@ type MariaDB struct {
 
 func (x *MariaDB) Reset() {
 	*x = MariaDB{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[8]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -742,7 +788,7 @@ func (x *MariaDB) String() string {
 func (*MariaDB) ProtoMessage() {}
 
 func (x *MariaDB) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[8]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -755,7 +801,7 @@ func (x *MariaDB) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MariaDB.ProtoReflect.Descriptor instead.
 func (*MariaDB) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{8}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *MariaDB) GetVersion() string {
@@ -797,7 +843,7 @@ type MongoDB struct {
 
 func (x *MongoDB) Reset() {
 	*x = MongoDB{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[9]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -809,7 +855,7 @@ func (x *MongoDB) String() string {
 func (*MongoDB) ProtoMessage() {}
 
 func (x *MongoDB) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[9]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -822,7 +868,7 @@ func (x *MongoDB) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MongoDB.ProtoReflect.Descriptor instead.
 func (*MongoDB) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{9}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *MongoDB) GetVersion() string {
@@ -859,7 +905,7 @@ type OTel struct {
 
 func (x *OTel) Reset() {
 	*x = OTel{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[10]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -871,7 +917,7 @@ func (x *OTel) String() string {
 func (*OTel) ProtoMessage() {}
 
 func (x *OTel) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[10]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -884,7 +930,7 @@ func (x *OTel) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OTel.ProtoReflect.Descriptor instead.
 func (*OTel) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{10}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *OTel) GetExport() *OTelExport {
@@ -915,7 +961,7 @@ type OTelExport struct {
 
 func (x *OTelExport) Reset() {
 	*x = OTelExport{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[11]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -927,7 +973,7 @@ func (x *OTelExport) String() string {
 func (*OTelExport) ProtoMessage() {}
 
 func (x *OTelExport) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[11]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -940,7 +986,7 @@ func (x *OTelExport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OTelExport.ProtoReflect.Descriptor instead.
 func (*OTelExport) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{11}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *OTelExport) GetEndpoint() string {
@@ -975,7 +1021,7 @@ type Database struct {
 
 func (x *Database) Reset() {
 	*x = Database{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[12]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -987,7 +1033,7 @@ func (x *Database) String() string {
 func (*Database) ProtoMessage() {}
 
 func (x *Database) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[12]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1000,7 +1046,7 @@ func (x *Database) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Database.ProtoReflect.Descriptor instead.
 func (*Database) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{12}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Database) GetNeon() *Neon {
@@ -1037,7 +1083,7 @@ type Neon struct {
 
 func (x *Neon) Reset() {
 	*x = Neon{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[13]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1049,7 +1095,7 @@ func (x *Neon) String() string {
 func (*Neon) ProtoMessage() {}
 
 func (x *Neon) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[13]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1062,7 +1108,7 @@ func (x *Neon) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Neon.ProtoReflect.Descriptor instead.
 func (*Neon) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{13}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Neon) GetIntegration() string {
@@ -1135,7 +1181,7 @@ type Previews struct {
 
 func (x *Previews) Reset() {
 	*x = Previews{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[14]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1147,7 +1193,7 @@ func (x *Previews) String() string {
 func (*Previews) ProtoMessage() {}
 
 func (x *Previews) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[14]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1160,7 +1206,7 @@ func (x *Previews) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Previews.ProtoReflect.Descriptor instead.
 func (*Previews) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{14}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Previews) GetPreviews() isPreviews_Previews {
@@ -1218,7 +1264,7 @@ type Commands struct {
 
 func (x *Commands) Reset() {
 	*x = Commands{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[15]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1230,7 +1276,7 @@ func (x *Commands) String() string {
 func (*Commands) ProtoMessage() {}
 
 func (x *Commands) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[15]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1243,7 +1289,7 @@ func (x *Commands) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Commands.ProtoReflect.Descriptor instead.
 func (*Commands) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{15}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Commands) GetHandled() string {
@@ -1267,7 +1313,7 @@ type Wait struct {
 
 func (x *Wait) Reset() {
 	*x = Wait{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[16]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1279,7 +1325,7 @@ func (x *Wait) String() string {
 func (*Wait) ProtoMessage() {}
 
 func (x *Wait) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[16]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1292,7 +1338,7 @@ func (x *Wait) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Wait.ProtoReflect.Descriptor instead.
 func (*Wait) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{16}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Wait) GetChecks() []string {
@@ -1322,7 +1368,7 @@ type Registry struct {
 
 func (x *Registry) Reset() {
 	*x = Registry{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[17]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1334,7 +1380,7 @@ func (x *Registry) String() string {
 func (*Registry) ProtoMessage() {}
 
 func (x *Registry) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[17]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1347,7 +1393,7 @@ func (x *Registry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Registry.ProtoReflect.Descriptor instead.
 func (*Registry) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{17}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *Registry) GetUsername() string {
@@ -1377,7 +1423,7 @@ type Lifecycle struct {
 
 func (x *Lifecycle) Reset() {
 	*x = Lifecycle{}
-	mi := &file_stagd_config_v1_config_proto_msgTypes[18]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1389,7 +1435,7 @@ func (x *Lifecycle) String() string {
 func (*Lifecycle) ProtoMessage() {}
 
 func (x *Lifecycle) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_config_v1_config_proto_msgTypes[18]
+	mi := &file_stagd_config_v1_config_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1402,7 +1448,7 @@ func (x *Lifecycle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Lifecycle.ProtoReflect.Descriptor instead.
 func (*Lifecycle) Descriptor() ([]byte, []int) {
-	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{18}
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Lifecycle) GetSleepAfter() *durationpb.Duration {
@@ -1473,14 +1519,16 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\tArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x0f\n" +
-	"\x06source\x12\x05\xbaH\x02\b\x01\"\xad\x02\n" +
+	"\x06source\x12\x05\xbaH\x02\b\x01\"\xd5\x02\n" +
 	"\bServices\x12)\n" +
 	"\x04mail\x18\x01 \x01(\v2\x15.stagd.config.v1.MailR\x04mail\x12)\n" +
 	"\x04otel\x18\x02 \x01(\v2\x15.stagd.config.v1.OTelR\x04otel\x125\n" +
 	"\bpostgres\x18\x03 \x01(\v2\x19.stagd.config.v1.PostgresR\bpostgres\x12,\n" +
 	"\x05mysql\x18\x04 \x01(\v2\x16.stagd.config.v1.MySQLR\x05mysql\x122\n" +
 	"\amariadb\x18\x05 \x01(\v2\x18.stagd.config.v1.MariaDBR\amariadb\x122\n" +
-	"\amongodb\x18\x06 \x01(\v2\x18.stagd.config.v1.MongoDBR\amongodb\"\x06\n" +
+	"\amongodb\x18\x06 \x01(\v2\x18.stagd.config.v1.MongoDBR\amongodb\x12&\n" +
+	"\x03sms\x18\a \x01(\v2\x14.stagd.config.v1.SmsR\x03sms\"\x05\n" +
+	"\x03Sms\"\x06\n" +
 	"\x04Mail\"\xc9\x01\n" +
 	"\bPostgres\x122\n" +
 	"\aversion\x18\x01 \x01(\tB\x18\xbaH\x15\xd8\x01\x01r\x10R\x0216R\x0217R\x0218R\x0219R\aversion\x12=\n" +
@@ -1561,73 +1609,75 @@ func file_stagd_config_v1_config_proto_rawDescGZIP() []byte {
 	return file_stagd_config_v1_config_proto_rawDescData
 }
 
-var file_stagd_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_stagd_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_stagd_config_v1_config_proto_goTypes = []any{
 	(*Config)(nil),              // 0: stagd.config.v1.Config
 	(*App)(nil),                 // 1: stagd.config.v1.App
 	(*Ingress)(nil),             // 2: stagd.config.v1.Ingress
 	(*Build)(nil),               // 3: stagd.config.v1.Build
 	(*Services)(nil),            // 4: stagd.config.v1.Services
-	(*Mail)(nil),                // 5: stagd.config.v1.Mail
-	(*Postgres)(nil),            // 6: stagd.config.v1.Postgres
-	(*MySQL)(nil),               // 7: stagd.config.v1.MySQL
-	(*MariaDB)(nil),             // 8: stagd.config.v1.MariaDB
-	(*MongoDB)(nil),             // 9: stagd.config.v1.MongoDB
-	(*OTel)(nil),                // 10: stagd.config.v1.OTel
-	(*OTelExport)(nil),          // 11: stagd.config.v1.OTelExport
-	(*Database)(nil),            // 12: stagd.config.v1.Database
-	(*Neon)(nil),                // 13: stagd.config.v1.Neon
-	(*Previews)(nil),            // 14: stagd.config.v1.Previews
-	(*Commands)(nil),            // 15: stagd.config.v1.Commands
-	(*Wait)(nil),                // 16: stagd.config.v1.Wait
-	(*Registry)(nil),            // 17: stagd.config.v1.Registry
-	(*Lifecycle)(nil),           // 18: stagd.config.v1.Lifecycle
-	nil,                         // 19: stagd.config.v1.Config.IngressEntry
-	nil,                         // 20: stagd.config.v1.Config.BuildEntry
-	nil,                         // 21: stagd.config.v1.Config.EnvEntry
-	nil,                         // 22: stagd.config.v1.Config.RegistriesEntry
-	nil,                         // 23: stagd.config.v1.Build.ArgsEntry
-	nil,                         // 24: stagd.config.v1.OTelExport.HeadersEntry
-	nil,                         // 25: stagd.config.v1.Neon.ParamsEntry
-	nil,                         // 26: stagd.config.v1.Neon.EnvEntry
-	(*durationpb.Duration)(nil), // 27: google.protobuf.Duration
+	(*Sms)(nil),                 // 5: stagd.config.v1.Sms
+	(*Mail)(nil),                // 6: stagd.config.v1.Mail
+	(*Postgres)(nil),            // 7: stagd.config.v1.Postgres
+	(*MySQL)(nil),               // 8: stagd.config.v1.MySQL
+	(*MariaDB)(nil),             // 9: stagd.config.v1.MariaDB
+	(*MongoDB)(nil),             // 10: stagd.config.v1.MongoDB
+	(*OTel)(nil),                // 11: stagd.config.v1.OTel
+	(*OTelExport)(nil),          // 12: stagd.config.v1.OTelExport
+	(*Database)(nil),            // 13: stagd.config.v1.Database
+	(*Neon)(nil),                // 14: stagd.config.v1.Neon
+	(*Previews)(nil),            // 15: stagd.config.v1.Previews
+	(*Commands)(nil),            // 16: stagd.config.v1.Commands
+	(*Wait)(nil),                // 17: stagd.config.v1.Wait
+	(*Registry)(nil),            // 18: stagd.config.v1.Registry
+	(*Lifecycle)(nil),           // 19: stagd.config.v1.Lifecycle
+	nil,                         // 20: stagd.config.v1.Config.IngressEntry
+	nil,                         // 21: stagd.config.v1.Config.BuildEntry
+	nil,                         // 22: stagd.config.v1.Config.EnvEntry
+	nil,                         // 23: stagd.config.v1.Config.RegistriesEntry
+	nil,                         // 24: stagd.config.v1.Build.ArgsEntry
+	nil,                         // 25: stagd.config.v1.OTelExport.HeadersEntry
+	nil,                         // 26: stagd.config.v1.Neon.ParamsEntry
+	nil,                         // 27: stagd.config.v1.Neon.EnvEntry
+	(*durationpb.Duration)(nil), // 28: google.protobuf.Duration
 }
 var file_stagd_config_v1_config_proto_depIdxs = []int32{
 	1,  // 0: stagd.config.v1.Config.app:type_name -> stagd.config.v1.App
-	19, // 1: stagd.config.v1.Config.ingress:type_name -> stagd.config.v1.Config.IngressEntry
-	20, // 2: stagd.config.v1.Config.build:type_name -> stagd.config.v1.Config.BuildEntry
+	20, // 1: stagd.config.v1.Config.ingress:type_name -> stagd.config.v1.Config.IngressEntry
+	21, // 2: stagd.config.v1.Config.build:type_name -> stagd.config.v1.Config.BuildEntry
 	4,  // 3: stagd.config.v1.Config.services:type_name -> stagd.config.v1.Services
-	21, // 4: stagd.config.v1.Config.env:type_name -> stagd.config.v1.Config.EnvEntry
-	12, // 5: stagd.config.v1.Config.database:type_name -> stagd.config.v1.Database
-	14, // 6: stagd.config.v1.Config.previews:type_name -> stagd.config.v1.Previews
-	15, // 7: stagd.config.v1.Config.commands:type_name -> stagd.config.v1.Commands
-	16, // 8: stagd.config.v1.Config.wait:type_name -> stagd.config.v1.Wait
-	22, // 9: stagd.config.v1.Config.registries:type_name -> stagd.config.v1.Config.RegistriesEntry
-	18, // 10: stagd.config.v1.Config.lifecycle:type_name -> stagd.config.v1.Lifecycle
-	23, // 11: stagd.config.v1.Build.args:type_name -> stagd.config.v1.Build.ArgsEntry
-	27, // 12: stagd.config.v1.Build.wait:type_name -> google.protobuf.Duration
-	5,  // 13: stagd.config.v1.Services.mail:type_name -> stagd.config.v1.Mail
-	10, // 14: stagd.config.v1.Services.otel:type_name -> stagd.config.v1.OTel
-	6,  // 15: stagd.config.v1.Services.postgres:type_name -> stagd.config.v1.Postgres
-	7,  // 16: stagd.config.v1.Services.mysql:type_name -> stagd.config.v1.MySQL
-	8,  // 17: stagd.config.v1.Services.mariadb:type_name -> stagd.config.v1.MariaDB
-	9,  // 18: stagd.config.v1.Services.mongodb:type_name -> stagd.config.v1.MongoDB
-	11, // 19: stagd.config.v1.OTel.export:type_name -> stagd.config.v1.OTelExport
-	24, // 20: stagd.config.v1.OTelExport.headers:type_name -> stagd.config.v1.OTelExport.HeadersEntry
-	13, // 21: stagd.config.v1.Database.neon:type_name -> stagd.config.v1.Neon
-	25, // 22: stagd.config.v1.Neon.params:type_name -> stagd.config.v1.Neon.ParamsEntry
-	26, // 23: stagd.config.v1.Neon.env:type_name -> stagd.config.v1.Neon.EnvEntry
-	27, // 24: stagd.config.v1.Wait.timeout:type_name -> google.protobuf.Duration
-	27, // 25: stagd.config.v1.Lifecycle.sleep_after:type_name -> google.protobuf.Duration
-	27, // 26: stagd.config.v1.Lifecycle.expire_after:type_name -> google.protobuf.Duration
-	2,  // 27: stagd.config.v1.Config.IngressEntry.value:type_name -> stagd.config.v1.Ingress
-	3,  // 28: stagd.config.v1.Config.BuildEntry.value:type_name -> stagd.config.v1.Build
-	17, // 29: stagd.config.v1.Config.RegistriesEntry.value:type_name -> stagd.config.v1.Registry
-	30, // [30:30] is the sub-list for method output_type
-	30, // [30:30] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	22, // 4: stagd.config.v1.Config.env:type_name -> stagd.config.v1.Config.EnvEntry
+	13, // 5: stagd.config.v1.Config.database:type_name -> stagd.config.v1.Database
+	15, // 6: stagd.config.v1.Config.previews:type_name -> stagd.config.v1.Previews
+	16, // 7: stagd.config.v1.Config.commands:type_name -> stagd.config.v1.Commands
+	17, // 8: stagd.config.v1.Config.wait:type_name -> stagd.config.v1.Wait
+	23, // 9: stagd.config.v1.Config.registries:type_name -> stagd.config.v1.Config.RegistriesEntry
+	19, // 10: stagd.config.v1.Config.lifecycle:type_name -> stagd.config.v1.Lifecycle
+	24, // 11: stagd.config.v1.Build.args:type_name -> stagd.config.v1.Build.ArgsEntry
+	28, // 12: stagd.config.v1.Build.wait:type_name -> google.protobuf.Duration
+	6,  // 13: stagd.config.v1.Services.mail:type_name -> stagd.config.v1.Mail
+	11, // 14: stagd.config.v1.Services.otel:type_name -> stagd.config.v1.OTel
+	7,  // 15: stagd.config.v1.Services.postgres:type_name -> stagd.config.v1.Postgres
+	8,  // 16: stagd.config.v1.Services.mysql:type_name -> stagd.config.v1.MySQL
+	9,  // 17: stagd.config.v1.Services.mariadb:type_name -> stagd.config.v1.MariaDB
+	10, // 18: stagd.config.v1.Services.mongodb:type_name -> stagd.config.v1.MongoDB
+	5,  // 19: stagd.config.v1.Services.sms:type_name -> stagd.config.v1.Sms
+	12, // 20: stagd.config.v1.OTel.export:type_name -> stagd.config.v1.OTelExport
+	25, // 21: stagd.config.v1.OTelExport.headers:type_name -> stagd.config.v1.OTelExport.HeadersEntry
+	14, // 22: stagd.config.v1.Database.neon:type_name -> stagd.config.v1.Neon
+	26, // 23: stagd.config.v1.Neon.params:type_name -> stagd.config.v1.Neon.ParamsEntry
+	27, // 24: stagd.config.v1.Neon.env:type_name -> stagd.config.v1.Neon.EnvEntry
+	28, // 25: stagd.config.v1.Wait.timeout:type_name -> google.protobuf.Duration
+	28, // 26: stagd.config.v1.Lifecycle.sleep_after:type_name -> google.protobuf.Duration
+	28, // 27: stagd.config.v1.Lifecycle.expire_after:type_name -> google.protobuf.Duration
+	2,  // 28: stagd.config.v1.Config.IngressEntry.value:type_name -> stagd.config.v1.Ingress
+	3,  // 29: stagd.config.v1.Config.BuildEntry.value:type_name -> stagd.config.v1.Build
+	18, // 30: stagd.config.v1.Config.RegistriesEntry.value:type_name -> stagd.config.v1.Registry
+	31, // [31:31] is the sub-list for method output_type
+	31, // [31:31] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_stagd_config_v1_config_proto_init() }
@@ -1639,7 +1689,7 @@ func file_stagd_config_v1_config_proto_init() {
 		(*Build_Context)(nil),
 		(*Build_Image)(nil),
 	}
-	file_stagd_config_v1_config_proto_msgTypes[14].OneofWrappers = []any{
+	file_stagd_config_v1_config_proto_msgTypes[15].OneofWrappers = []any{
 		(*Previews_When)(nil),
 		(*Previews_Label)(nil),
 	}
@@ -1649,7 +1699,7 @@ func file_stagd_config_v1_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_config_v1_config_proto_rawDesc), len(file_stagd_config_v1_config_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   27,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
