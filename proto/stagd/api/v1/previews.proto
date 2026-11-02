@@ -280,6 +280,44 @@ message Preview {
   // deploy on a new instance: stagd.yaml's services: { postgres: { seed } },
   // and mysql, mariadb, mongodb.
   repeated PreviewSeed seeds = 22;
+  // Why it failed, as far as Stagd can tell from what it failed on and the
+  // logs it left: set when FAILED, unset when nothing was found to say.
+  PreviewFailure failure = 23;
+}
+
+// A failed deploy explained: where it failed, the lines that show why, and
+// the likely cause and fix. Secrets and anything that looks like a key are
+// masked out of it.
+message PreviewFailure {
+  // Where in the deploy: config, checks, source, build, pull, seed, start.
+  string stage = 1;
+  // The compose service it's about; empty for the whole preview.
+  string service = 2;
+  // The cause, in a sentence; empty when no explanation was found.
+  string cause = 3;
+  // What to change; backticks around code.
+  string fix = 4;
+  // How sure: high when the fix is mechanical, likely when it's the usual
+  // reason.
+  PreviewFailureConfidence confidence = 5;
+  // The lines that show it, at most five.
+  repeated PreviewFailureEvidence evidence = 6;
+  // What explained it: a rule's id, e.g. rule:seed-download.
+  string explained_by = 7;
+  google.protobuf.Timestamp create_time = 8;
+}
+
+enum PreviewFailureConfidence {
+  PREVIEW_FAILURE_CONFIDENCE_UNSPECIFIED = 0;
+  PREVIEW_FAILURE_CONFIDENCE_HIGH = 1;
+  PREVIEW_FAILURE_CONFIDENCE_LIKELY = 2;
+}
+
+// One line that shows why, and where it's from: "error", "<service> logs"
+// or "<service> build".
+message PreviewFailureEvidence {
+  string source = 1;
+  string text = 2;
 }
 
 // PreviewCompute is the compute connection a preview runs on.
