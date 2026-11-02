@@ -54,7 +54,6 @@ func New(version string) *cli.Command {
 			previewCommand(),
 			validateCommand(),
 			mcpCommand(),
-			mockCommand(),
 			relayCommand(version),
 			versionCommand(version),
 			updateCommand(),
