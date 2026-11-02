@@ -59,10 +59,17 @@ service PreviewService {
   rpc ClearMail(ClearMailRequest) returns (ClearMailResponse);
   // DeleteMail deletes one message a preview captured.
   rpc DeleteMail(DeleteMailRequest) returns (DeleteMailResponse);
+  // WaitForMail answers as soon as a message matching the filter arrives
+  // after the cursor, or with none when the timeout passes: what a test
+  // waits on after the step that should send it, and how it checks that a
+  // step sent nothing.
+  rpc WaitForMail(WaitForMailRequest) returns (WaitForMailResponse);
   // ListTexts lists the text messages (SMS) a preview's app sent, newest
   // first, caught by Stagd's mock of the vendors' APIs. Only for previews
   // with text capture on (stagd.yaml `services: { sms: {} }`) and running.
   rpc ListTexts(ListTextsRequest) returns (ListTextsResponse);
+  // WaitForTexts is WaitForMail for text messages.
+  rpc WaitForTexts(WaitForTextsRequest) returns (WaitForTextsResponse);
 
   // GetServiceUsage returns CPU and memory per service of a preview over a
   // window up to 24 hours. Stagd samples them every 30 seconds while a
@@ -452,6 +459,18 @@ message ListTextsRequest {
     gte: 0
     lte: 500
   }];
+  // Only those that arrived after this cursor, from an earlier
+  // ListTexts or WaitForTexts; empty means all.
+  string after = 3;
+  TextFilter filter = 4;
+}
+
+// Which text messages: each field set must match. Case-insensitive.
+message TextFilter {
+  // Part of the number it went to, e.g. 4791234567.
+  string to = 1;
+  // Part of the body.
+  string body = 2;
 }
 
 // A text message the app sent, as the vendor's API was asked to send it.
@@ -468,6 +487,34 @@ message TextMessage {
 
 message ListTextsResponse {
   repeated TextMessage texts = 1;
+  // Where the texts stand now, matching the filter or not: pass it as
+  // `after` to get only what arrives from here on.
+  string cursor = 2;
+}
+
+message WaitForTextsRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  // As in ListTexts: take it before the step that should send the text.
+  // Empty means any captured so far counts too.
+  string after = 2;
+  TextFilter filter = 3;
+  // How long to wait: up to a minute; unset means 30 seconds.
+  google.protobuf.Duration timeout = 4 [(buf.validate.field).duration = {
+    gte: {}
+    lte: {seconds: 60}
+  }];
+  // At most this many, newest first; 0 means 50.
+  int32 limit = 5 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 500
+  }];
+}
+
+message WaitForTextsResponse {
+  // The matching texts after the cursor, newest first; none when the
+  // timeout passed without one.
+  repeated TextMessage texts = 1;
+  string cursor = 2;
 }
 
 message ListMailRequest {
@@ -477,6 +524,21 @@ message ListMailRequest {
     gte: 0
     lte: 500
   }];
+  // Only messages that arrived after this cursor, from an earlier ListMail
+  // or WaitForMail; empty means all.
+  string after = 3;
+  MailFilter filter = 4;
+}
+
+// Which messages: each field set must match. Case-insensitive.
+message MailFilter {
+  // Part of an address or name it went to: in To, Cc or Bcc (which holds
+  // whoever it was delivered to that the headers don't name).
+  string to = 1;
+  // Part of the sender's address or name.
+  string from = 2;
+  // Part of the subject.
+  string subject = 3;
 }
 
 message MailAddress {
@@ -494,12 +556,44 @@ message MailSummary {
   string snippet = 5;
   google.protobuf.Timestamp receive_time = 6;
   int64 size_bytes = 7;
+  repeated MailAddress cc = 8;
+  // Whoever it was delivered to that To and Cc don't name.
+  repeated MailAddress bcc = 9;
+  int32 attachment_count = 10;
 }
 
 message ListMailResponse {
   repeated MailSummary messages = 1;
   // How many the preview captured in all; `messages` may stop at `limit`.
   int32 total = 2;
+  // Where the inbox stands now, matching the filter or not: pass it as
+  // `after` to get only what arrives from here on.
+  string cursor = 3;
+}
+
+message WaitForMailRequest {
+  string preview_id = 1 [(buf.validate.field).string.min_len = 1];
+  // As in ListMail: take it before the step that should send the message.
+  // Empty means any message captured so far counts too.
+  string after = 2;
+  MailFilter filter = 3;
+  // How long to wait: up to a minute; unset means 30 seconds.
+  google.protobuf.Duration timeout = 4 [(buf.validate.field).duration = {
+    gte: {}
+    lte: {seconds: 60}
+  }];
+  // At most this many, newest first; 0 means 50.
+  int32 limit = 5 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 500
+  }];
+}
+
+message WaitForMailResponse {
+  // The matching messages after the cursor, newest first; none when the
+  // timeout passed without one.
+  repeated MailSummary messages = 1;
+  string cursor = 2;
 }
 
 message GetMailRequest {
@@ -514,11 +608,36 @@ message MailHeader {
 
 message MailMessage {
   MailSummary summary = 1;
+  // As summary.cc.
   repeated MailAddress cc = 2;
   string text = 3;
   // As the app sent it. Show it sandboxed: it's the preview's content.
   string html = 4;
   repeated MailHeader headers = 5;
+  repeated MailAttachment attachments = 6;
+  // The links in the HTML and the text, each once, in order.
+  repeated string links = 7;
+  // Text a template seems to have left unfilled, in the subject, the text
+  // or the HTML as it reads: {{name}}, ${name}, undefined, null, NaN,
+  // [object Object], Invalid Date.
+  repeated UnfilledText unfilled = 8;
+}
+
+message MailAttachment {
+  // Mailpit's part id.
+  string part_id = 1;
+  string file_name = 2;
+  string content_type = 3;
+  int64 size_bytes = 4;
+}
+
+message UnfilledText {
+  // "subject", "text" or "html".
+  string part = 1;
+  // What was found, e.g. "{{name}}".
+  string found = 2;
+  // The words around it.
+  string near = 3;
 }
 
 message GetMailResponse {

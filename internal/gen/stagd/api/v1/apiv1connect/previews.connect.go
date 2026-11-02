@@ -76,9 +76,15 @@ const (
 	// PreviewServiceDeleteMailProcedure is the fully-qualified name of the PreviewService's DeleteMail
 	// RPC.
 	PreviewServiceDeleteMailProcedure = "/stagd.api.v1.PreviewService/DeleteMail"
+	// PreviewServiceWaitForMailProcedure is the fully-qualified name of the PreviewService's
+	// WaitForMail RPC.
+	PreviewServiceWaitForMailProcedure = "/stagd.api.v1.PreviewService/WaitForMail"
 	// PreviewServiceListTextsProcedure is the fully-qualified name of the PreviewService's ListTexts
 	// RPC.
 	PreviewServiceListTextsProcedure = "/stagd.api.v1.PreviewService/ListTexts"
+	// PreviewServiceWaitForTextsProcedure is the fully-qualified name of the PreviewService's
+	// WaitForTexts RPC.
+	PreviewServiceWaitForTextsProcedure = "/stagd.api.v1.PreviewService/WaitForTexts"
 	// PreviewServiceGetServiceUsageProcedure is the fully-qualified name of the PreviewService's
 	// GetServiceUsage RPC.
 	PreviewServiceGetServiceUsageProcedure = "/stagd.api.v1.PreviewService/GetServiceUsage"
@@ -138,10 +144,17 @@ type PreviewServiceClient interface {
 	ClearMail(context.Context, *connect.Request[v1.ClearMailRequest]) (*connect.Response[v1.ClearMailResponse], error)
 	// DeleteMail deletes one message a preview captured.
 	DeleteMail(context.Context, *connect.Request[v1.DeleteMailRequest]) (*connect.Response[v1.DeleteMailResponse], error)
+	// WaitForMail answers as soon as a message matching the filter arrives
+	// after the cursor, or with none when the timeout passes: what a test
+	// waits on after the step that should send it, and how it checks that a
+	// step sent nothing.
+	WaitForMail(context.Context, *connect.Request[v1.WaitForMailRequest]) (*connect.Response[v1.WaitForMailResponse], error)
 	// ListTexts lists the text messages (SMS) a preview's app sent, newest
 	// first, caught by Stagd's mock of the vendors' APIs. Only for previews
 	// with text capture on (stagd.yaml `services: { sms: {} }`) and running.
 	ListTexts(context.Context, *connect.Request[v1.ListTextsRequest]) (*connect.Response[v1.ListTextsResponse], error)
+	// WaitForTexts is WaitForMail for text messages.
+	WaitForTexts(context.Context, *connect.Request[v1.WaitForTextsRequest]) (*connect.Response[v1.WaitForTextsResponse], error)
 	// GetServiceUsage returns CPU and memory per service of a preview over a
 	// window up to 24 hours. Stagd samples them every 30 seconds while a
 	// preview is live, on compute that can say: nothing while it sleeps, so
@@ -267,10 +280,22 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("DeleteMail")),
 			connect.WithClientOptions(opts...),
 		),
+		waitForMail: connect.NewClient[v1.WaitForMailRequest, v1.WaitForMailResponse](
+			httpClient,
+			baseURL+PreviewServiceWaitForMailProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("WaitForMail")),
+			connect.WithClientOptions(opts...),
+		),
 		listTexts: connect.NewClient[v1.ListTextsRequest, v1.ListTextsResponse](
 			httpClient,
 			baseURL+PreviewServiceListTextsProcedure,
 			connect.WithSchema(previewServiceMethods.ByName("ListTexts")),
+			connect.WithClientOptions(opts...),
+		),
+		waitForTexts: connect.NewClient[v1.WaitForTextsRequest, v1.WaitForTextsResponse](
+			httpClient,
+			baseURL+PreviewServiceWaitForTextsProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("WaitForTexts")),
 			connect.WithClientOptions(opts...),
 		),
 		getServiceUsage: connect.NewClient[v1.GetServiceUsageRequest, v1.GetServiceUsageResponse](
@@ -323,7 +348,9 @@ type previewServiceClient struct {
 	getMail             *connect.Client[v1.GetMailRequest, v1.GetMailResponse]
 	clearMail           *connect.Client[v1.ClearMailRequest, v1.ClearMailResponse]
 	deleteMail          *connect.Client[v1.DeleteMailRequest, v1.DeleteMailResponse]
+	waitForMail         *connect.Client[v1.WaitForMailRequest, v1.WaitForMailResponse]
 	listTexts           *connect.Client[v1.ListTextsRequest, v1.ListTextsResponse]
+	waitForTexts        *connect.Client[v1.WaitForTextsRequest, v1.WaitForTextsResponse]
 	getServiceUsage     *connect.Client[v1.GetServiceUsageRequest, v1.GetServiceUsageResponse]
 	listLogs            *connect.Client[v1.ListLogsRequest, v1.ListLogsResponse]
 	listBuildLogs       *connect.Client[v1.ListBuildLogsRequest, v1.ListBuildLogsResponse]
@@ -406,9 +433,19 @@ func (c *previewServiceClient) DeleteMail(ctx context.Context, req *connect.Requ
 	return c.deleteMail.CallUnary(ctx, req)
 }
 
+// WaitForMail calls stagd.api.v1.PreviewService.WaitForMail.
+func (c *previewServiceClient) WaitForMail(ctx context.Context, req *connect.Request[v1.WaitForMailRequest]) (*connect.Response[v1.WaitForMailResponse], error) {
+	return c.waitForMail.CallUnary(ctx, req)
+}
+
 // ListTexts calls stagd.api.v1.PreviewService.ListTexts.
 func (c *previewServiceClient) ListTexts(ctx context.Context, req *connect.Request[v1.ListTextsRequest]) (*connect.Response[v1.ListTextsResponse], error) {
 	return c.listTexts.CallUnary(ctx, req)
+}
+
+// WaitForTexts calls stagd.api.v1.PreviewService.WaitForTexts.
+func (c *previewServiceClient) WaitForTexts(ctx context.Context, req *connect.Request[v1.WaitForTextsRequest]) (*connect.Response[v1.WaitForTextsResponse], error) {
+	return c.waitForTexts.CallUnary(ctx, req)
 }
 
 // GetServiceUsage calls stagd.api.v1.PreviewService.GetServiceUsage.
@@ -480,10 +517,17 @@ type PreviewServiceHandler interface {
 	ClearMail(context.Context, *connect.Request[v1.ClearMailRequest]) (*connect.Response[v1.ClearMailResponse], error)
 	// DeleteMail deletes one message a preview captured.
 	DeleteMail(context.Context, *connect.Request[v1.DeleteMailRequest]) (*connect.Response[v1.DeleteMailResponse], error)
+	// WaitForMail answers as soon as a message matching the filter arrives
+	// after the cursor, or with none when the timeout passes: what a test
+	// waits on after the step that should send it, and how it checks that a
+	// step sent nothing.
+	WaitForMail(context.Context, *connect.Request[v1.WaitForMailRequest]) (*connect.Response[v1.WaitForMailResponse], error)
 	// ListTexts lists the text messages (SMS) a preview's app sent, newest
 	// first, caught by Stagd's mock of the vendors' APIs. Only for previews
 	// with text capture on (stagd.yaml `services: { sms: {} }`) and running.
 	ListTexts(context.Context, *connect.Request[v1.ListTextsRequest]) (*connect.Response[v1.ListTextsResponse], error)
+	// WaitForTexts is WaitForMail for text messages.
+	WaitForTexts(context.Context, *connect.Request[v1.WaitForTextsRequest]) (*connect.Response[v1.WaitForTextsResponse], error)
 	// GetServiceUsage returns CPU and memory per service of a preview over a
 	// window up to 24 hours. Stagd samples them every 30 seconds while a
 	// preview is live, on compute that can say: nothing while it sleeps, so
@@ -605,10 +649,22 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		connect.WithSchema(previewServiceMethods.ByName("DeleteMail")),
 		connect.WithHandlerOptions(opts...),
 	)
+	previewServiceWaitForMailHandler := connect.NewUnaryHandler(
+		PreviewServiceWaitForMailProcedure,
+		svc.WaitForMail,
+		connect.WithSchema(previewServiceMethods.ByName("WaitForMail")),
+		connect.WithHandlerOptions(opts...),
+	)
 	previewServiceListTextsHandler := connect.NewUnaryHandler(
 		PreviewServiceListTextsProcedure,
 		svc.ListTexts,
 		connect.WithSchema(previewServiceMethods.ByName("ListTexts")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceWaitForTextsHandler := connect.NewUnaryHandler(
+		PreviewServiceWaitForTextsProcedure,
+		svc.WaitForTexts,
+		connect.WithSchema(previewServiceMethods.ByName("WaitForTexts")),
 		connect.WithHandlerOptions(opts...),
 	)
 	previewServiceGetServiceUsageHandler := connect.NewUnaryHandler(
@@ -673,8 +729,12 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceClearMailHandler.ServeHTTP(w, r)
 		case PreviewServiceDeleteMailProcedure:
 			previewServiceDeleteMailHandler.ServeHTTP(w, r)
+		case PreviewServiceWaitForMailProcedure:
+			previewServiceWaitForMailHandler.ServeHTTP(w, r)
 		case PreviewServiceListTextsProcedure:
 			previewServiceListTextsHandler.ServeHTTP(w, r)
+		case PreviewServiceWaitForTextsProcedure:
+			previewServiceWaitForTextsHandler.ServeHTTP(w, r)
 		case PreviewServiceGetServiceUsageProcedure:
 			previewServiceGetServiceUsageHandler.ServeHTTP(w, r)
 		case PreviewServiceListLogsProcedure:
@@ -754,8 +814,16 @@ func (UnimplementedPreviewServiceHandler) DeleteMail(context.Context, *connect.R
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.DeleteMail is not implemented"))
 }
 
+func (UnimplementedPreviewServiceHandler) WaitForMail(context.Context, *connect.Request[v1.WaitForMailRequest]) (*connect.Response[v1.WaitForMailResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.WaitForMail is not implemented"))
+}
+
 func (UnimplementedPreviewServiceHandler) ListTexts(context.Context, *connect.Request[v1.ListTextsRequest]) (*connect.Response[v1.ListTextsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListTexts is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) WaitForTexts(context.Context, *connect.Request[v1.WaitForTextsRequest]) (*connect.Response[v1.WaitForTextsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.WaitForTexts is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) GetServiceUsage(context.Context, *connect.Request[v1.GetServiceUsageRequest]) (*connect.Response[v1.GetServiceUsageResponse], error) {

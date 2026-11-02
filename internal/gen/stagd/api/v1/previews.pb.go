@@ -2473,7 +2473,11 @@ type ListTextsRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	PreviewId string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
 	// At most this many, newest first; 0 means 50.
-	Limit         int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// Only those that arrived after this cursor, from an earlier
+	// ListTexts or WaitForTexts; empty means all.
+	After         string      `protobuf:"bytes,3,opt,name=after,proto3" json:"after,omitempty"`
+	Filter        *TextFilter `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2522,6 +2526,75 @@ func (x *ListTextsRequest) GetLimit() int32 {
 	return 0
 }
 
+func (x *ListTextsRequest) GetAfter() string {
+	if x != nil {
+		return x.After
+	}
+	return ""
+}
+
+func (x *ListTextsRequest) GetFilter() *TextFilter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+// Which text messages: each field set must match. Case-insensitive.
+type TextFilter struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Part of the number it went to, e.g. 4791234567.
+	To string `protobuf:"bytes,1,opt,name=to,proto3" json:"to,omitempty"`
+	// Part of the body.
+	Body          string `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TextFilter) Reset() {
+	*x = TextFilter{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TextFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TextFilter) ProtoMessage() {}
+
+func (x *TextFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TextFilter.ProtoReflect.Descriptor instead.
+func (*TextFilter) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *TextFilter) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+func (x *TextFilter) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
 // A text message the app sent, as the vendor's API was asked to send it.
 type TextMessage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2539,7 +2612,7 @@ type TextMessage struct {
 
 func (x *TextMessage) Reset() {
 	*x = TextMessage{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[32]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2551,7 +2624,7 @@ func (x *TextMessage) String() string {
 func (*TextMessage) ProtoMessage() {}
 
 func (x *TextMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[32]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2564,7 +2637,7 @@ func (x *TextMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TextMessage.ProtoReflect.Descriptor instead.
 func (*TextMessage) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{32}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *TextMessage) GetId() string {
@@ -2610,15 +2683,18 @@ func (x *TextMessage) GetSendTime() *timestamppb.Timestamp {
 }
 
 type ListTextsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Texts         []*TextMessage         `protobuf:"bytes,1,rep,name=texts,proto3" json:"texts,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Texts []*TextMessage         `protobuf:"bytes,1,rep,name=texts,proto3" json:"texts,omitempty"`
+	// Where the texts stand now, matching the filter or not: pass it as
+	// `after` to get only what arrives from here on.
+	Cursor        string `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListTextsResponse) Reset() {
 	*x = ListTextsResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[33]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2630,7 +2706,7 @@ func (x *ListTextsResponse) String() string {
 func (*ListTextsResponse) ProtoMessage() {}
 
 func (x *ListTextsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[33]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2643,7 +2719,7 @@ func (x *ListTextsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTextsResponse.ProtoReflect.Descriptor instead.
 func (*ListTextsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{33}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListTextsResponse) GetTexts() []*TextMessage {
@@ -2653,18 +2729,163 @@ func (x *ListTextsResponse) GetTexts() []*TextMessage {
 	return nil
 }
 
+func (x *ListTextsResponse) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
+type WaitForTextsRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PreviewId string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
+	// As in ListTexts: take it before the step that should send the text.
+	// Empty means any captured so far counts too.
+	After  string      `protobuf:"bytes,2,opt,name=after,proto3" json:"after,omitempty"`
+	Filter *TextFilter `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	// How long to wait: up to a minute; unset means 30 seconds.
+	Timeout *durationpb.Duration `protobuf:"bytes,4,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// At most this many, newest first; 0 means 50.
+	Limit         int32 `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WaitForTextsRequest) Reset() {
+	*x = WaitForTextsRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WaitForTextsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WaitForTextsRequest) ProtoMessage() {}
+
+func (x *WaitForTextsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WaitForTextsRequest.ProtoReflect.Descriptor instead.
+func (*WaitForTextsRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *WaitForTextsRequest) GetPreviewId() string {
+	if x != nil {
+		return x.PreviewId
+	}
+	return ""
+}
+
+func (x *WaitForTextsRequest) GetAfter() string {
+	if x != nil {
+		return x.After
+	}
+	return ""
+}
+
+func (x *WaitForTextsRequest) GetFilter() *TextFilter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+func (x *WaitForTextsRequest) GetTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.Timeout
+	}
+	return nil
+}
+
+func (x *WaitForTextsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type WaitForTextsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The matching texts after the cursor, newest first; none when the
+	// timeout passed without one.
+	Texts         []*TextMessage `protobuf:"bytes,1,rep,name=texts,proto3" json:"texts,omitempty"`
+	Cursor        string         `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WaitForTextsResponse) Reset() {
+	*x = WaitForTextsResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WaitForTextsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WaitForTextsResponse) ProtoMessage() {}
+
+func (x *WaitForTextsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WaitForTextsResponse.ProtoReflect.Descriptor instead.
+func (*WaitForTextsResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *WaitForTextsResponse) GetTexts() []*TextMessage {
+	if x != nil {
+		return x.Texts
+	}
+	return nil
+}
+
+func (x *WaitForTextsResponse) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
 type ListMailRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	PreviewId string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
 	// At most this many, newest first; 0 means 50.
-	Limit         int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// Only messages that arrived after this cursor, from an earlier ListMail
+	// or WaitForMail; empty means all.
+	After         string      `protobuf:"bytes,3,opt,name=after,proto3" json:"after,omitempty"`
+	Filter        *MailFilter `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListMailRequest) Reset() {
 	*x = ListMailRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[34]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2676,7 +2897,7 @@ func (x *ListMailRequest) String() string {
 func (*ListMailRequest) ProtoMessage() {}
 
 func (x *ListMailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[34]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2689,7 +2910,7 @@ func (x *ListMailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMailRequest.ProtoReflect.Descriptor instead.
 func (*ListMailRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{34}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListMailRequest) GetPreviewId() string {
@@ -2706,6 +2927,85 @@ func (x *ListMailRequest) GetLimit() int32 {
 	return 0
 }
 
+func (x *ListMailRequest) GetAfter() string {
+	if x != nil {
+		return x.After
+	}
+	return ""
+}
+
+func (x *ListMailRequest) GetFilter() *MailFilter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+// Which messages: each field set must match. Case-insensitive.
+type MailFilter struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Part of an address or name it went to: in To, Cc or Bcc (which holds
+	// whoever it was delivered to that the headers don't name).
+	To string `protobuf:"bytes,1,opt,name=to,proto3" json:"to,omitempty"`
+	// Part of the sender's address or name.
+	From string `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
+	// Part of the subject.
+	Subject       string `protobuf:"bytes,3,opt,name=subject,proto3" json:"subject,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MailFilter) Reset() {
+	*x = MailFilter{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MailFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MailFilter) ProtoMessage() {}
+
+func (x *MailFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MailFilter.ProtoReflect.Descriptor instead.
+func (*MailFilter) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *MailFilter) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+func (x *MailFilter) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *MailFilter) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
 type MailAddress struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -2716,7 +3016,7 @@ type MailAddress struct {
 
 func (x *MailAddress) Reset() {
 	*x = MailAddress{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[35]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2728,7 +3028,7 @@ func (x *MailAddress) String() string {
 func (*MailAddress) ProtoMessage() {}
 
 func (x *MailAddress) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[35]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2741,7 +3041,7 @@ func (x *MailAddress) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MailAddress.ProtoReflect.Descriptor instead.
 func (*MailAddress) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{35}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *MailAddress) GetName() string {
@@ -2766,16 +3066,20 @@ type MailSummary struct {
 	To      []*MailAddress         `protobuf:"bytes,3,rep,name=to,proto3" json:"to,omitempty"`
 	Subject string                 `protobuf:"bytes,4,opt,name=subject,proto3" json:"subject,omitempty"`
 	// The start of the text, for lists.
-	Snippet       string                 `protobuf:"bytes,5,opt,name=snippet,proto3" json:"snippet,omitempty"`
-	ReceiveTime   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=receive_time,json=receiveTime,proto3" json:"receive_time,omitempty"`
-	SizeBytes     int64                  `protobuf:"varint,7,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Snippet     string                 `protobuf:"bytes,5,opt,name=snippet,proto3" json:"snippet,omitempty"`
+	ReceiveTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=receive_time,json=receiveTime,proto3" json:"receive_time,omitempty"`
+	SizeBytes   int64                  `protobuf:"varint,7,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	Cc          []*MailAddress         `protobuf:"bytes,8,rep,name=cc,proto3" json:"cc,omitempty"`
+	// Whoever it was delivered to that To and Cc don't name.
+	Bcc             []*MailAddress `protobuf:"bytes,9,rep,name=bcc,proto3" json:"bcc,omitempty"`
+	AttachmentCount int32          `protobuf:"varint,10,opt,name=attachment_count,json=attachmentCount,proto3" json:"attachment_count,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *MailSummary) Reset() {
 	*x = MailSummary{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[36]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2787,7 +3091,7 @@ func (x *MailSummary) String() string {
 func (*MailSummary) ProtoMessage() {}
 
 func (x *MailSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[36]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2800,7 +3104,7 @@ func (x *MailSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MailSummary.ProtoReflect.Descriptor instead.
 func (*MailSummary) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{36}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *MailSummary) GetId() string {
@@ -2852,18 +3156,42 @@ func (x *MailSummary) GetSizeBytes() int64 {
 	return 0
 }
 
+func (x *MailSummary) GetCc() []*MailAddress {
+	if x != nil {
+		return x.Cc
+	}
+	return nil
+}
+
+func (x *MailSummary) GetBcc() []*MailAddress {
+	if x != nil {
+		return x.Bcc
+	}
+	return nil
+}
+
+func (x *MailSummary) GetAttachmentCount() int32 {
+	if x != nil {
+		return x.AttachmentCount
+	}
+	return 0
+}
+
 type ListMailResponse struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Messages []*MailSummary         `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
 	// How many the preview captured in all; `messages` may stop at `limit`.
-	Total         int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	Total int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	// Where the inbox stands now, matching the filter or not: pass it as
+	// `after` to get only what arrives from here on.
+	Cursor        string `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListMailResponse) Reset() {
 	*x = ListMailResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[37]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2875,7 +3203,7 @@ func (x *ListMailResponse) String() string {
 func (*ListMailResponse) ProtoMessage() {}
 
 func (x *ListMailResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[37]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2888,7 +3216,7 @@ func (x *ListMailResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMailResponse.ProtoReflect.Descriptor instead.
 func (*ListMailResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{37}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ListMailResponse) GetMessages() []*MailSummary {
@@ -2905,6 +3233,147 @@ func (x *ListMailResponse) GetTotal() int32 {
 	return 0
 }
 
+func (x *ListMailResponse) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
+type WaitForMailRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PreviewId string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
+	// As in ListMail: take it before the step that should send the message.
+	// Empty means any message captured so far counts too.
+	After  string      `protobuf:"bytes,2,opt,name=after,proto3" json:"after,omitempty"`
+	Filter *MailFilter `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	// How long to wait: up to a minute; unset means 30 seconds.
+	Timeout *durationpb.Duration `protobuf:"bytes,4,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// At most this many, newest first; 0 means 50.
+	Limit         int32 `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WaitForMailRequest) Reset() {
+	*x = WaitForMailRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WaitForMailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WaitForMailRequest) ProtoMessage() {}
+
+func (x *WaitForMailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WaitForMailRequest.ProtoReflect.Descriptor instead.
+func (*WaitForMailRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *WaitForMailRequest) GetPreviewId() string {
+	if x != nil {
+		return x.PreviewId
+	}
+	return ""
+}
+
+func (x *WaitForMailRequest) GetAfter() string {
+	if x != nil {
+		return x.After
+	}
+	return ""
+}
+
+func (x *WaitForMailRequest) GetFilter() *MailFilter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+func (x *WaitForMailRequest) GetTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.Timeout
+	}
+	return nil
+}
+
+func (x *WaitForMailRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type WaitForMailResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The matching messages after the cursor, newest first; none when the
+	// timeout passed without one.
+	Messages      []*MailSummary `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	Cursor        string         `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WaitForMailResponse) Reset() {
+	*x = WaitForMailResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WaitForMailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WaitForMailResponse) ProtoMessage() {}
+
+func (x *WaitForMailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WaitForMailResponse.ProtoReflect.Descriptor instead.
+func (*WaitForMailResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *WaitForMailResponse) GetMessages() []*MailSummary {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+func (x *WaitForMailResponse) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
 type GetMailRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PreviewId     string                 `protobuf:"bytes,1,opt,name=preview_id,json=previewId,proto3" json:"preview_id,omitempty"`
@@ -2915,7 +3384,7 @@ type GetMailRequest struct {
 
 func (x *GetMailRequest) Reset() {
 	*x = GetMailRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[38]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2927,7 +3396,7 @@ func (x *GetMailRequest) String() string {
 func (*GetMailRequest) ProtoMessage() {}
 
 func (x *GetMailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[38]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2940,7 +3409,7 @@ func (x *GetMailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMailRequest.ProtoReflect.Descriptor instead.
 func (*GetMailRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{38}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *GetMailRequest) GetPreviewId() string {
@@ -2967,7 +3436,7 @@ type MailHeader struct {
 
 func (x *MailHeader) Reset() {
 	*x = MailHeader{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[39]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2979,7 +3448,7 @@ func (x *MailHeader) String() string {
 func (*MailHeader) ProtoMessage() {}
 
 func (x *MailHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[39]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2992,7 +3461,7 @@ func (x *MailHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MailHeader.ProtoReflect.Descriptor instead.
 func (*MailHeader) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{39}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *MailHeader) GetName() string {
@@ -3012,18 +3481,26 @@ func (x *MailHeader) GetValue() string {
 type MailMessage struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Summary *MailSummary           `protobuf:"bytes,1,opt,name=summary,proto3" json:"summary,omitempty"`
-	Cc      []*MailAddress         `protobuf:"bytes,2,rep,name=cc,proto3" json:"cc,omitempty"`
-	Text    string                 `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
+	// As summary.cc.
+	Cc   []*MailAddress `protobuf:"bytes,2,rep,name=cc,proto3" json:"cc,omitempty"`
+	Text string         `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
 	// As the app sent it. Show it sandboxed: it's the preview's content.
-	Html          string        `protobuf:"bytes,4,opt,name=html,proto3" json:"html,omitempty"`
-	Headers       []*MailHeader `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty"`
+	Html        string            `protobuf:"bytes,4,opt,name=html,proto3" json:"html,omitempty"`
+	Headers     []*MailHeader     `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty"`
+	Attachments []*MailAttachment `protobuf:"bytes,6,rep,name=attachments,proto3" json:"attachments,omitempty"`
+	// The links in the HTML and the text, each once, in order.
+	Links []string `protobuf:"bytes,7,rep,name=links,proto3" json:"links,omitempty"`
+	// Text a template seems to have left unfilled, in the subject, the text
+	// or the HTML as it reads: {{name}}, ${name}, undefined, null, NaN,
+	// [object Object], Invalid Date.
+	Unfilled      []*UnfilledText `protobuf:"bytes,8,rep,name=unfilled,proto3" json:"unfilled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MailMessage) Reset() {
 	*x = MailMessage{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[40]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3035,7 +3512,7 @@ func (x *MailMessage) String() string {
 func (*MailMessage) ProtoMessage() {}
 
 func (x *MailMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[40]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3048,7 +3525,7 @@ func (x *MailMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MailMessage.ProtoReflect.Descriptor instead.
 func (*MailMessage) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{40}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *MailMessage) GetSummary() *MailSummary {
@@ -3086,6 +3563,159 @@ func (x *MailMessage) GetHeaders() []*MailHeader {
 	return nil
 }
 
+func (x *MailMessage) GetAttachments() []*MailAttachment {
+	if x != nil {
+		return x.Attachments
+	}
+	return nil
+}
+
+func (x *MailMessage) GetLinks() []string {
+	if x != nil {
+		return x.Links
+	}
+	return nil
+}
+
+func (x *MailMessage) GetUnfilled() []*UnfilledText {
+	if x != nil {
+		return x.Unfilled
+	}
+	return nil
+}
+
+type MailAttachment struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Mailpit's part id.
+	PartId        string `protobuf:"bytes,1,opt,name=part_id,json=partId,proto3" json:"part_id,omitempty"`
+	FileName      string `protobuf:"bytes,2,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	ContentType   string `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	SizeBytes     int64  `protobuf:"varint,4,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MailAttachment) Reset() {
+	*x = MailAttachment{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MailAttachment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MailAttachment) ProtoMessage() {}
+
+func (x *MailAttachment) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MailAttachment.ProtoReflect.Descriptor instead.
+func (*MailAttachment) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *MailAttachment) GetPartId() string {
+	if x != nil {
+		return x.PartId
+	}
+	return ""
+}
+
+func (x *MailAttachment) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
+func (x *MailAttachment) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *MailAttachment) GetSizeBytes() int64 {
+	if x != nil {
+		return x.SizeBytes
+	}
+	return 0
+}
+
+type UnfilledText struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "subject", "text" or "html".
+	Part string `protobuf:"bytes,1,opt,name=part,proto3" json:"part,omitempty"`
+	// What was found, e.g. "{{name}}".
+	Found string `protobuf:"bytes,2,opt,name=found,proto3" json:"found,omitempty"`
+	// The words around it.
+	Near          string `protobuf:"bytes,3,opt,name=near,proto3" json:"near,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnfilledText) Reset() {
+	*x = UnfilledText{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnfilledText) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnfilledText) ProtoMessage() {}
+
+func (x *UnfilledText) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnfilledText.ProtoReflect.Descriptor instead.
+func (*UnfilledText) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *UnfilledText) GetPart() string {
+	if x != nil {
+		return x.Part
+	}
+	return ""
+}
+
+func (x *UnfilledText) GetFound() string {
+	if x != nil {
+		return x.Found
+	}
+	return ""
+}
+
+func (x *UnfilledText) GetNear() string {
+	if x != nil {
+		return x.Near
+	}
+	return ""
+}
+
 type GetMailResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       *MailMessage           `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
@@ -3095,7 +3725,7 @@ type GetMailResponse struct {
 
 func (x *GetMailResponse) Reset() {
 	*x = GetMailResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[41]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3107,7 +3737,7 @@ func (x *GetMailResponse) String() string {
 func (*GetMailResponse) ProtoMessage() {}
 
 func (x *GetMailResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[41]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3120,7 +3750,7 @@ func (x *GetMailResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMailResponse.ProtoReflect.Descriptor instead.
 func (*GetMailResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{41}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *GetMailResponse) GetMessage() *MailMessage {
@@ -3139,7 +3769,7 @@ type ClearMailRequest struct {
 
 func (x *ClearMailRequest) Reset() {
 	*x = ClearMailRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[42]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3151,7 +3781,7 @@ func (x *ClearMailRequest) String() string {
 func (*ClearMailRequest) ProtoMessage() {}
 
 func (x *ClearMailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[42]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3164,7 +3794,7 @@ func (x *ClearMailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearMailRequest.ProtoReflect.Descriptor instead.
 func (*ClearMailRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{42}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *ClearMailRequest) GetPreviewId() string {
@@ -3182,7 +3812,7 @@ type ClearMailResponse struct {
 
 func (x *ClearMailResponse) Reset() {
 	*x = ClearMailResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[43]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3194,7 +3824,7 @@ func (x *ClearMailResponse) String() string {
 func (*ClearMailResponse) ProtoMessage() {}
 
 func (x *ClearMailResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[43]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3207,7 +3837,7 @@ func (x *ClearMailResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearMailResponse.ProtoReflect.Descriptor instead.
 func (*ClearMailResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{43}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{51}
 }
 
 type DeleteMailRequest struct {
@@ -3221,7 +3851,7 @@ type DeleteMailRequest struct {
 
 func (x *DeleteMailRequest) Reset() {
 	*x = DeleteMailRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[44]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3233,7 +3863,7 @@ func (x *DeleteMailRequest) String() string {
 func (*DeleteMailRequest) ProtoMessage() {}
 
 func (x *DeleteMailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[44]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3246,7 +3876,7 @@ func (x *DeleteMailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteMailRequest.ProtoReflect.Descriptor instead.
 func (*DeleteMailRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{44}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *DeleteMailRequest) GetPreviewId() string {
@@ -3271,7 +3901,7 @@ type DeleteMailResponse struct {
 
 func (x *DeleteMailResponse) Reset() {
 	*x = DeleteMailResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[45]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3283,7 +3913,7 @@ func (x *DeleteMailResponse) String() string {
 func (*DeleteMailResponse) ProtoMessage() {}
 
 func (x *DeleteMailResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[45]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3296,7 +3926,7 @@ func (x *DeleteMailResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteMailResponse.ProtoReflect.Descriptor instead.
 func (*DeleteMailResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{45}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{53}
 }
 
 type GetServiceUsageRequest struct {
@@ -3310,7 +3940,7 @@ type GetServiceUsageRequest struct {
 
 func (x *GetServiceUsageRequest) Reset() {
 	*x = GetServiceUsageRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[46]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3322,7 +3952,7 @@ func (x *GetServiceUsageRequest) String() string {
 func (*GetServiceUsageRequest) ProtoMessage() {}
 
 func (x *GetServiceUsageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[46]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3335,7 +3965,7 @@ func (x *GetServiceUsageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceUsageRequest.ProtoReflect.Descriptor instead.
 func (*GetServiceUsageRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{46}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *GetServiceUsageRequest) GetPreviewId() string {
@@ -3362,7 +3992,7 @@ type GetServiceUsageResponse struct {
 
 func (x *GetServiceUsageResponse) Reset() {
 	*x = GetServiceUsageResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[47]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3374,7 +4004,7 @@ func (x *GetServiceUsageResponse) String() string {
 func (*GetServiceUsageResponse) ProtoMessage() {}
 
 func (x *GetServiceUsageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[47]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3387,7 +4017,7 @@ func (x *GetServiceUsageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceUsageResponse.ProtoReflect.Descriptor instead.
 func (*GetServiceUsageResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{47}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *GetServiceUsageResponse) GetServices() []*ServiceUsage {
@@ -3419,7 +4049,7 @@ type ServiceUsage struct {
 
 func (x *ServiceUsage) Reset() {
 	*x = ServiceUsage{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[48]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3431,7 +4061,7 @@ func (x *ServiceUsage) String() string {
 func (*ServiceUsage) ProtoMessage() {}
 
 func (x *ServiceUsage) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[48]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3444,7 +4074,7 @@ func (x *ServiceUsage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceUsage.ProtoReflect.Descriptor instead.
 func (*ServiceUsage) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{48}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ServiceUsage) GetService() string {
@@ -3522,7 +4152,7 @@ type UsagePoint struct {
 
 func (x *UsagePoint) Reset() {
 	*x = UsagePoint{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[49]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3534,7 +4164,7 @@ func (x *UsagePoint) String() string {
 func (*UsagePoint) ProtoMessage() {}
 
 func (x *UsagePoint) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[49]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3547,7 +4177,7 @@ func (x *UsagePoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UsagePoint.ProtoReflect.Descriptor instead.
 func (*UsagePoint) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{49}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *UsagePoint) GetTime() *timestamppb.Timestamp {
@@ -3580,7 +4210,7 @@ type ListBuildLogsRequest struct {
 
 func (x *ListBuildLogsRequest) Reset() {
 	*x = ListBuildLogsRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[50]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3592,7 +4222,7 @@ func (x *ListBuildLogsRequest) String() string {
 func (*ListBuildLogsRequest) ProtoMessage() {}
 
 func (x *ListBuildLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[50]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3605,7 +4235,7 @@ func (x *ListBuildLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBuildLogsRequest.ProtoReflect.Descriptor instead.
 func (*ListBuildLogsRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{50}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ListBuildLogsRequest) GetPreviewId() string {
@@ -3625,7 +4255,7 @@ type ListBuildLogsResponse struct {
 
 func (x *ListBuildLogsResponse) Reset() {
 	*x = ListBuildLogsResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[51]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3637,7 +4267,7 @@ func (x *ListBuildLogsResponse) String() string {
 func (*ListBuildLogsResponse) ProtoMessage() {}
 
 func (x *ListBuildLogsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[51]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3650,7 +4280,7 @@ func (x *ListBuildLogsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBuildLogsResponse.ProtoReflect.Descriptor instead.
 func (*ListBuildLogsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{51}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *ListBuildLogsResponse) GetBuilds() []*BuildLog {
@@ -3675,7 +4305,7 @@ type BuildLog struct {
 
 func (x *BuildLog) Reset() {
 	*x = BuildLog{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[52]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3687,7 +4317,7 @@ func (x *BuildLog) String() string {
 func (*BuildLog) ProtoMessage() {}
 
 func (x *BuildLog) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[52]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3700,7 +4330,7 @@ func (x *BuildLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildLog.ProtoReflect.Descriptor instead.
 func (*BuildLog) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{52}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *BuildLog) GetService() string {
@@ -3740,7 +4370,7 @@ type ListLogsRequest struct {
 
 func (x *ListLogsRequest) Reset() {
 	*x = ListLogsRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[53]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3752,7 +4382,7 @@ func (x *ListLogsRequest) String() string {
 func (*ListLogsRequest) ProtoMessage() {}
 
 func (x *ListLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[53]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3765,7 +4395,7 @@ func (x *ListLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLogsRequest.ProtoReflect.Descriptor instead.
 func (*ListLogsRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{53}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ListLogsRequest) GetPreviewId() string {
@@ -3808,7 +4438,7 @@ type ListLogsResponse struct {
 
 func (x *ListLogsResponse) Reset() {
 	*x = ListLogsResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[54]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3820,7 +4450,7 @@ func (x *ListLogsResponse) String() string {
 func (*ListLogsResponse) ProtoMessage() {}
 
 func (x *ListLogsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[54]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3833,7 +4463,7 @@ func (x *ListLogsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLogsResponse.ProtoReflect.Descriptor instead.
 func (*ListLogsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{54}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *ListLogsResponse) GetLines() []*LogLine {
@@ -3871,7 +4501,7 @@ type LogLine struct {
 
 func (x *LogLine) Reset() {
 	*x = LogLine{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[55]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3883,7 +4513,7 @@ func (x *LogLine) String() string {
 func (*LogLine) ProtoMessage() {}
 
 func (x *LogLine) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[55]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3896,7 +4526,7 @@ func (x *LogLine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogLine.ProtoReflect.Descriptor instead.
 func (*LogLine) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{55}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *LogLine) GetTime() *timestamppb.Timestamp {
@@ -3959,7 +4589,7 @@ type LogField struct {
 
 func (x *LogField) Reset() {
 	*x = LogField{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[56]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3971,7 +4601,7 @@ func (x *LogField) String() string {
 func (*LogField) ProtoMessage() {}
 
 func (x *LogField) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[56]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3984,7 +4614,7 @@ func (x *LogField) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogField.ProtoReflect.Descriptor instead.
 func (*LogField) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{56}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *LogField) GetKey() string {
@@ -4022,7 +4652,7 @@ type ListTracesRequest struct {
 
 func (x *ListTracesRequest) Reset() {
 	*x = ListTracesRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[57]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4034,7 +4664,7 @@ func (x *ListTracesRequest) String() string {
 func (*ListTracesRequest) ProtoMessage() {}
 
 func (x *ListTracesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[57]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4047,7 +4677,7 @@ func (x *ListTracesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTracesRequest.ProtoReflect.Descriptor instead.
 func (*ListTracesRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{57}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *ListTracesRequest) GetPreviewId() string {
@@ -4111,7 +4741,7 @@ type ListTracesResponse struct {
 
 func (x *ListTracesResponse) Reset() {
 	*x = ListTracesResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[58]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4123,7 +4753,7 @@ func (x *ListTracesResponse) String() string {
 func (*ListTracesResponse) ProtoMessage() {}
 
 func (x *ListTracesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[58]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4136,7 +4766,7 @@ func (x *ListTracesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTracesResponse.ProtoReflect.Descriptor instead.
 func (*ListTracesResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{58}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *ListTracesResponse) GetTraces() []*TraceSummary {
@@ -4174,7 +4804,7 @@ type TraceSummary struct {
 
 func (x *TraceSummary) Reset() {
 	*x = TraceSummary{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[59]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4186,7 +4816,7 @@ func (x *TraceSummary) String() string {
 func (*TraceSummary) ProtoMessage() {}
 
 func (x *TraceSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[59]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4199,7 +4829,7 @@ func (x *TraceSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TraceSummary.ProtoReflect.Descriptor instead.
 func (*TraceSummary) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{59}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *TraceSummary) GetTraceId() string {
@@ -4282,7 +4912,7 @@ type GetTraceRequest struct {
 
 func (x *GetTraceRequest) Reset() {
 	*x = GetTraceRequest{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[60]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4294,7 +4924,7 @@ func (x *GetTraceRequest) String() string {
 func (*GetTraceRequest) ProtoMessage() {}
 
 func (x *GetTraceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[60]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4307,7 +4937,7 @@ func (x *GetTraceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTraceRequest.ProtoReflect.Descriptor instead.
 func (*GetTraceRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{60}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *GetTraceRequest) GetPreviewId() string {
@@ -4335,7 +4965,7 @@ type GetTraceResponse struct {
 
 func (x *GetTraceResponse) Reset() {
 	*x = GetTraceResponse{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[61]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4347,7 +4977,7 @@ func (x *GetTraceResponse) String() string {
 func (*GetTraceResponse) ProtoMessage() {}
 
 func (x *GetTraceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[61]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4360,7 +4990,7 @@ func (x *GetTraceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTraceResponse.ProtoReflect.Descriptor instead.
 func (*GetTraceResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{61}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *GetTraceResponse) GetTraceId() string {
@@ -4398,7 +5028,7 @@ type Span struct {
 
 func (x *Span) Reset() {
 	*x = Span{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[62]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4410,7 +5040,7 @@ func (x *Span) String() string {
 func (*Span) ProtoMessage() {}
 
 func (x *Span) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[62]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4423,7 +5053,7 @@ func (x *Span) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Span.ProtoReflect.Descriptor instead.
 func (*Span) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{62}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *Span) GetSpanId() string {
@@ -4515,7 +5145,7 @@ type SpanEvent struct {
 
 func (x *SpanEvent) Reset() {
 	*x = SpanEvent{}
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[63]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4527,7 +5157,7 @@ func (x *SpanEvent) String() string {
 func (*SpanEvent) ProtoMessage() {}
 
 func (x *SpanEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_previews_proto_msgTypes[63]
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4540,7 +5170,7 @@ func (x *SpanEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SpanEvent.ProtoReflect.Descriptor instead.
 func (*SpanEvent) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{63}
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *SpanEvent) GetName() string {
@@ -4731,29 +5361,54 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\amessage\x18\x04 \x01(\tR\amessage\"w\n" +
 	"\x19ListPreviewEventsResponse\x122\n" +
 	"\x06events\x18\x01 \x03(\v2\x1a.stagd.api.v1.PreviewEventR\x06events\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\\\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa4\x01\n" +
 	"\x10ListTextsRequest\x12&\n" +
 	"\n" +
 	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12 \n" +
 	"\x05limit\x18\x02 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\xf4\x03(\x00R\x05limit\"\xa6\x01\n" +
+	"\xbaH\a\x1a\x05\x18\xf4\x03(\x00R\x05limit\x12\x14\n" +
+	"\x05after\x18\x03 \x01(\tR\x05after\x120\n" +
+	"\x06filter\x18\x04 \x01(\v2\x18.stagd.api.v1.TextFilterR\x06filter\"0\n" +
+	"\n" +
+	"TextFilter\x12\x0e\n" +
+	"\x02to\x18\x01 \x01(\tR\x02to\x12\x12\n" +
+	"\x04body\x18\x02 \x01(\tR\x04body\"\xa6\x01\n" +
 	"\vTextMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06vendor\x18\x02 \x01(\tR\x06vendor\x12\x0e\n" +
 	"\x02to\x18\x03 \x01(\tR\x02to\x12\x12\n" +
 	"\x04from\x18\x04 \x01(\tR\x04from\x12\x12\n" +
 	"\x04body\x18\x05 \x01(\tR\x04body\x127\n" +
-	"\tsend_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\bsendTime\"D\n" +
+	"\tsend_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\bsendTime\"\\\n" +
 	"\x11ListTextsResponse\x12/\n" +
-	"\x05texts\x18\x01 \x03(\v2\x19.stagd.api.v1.TextMessageR\x05texts\"[\n" +
+	"\x05texts\x18\x01 \x03(\v2\x19.stagd.api.v1.TextMessageR\x05texts\x12\x16\n" +
+	"\x06cursor\x18\x02 \x01(\tR\x06cursor\"\xea\x01\n" +
+	"\x13WaitForTextsRequest\x12&\n" +
+	"\n" +
+	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12\x14\n" +
+	"\x05after\x18\x02 \x01(\tR\x05after\x120\n" +
+	"\x06filter\x18\x03 \x01(\v2\x18.stagd.api.v1.TextFilterR\x06filter\x12A\n" +
+	"\atimeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\f\xbaH\t\xaa\x01\x06\"\x02\b<2\x00R\atimeout\x12 \n" +
+	"\x05limit\x18\x05 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\xf4\x03(\x00R\x05limit\"_\n" +
+	"\x14WaitForTextsResponse\x12/\n" +
+	"\x05texts\x18\x01 \x03(\v2\x19.stagd.api.v1.TextMessageR\x05texts\x12\x16\n" +
+	"\x06cursor\x18\x02 \x01(\tR\x06cursor\"\xa3\x01\n" +
 	"\x0fListMailRequest\x12&\n" +
 	"\n" +
 	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12 \n" +
 	"\x05limit\x18\x02 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\xf4\x03(\x00R\x05limit\";\n" +
+	"\xbaH\a\x1a\x05\x18\xf4\x03(\x00R\x05limit\x12\x14\n" +
+	"\x05after\x18\x03 \x01(\tR\x05after\x120\n" +
+	"\x06filter\x18\x04 \x01(\v2\x18.stagd.api.v1.MailFilterR\x06filter\"J\n" +
+	"\n" +
+	"MailFilter\x12\x0e\n" +
+	"\x02to\x18\x01 \x01(\tR\x02to\x12\x12\n" +
+	"\x04from\x18\x02 \x01(\tR\x04from\x12\x18\n" +
+	"\asubject\x18\x03 \x01(\tR\asubject\";\n" +
 	"\vMailAddress\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aaddress\x18\x02 \x01(\tR\aaddress\"\x89\x02\n" +
+	"\aaddress\x18\x02 \x01(\tR\aaddress\"\x8c\x03\n" +
 	"\vMailSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12-\n" +
 	"\x04from\x18\x02 \x01(\v2\x19.stagd.api.v1.MailAddressR\x04from\x12)\n" +
@@ -4762,10 +5417,26 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\asnippet\x18\x05 \x01(\tR\asnippet\x12=\n" +
 	"\freceive_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vreceiveTime\x12\x1d\n" +
 	"\n" +
-	"size_bytes\x18\a \x01(\x03R\tsizeBytes\"_\n" +
+	"size_bytes\x18\a \x01(\x03R\tsizeBytes\x12)\n" +
+	"\x02cc\x18\b \x03(\v2\x19.stagd.api.v1.MailAddressR\x02cc\x12+\n" +
+	"\x03bcc\x18\t \x03(\v2\x19.stagd.api.v1.MailAddressR\x03bcc\x12)\n" +
+	"\x10attachment_count\x18\n" +
+	" \x01(\x05R\x0fattachmentCount\"w\n" +
 	"\x10ListMailResponse\x125\n" +
 	"\bmessages\x18\x01 \x03(\v2\x19.stagd.api.v1.MailSummaryR\bmessages\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"Q\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\x12\x16\n" +
+	"\x06cursor\x18\x03 \x01(\tR\x06cursor\"\xe9\x01\n" +
+	"\x12WaitForMailRequest\x12&\n" +
+	"\n" +
+	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12\x14\n" +
+	"\x05after\x18\x02 \x01(\tR\x05after\x120\n" +
+	"\x06filter\x18\x03 \x01(\v2\x18.stagd.api.v1.MailFilterR\x06filter\x12A\n" +
+	"\atimeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationB\f\xbaH\t\xaa\x01\x06\"\x02\b<2\x00R\atimeout\x12 \n" +
+	"\x05limit\x18\x05 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\xf4\x03(\x00R\x05limit\"d\n" +
+	"\x13WaitForMailResponse\x125\n" +
+	"\bmessages\x18\x01 \x03(\v2\x19.stagd.api.v1.MailSummaryR\bmessages\x12\x16\n" +
+	"\x06cursor\x18\x02 \x01(\tR\x06cursor\"Q\n" +
 	"\x0eGetMailRequest\x12&\n" +
 	"\n" +
 	"preview_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tpreviewId\x12\x17\n" +
@@ -4773,13 +5444,26 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\n" +
 	"MailHeader\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"\xc9\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\xd7\x02\n" +
 	"\vMailMessage\x123\n" +
 	"\asummary\x18\x01 \x01(\v2\x19.stagd.api.v1.MailSummaryR\asummary\x12)\n" +
 	"\x02cc\x18\x02 \x03(\v2\x19.stagd.api.v1.MailAddressR\x02cc\x12\x12\n" +
 	"\x04text\x18\x03 \x01(\tR\x04text\x12\x12\n" +
 	"\x04html\x18\x04 \x01(\tR\x04html\x122\n" +
-	"\aheaders\x18\x05 \x03(\v2\x18.stagd.api.v1.MailHeaderR\aheaders\"F\n" +
+	"\aheaders\x18\x05 \x03(\v2\x18.stagd.api.v1.MailHeaderR\aheaders\x12>\n" +
+	"\vattachments\x18\x06 \x03(\v2\x1c.stagd.api.v1.MailAttachmentR\vattachments\x12\x14\n" +
+	"\x05links\x18\a \x03(\tR\x05links\x126\n" +
+	"\bunfilled\x18\b \x03(\v2\x1a.stagd.api.v1.UnfilledTextR\bunfilled\"\x88\x01\n" +
+	"\x0eMailAttachment\x12\x17\n" +
+	"\apart_id\x18\x01 \x01(\tR\x06partId\x12\x1b\n" +
+	"\tfile_name\x18\x02 \x01(\tR\bfileName\x12!\n" +
+	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\x04 \x01(\x03R\tsizeBytes\"L\n" +
+	"\fUnfilledText\x12\x12\n" +
+	"\x04part\x18\x01 \x01(\tR\x04part\x12\x14\n" +
+	"\x05found\x18\x02 \x01(\tR\x05found\x12\x12\n" +
+	"\x04near\x18\x03 \x01(\tR\x04near\"F\n" +
 	"\x0fGetMailResponse\x123\n" +
 	"\amessage\x18\x01 \x01(\v2\x19.stagd.api.v1.MailMessageR\amessage\":\n" +
 	"\x10ClearMailRequest\x12&\n" +
@@ -4948,7 +5632,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x10SPAN_KIND_SERVER\x10\x02\x12\x14\n" +
 	"\x10SPAN_KIND_CLIENT\x10\x03\x12\x16\n" +
 	"\x12SPAN_KIND_PRODUCER\x10\x04\x12\x16\n" +
-	"\x12SPAN_KIND_CONSUMER\x10\x052\x9a\x0e\n" +
+	"\x12SPAN_KIND_CONSUMER\x10\x052\xc5\x0f\n" +
 	"\x0ePreviewService\x12X\n" +
 	"\rCreatePreview\x12\".stagd.api.v1.CreatePreviewRequest\x1a#.stagd.api.v1.CreatePreviewResponse\x12R\n" +
 	"\vListSources\x12 .stagd.api.v1.ListSourcesRequest\x1a!.stagd.api.v1.ListSourcesResponse\x12O\n" +
@@ -4966,8 +5650,10 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\aGetMail\x12\x1c.stagd.api.v1.GetMailRequest\x1a\x1d.stagd.api.v1.GetMailResponse\x12L\n" +
 	"\tClearMail\x12\x1e.stagd.api.v1.ClearMailRequest\x1a\x1f.stagd.api.v1.ClearMailResponse\x12O\n" +
 	"\n" +
-	"DeleteMail\x12\x1f.stagd.api.v1.DeleteMailRequest\x1a .stagd.api.v1.DeleteMailResponse\x12L\n" +
-	"\tListTexts\x12\x1e.stagd.api.v1.ListTextsRequest\x1a\x1f.stagd.api.v1.ListTextsResponse\x12^\n" +
+	"DeleteMail\x12\x1f.stagd.api.v1.DeleteMailRequest\x1a .stagd.api.v1.DeleteMailResponse\x12R\n" +
+	"\vWaitForMail\x12 .stagd.api.v1.WaitForMailRequest\x1a!.stagd.api.v1.WaitForMailResponse\x12L\n" +
+	"\tListTexts\x12\x1e.stagd.api.v1.ListTextsRequest\x1a\x1f.stagd.api.v1.ListTextsResponse\x12U\n" +
+	"\fWaitForTexts\x12!.stagd.api.v1.WaitForTextsRequest\x1a\".stagd.api.v1.WaitForTextsResponse\x12^\n" +
 	"\x0fGetServiceUsage\x12$.stagd.api.v1.GetServiceUsageRequest\x1a%.stagd.api.v1.GetServiceUsageResponse\x12I\n" +
 	"\bListLogs\x12\x1d.stagd.api.v1.ListLogsRequest\x1a\x1e.stagd.api.v1.ListLogsResponse\x12X\n" +
 	"\rListBuildLogs\x12\".stagd.api.v1.ListBuildLogsRequest\x1a#.stagd.api.v1.ListBuildLogsResponse\x12O\n" +
@@ -4989,7 +5675,7 @@ func file_stagd_api_v1_previews_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_previews_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_stagd_api_v1_previews_proto_msgTypes = make([]protoimpl.MessageInfo, 65)
+var file_stagd_api_v1_previews_proto_msgTypes = make([]protoimpl.MessageInfo, 73)
 var file_stagd_api_v1_previews_proto_goTypes = []any{
 	(PreviewAccess)(0),                  // 0: stagd.api.v1.PreviewAccess
 	(PreviewStatus)(0),                  // 1: stagd.api.v1.PreviewStatus
@@ -5030,171 +5716,195 @@ var file_stagd_api_v1_previews_proto_goTypes = []any{
 	(*PreviewEvent)(nil),                // 36: stagd.api.v1.PreviewEvent
 	(*ListPreviewEventsResponse)(nil),   // 37: stagd.api.v1.ListPreviewEventsResponse
 	(*ListTextsRequest)(nil),            // 38: stagd.api.v1.ListTextsRequest
-	(*TextMessage)(nil),                 // 39: stagd.api.v1.TextMessage
-	(*ListTextsResponse)(nil),           // 40: stagd.api.v1.ListTextsResponse
-	(*ListMailRequest)(nil),             // 41: stagd.api.v1.ListMailRequest
-	(*MailAddress)(nil),                 // 42: stagd.api.v1.MailAddress
-	(*MailSummary)(nil),                 // 43: stagd.api.v1.MailSummary
-	(*ListMailResponse)(nil),            // 44: stagd.api.v1.ListMailResponse
-	(*GetMailRequest)(nil),              // 45: stagd.api.v1.GetMailRequest
-	(*MailHeader)(nil),                  // 46: stagd.api.v1.MailHeader
-	(*MailMessage)(nil),                 // 47: stagd.api.v1.MailMessage
-	(*GetMailResponse)(nil),             // 48: stagd.api.v1.GetMailResponse
-	(*ClearMailRequest)(nil),            // 49: stagd.api.v1.ClearMailRequest
-	(*ClearMailResponse)(nil),           // 50: stagd.api.v1.ClearMailResponse
-	(*DeleteMailRequest)(nil),           // 51: stagd.api.v1.DeleteMailRequest
-	(*DeleteMailResponse)(nil),          // 52: stagd.api.v1.DeleteMailResponse
-	(*GetServiceUsageRequest)(nil),      // 53: stagd.api.v1.GetServiceUsageRequest
-	(*GetServiceUsageResponse)(nil),     // 54: stagd.api.v1.GetServiceUsageResponse
-	(*ServiceUsage)(nil),                // 55: stagd.api.v1.ServiceUsage
-	(*UsagePoint)(nil),                  // 56: stagd.api.v1.UsagePoint
-	(*ListBuildLogsRequest)(nil),        // 57: stagd.api.v1.ListBuildLogsRequest
-	(*ListBuildLogsResponse)(nil),       // 58: stagd.api.v1.ListBuildLogsResponse
-	(*BuildLog)(nil),                    // 59: stagd.api.v1.BuildLog
-	(*ListLogsRequest)(nil),             // 60: stagd.api.v1.ListLogsRequest
-	(*ListLogsResponse)(nil),            // 61: stagd.api.v1.ListLogsResponse
-	(*LogLine)(nil),                     // 62: stagd.api.v1.LogLine
-	(*LogField)(nil),                    // 63: stagd.api.v1.LogField
-	(*ListTracesRequest)(nil),           // 64: stagd.api.v1.ListTracesRequest
-	(*ListTracesResponse)(nil),          // 65: stagd.api.v1.ListTracesResponse
-	(*TraceSummary)(nil),                // 66: stagd.api.v1.TraceSummary
-	(*GetTraceRequest)(nil),             // 67: stagd.api.v1.GetTraceRequest
-	(*GetTraceResponse)(nil),            // 68: stagd.api.v1.GetTraceResponse
-	(*Span)(nil),                        // 69: stagd.api.v1.Span
-	(*SpanEvent)(nil),                   // 70: stagd.api.v1.SpanEvent
-	nil,                                 // 71: stagd.api.v1.ValidateAppRequest.FilesEntry
-	(*durationpb.Duration)(nil),         // 72: google.protobuf.Duration
-	(*SeedFile)(nil),                    // 73: stagd.api.v1.SeedFile
-	(*Repository)(nil),                  // 74: stagd.api.v1.Repository
-	(*ChangeRequest)(nil),               // 75: stagd.api.v1.ChangeRequest
-	(*timestamppb.Timestamp)(nil),       // 76: google.protobuf.Timestamp
-	(ComputeProvider)(0),                // 77: stagd.api.v1.ComputeProvider
-	(*v1.Config)(nil),                   // 78: stagd.config.v1.Config
+	(*TextFilter)(nil),                  // 39: stagd.api.v1.TextFilter
+	(*TextMessage)(nil),                 // 40: stagd.api.v1.TextMessage
+	(*ListTextsResponse)(nil),           // 41: stagd.api.v1.ListTextsResponse
+	(*WaitForTextsRequest)(nil),         // 42: stagd.api.v1.WaitForTextsRequest
+	(*WaitForTextsResponse)(nil),        // 43: stagd.api.v1.WaitForTextsResponse
+	(*ListMailRequest)(nil),             // 44: stagd.api.v1.ListMailRequest
+	(*MailFilter)(nil),                  // 45: stagd.api.v1.MailFilter
+	(*MailAddress)(nil),                 // 46: stagd.api.v1.MailAddress
+	(*MailSummary)(nil),                 // 47: stagd.api.v1.MailSummary
+	(*ListMailResponse)(nil),            // 48: stagd.api.v1.ListMailResponse
+	(*WaitForMailRequest)(nil),          // 49: stagd.api.v1.WaitForMailRequest
+	(*WaitForMailResponse)(nil),         // 50: stagd.api.v1.WaitForMailResponse
+	(*GetMailRequest)(nil),              // 51: stagd.api.v1.GetMailRequest
+	(*MailHeader)(nil),                  // 52: stagd.api.v1.MailHeader
+	(*MailMessage)(nil),                 // 53: stagd.api.v1.MailMessage
+	(*MailAttachment)(nil),              // 54: stagd.api.v1.MailAttachment
+	(*UnfilledText)(nil),                // 55: stagd.api.v1.UnfilledText
+	(*GetMailResponse)(nil),             // 56: stagd.api.v1.GetMailResponse
+	(*ClearMailRequest)(nil),            // 57: stagd.api.v1.ClearMailRequest
+	(*ClearMailResponse)(nil),           // 58: stagd.api.v1.ClearMailResponse
+	(*DeleteMailRequest)(nil),           // 59: stagd.api.v1.DeleteMailRequest
+	(*DeleteMailResponse)(nil),          // 60: stagd.api.v1.DeleteMailResponse
+	(*GetServiceUsageRequest)(nil),      // 61: stagd.api.v1.GetServiceUsageRequest
+	(*GetServiceUsageResponse)(nil),     // 62: stagd.api.v1.GetServiceUsageResponse
+	(*ServiceUsage)(nil),                // 63: stagd.api.v1.ServiceUsage
+	(*UsagePoint)(nil),                  // 64: stagd.api.v1.UsagePoint
+	(*ListBuildLogsRequest)(nil),        // 65: stagd.api.v1.ListBuildLogsRequest
+	(*ListBuildLogsResponse)(nil),       // 66: stagd.api.v1.ListBuildLogsResponse
+	(*BuildLog)(nil),                    // 67: stagd.api.v1.BuildLog
+	(*ListLogsRequest)(nil),             // 68: stagd.api.v1.ListLogsRequest
+	(*ListLogsResponse)(nil),            // 69: stagd.api.v1.ListLogsResponse
+	(*LogLine)(nil),                     // 70: stagd.api.v1.LogLine
+	(*LogField)(nil),                    // 71: stagd.api.v1.LogField
+	(*ListTracesRequest)(nil),           // 72: stagd.api.v1.ListTracesRequest
+	(*ListTracesResponse)(nil),          // 73: stagd.api.v1.ListTracesResponse
+	(*TraceSummary)(nil),                // 74: stagd.api.v1.TraceSummary
+	(*GetTraceRequest)(nil),             // 75: stagd.api.v1.GetTraceRequest
+	(*GetTraceResponse)(nil),            // 76: stagd.api.v1.GetTraceResponse
+	(*Span)(nil),                        // 77: stagd.api.v1.Span
+	(*SpanEvent)(nil),                   // 78: stagd.api.v1.SpanEvent
+	nil,                                 // 79: stagd.api.v1.ValidateAppRequest.FilesEntry
+	(*durationpb.Duration)(nil),         // 80: google.protobuf.Duration
+	(*SeedFile)(nil),                    // 81: stagd.api.v1.SeedFile
+	(*Repository)(nil),                  // 82: stagd.api.v1.Repository
+	(*ChangeRequest)(nil),               // 83: stagd.api.v1.ChangeRequest
+	(*timestamppb.Timestamp)(nil),       // 84: google.protobuf.Timestamp
+	(ComputeProvider)(0),                // 85: stagd.api.v1.ComputeProvider
+	(*v1.Config)(nil),                   // 86: stagd.config.v1.Config
 }
 var file_stagd_api_v1_previews_proto_depIdxs = []int32{
-	0,  // 0: stagd.api.v1.PreviewPolicy.access:type_name -> stagd.api.v1.PreviewAccess
-	72, // 1: stagd.api.v1.PreviewPolicy.sleep_after:type_name -> google.protobuf.Duration
-	72, // 2: stagd.api.v1.PreviewPolicy.expire_after:type_name -> google.protobuf.Duration
-	73, // 3: stagd.api.v1.PreviewSeed.file:type_name -> stagd.api.v1.SeedFile
-	3,  // 4: stagd.api.v1.PreviewComponent.phase:type_name -> stagd.api.v1.ComponentPhase
-	74, // 5: stagd.api.v1.Preview.repository:type_name -> stagd.api.v1.Repository
-	75, // 6: stagd.api.v1.Preview.change:type_name -> stagd.api.v1.ChangeRequest
-	1,  // 7: stagd.api.v1.Preview.status:type_name -> stagd.api.v1.PreviewStatus
-	2,  // 8: stagd.api.v1.Preview.trigger:type_name -> stagd.api.v1.PreviewTrigger
-	76, // 9: stagd.api.v1.Preview.create_time:type_name -> google.protobuf.Timestamp
-	76, // 10: stagd.api.v1.Preview.update_time:type_name -> google.protobuf.Timestamp
-	76, // 11: stagd.api.v1.Preview.expire_time:type_name -> google.protobuf.Timestamp
-	10, // 12: stagd.api.v1.Preview.ingresses:type_name -> stagd.api.v1.PreviewIngress
-	9,  // 13: stagd.api.v1.Preview.components:type_name -> stagd.api.v1.PreviewComponent
-	0,  // 14: stagd.api.v1.Preview.access:type_name -> stagd.api.v1.PreviewAccess
-	13, // 15: stagd.api.v1.Preview.compute:type_name -> stagd.api.v1.PreviewCompute
-	76, // 16: stagd.api.v1.Preview.thumbnail_time:type_name -> google.protobuf.Timestamp
-	8,  // 17: stagd.api.v1.Preview.seed:type_name -> stagd.api.v1.PreviewSeed
-	8,  // 18: stagd.api.v1.Preview.seeds:type_name -> stagd.api.v1.PreviewSeed
-	77, // 19: stagd.api.v1.PreviewCompute.provider:type_name -> stagd.api.v1.ComputeProvider
-	75, // 20: stagd.api.v1.ListSourcesResponse.changes:type_name -> stagd.api.v1.ChangeRequest
-	11, // 21: stagd.api.v1.CreatePreviewRequest.source:type_name -> stagd.api.v1.PreviewSource
-	12, // 22: stagd.api.v1.CreatePreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	12, // 23: stagd.api.v1.GetPreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	1,  // 24: stagd.api.v1.ListPreviewsRequest.statuses:type_name -> stagd.api.v1.PreviewStatus
-	12, // 25: stagd.api.v1.ListPreviewsResponse.previews:type_name -> stagd.api.v1.Preview
-	12, // 26: stagd.api.v1.WatchPreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	12, // 27: stagd.api.v1.WakePreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	12, // 28: stagd.api.v1.DestroyPreviewResponse.preview:type_name -> stagd.api.v1.Preview
-	7,  // 29: stagd.api.v1.GetPreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
-	7,  // 30: stagd.api.v1.UpdatePreviewPolicyRequest.policy:type_name -> stagd.api.v1.PreviewPolicy
-	7,  // 31: stagd.api.v1.UpdatePreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
-	71, // 32: stagd.api.v1.ValidateAppRequest.files:type_name -> stagd.api.v1.ValidateAppRequest.FilesEntry
-	33, // 33: stagd.api.v1.ValidateAppResponse.components:type_name -> stagd.api.v1.AppComponent
-	10, // 34: stagd.api.v1.ValidateAppResponse.ingresses:type_name -> stagd.api.v1.PreviewIngress
-	78, // 35: stagd.api.v1.ValidateAppResponse.config:type_name -> stagd.config.v1.Config
-	76, // 36: stagd.api.v1.PreviewEvent.time:type_name -> google.protobuf.Timestamp
-	1,  // 37: stagd.api.v1.PreviewEvent.status:type_name -> stagd.api.v1.PreviewStatus
-	36, // 38: stagd.api.v1.ListPreviewEventsResponse.events:type_name -> stagd.api.v1.PreviewEvent
-	76, // 39: stagd.api.v1.TextMessage.send_time:type_name -> google.protobuf.Timestamp
-	39, // 40: stagd.api.v1.ListTextsResponse.texts:type_name -> stagd.api.v1.TextMessage
-	42, // 41: stagd.api.v1.MailSummary.from:type_name -> stagd.api.v1.MailAddress
-	42, // 42: stagd.api.v1.MailSummary.to:type_name -> stagd.api.v1.MailAddress
-	76, // 43: stagd.api.v1.MailSummary.receive_time:type_name -> google.protobuf.Timestamp
-	43, // 44: stagd.api.v1.ListMailResponse.messages:type_name -> stagd.api.v1.MailSummary
-	43, // 45: stagd.api.v1.MailMessage.summary:type_name -> stagd.api.v1.MailSummary
-	42, // 46: stagd.api.v1.MailMessage.cc:type_name -> stagd.api.v1.MailAddress
-	46, // 47: stagd.api.v1.MailMessage.headers:type_name -> stagd.api.v1.MailHeader
-	47, // 48: stagd.api.v1.GetMailResponse.message:type_name -> stagd.api.v1.MailMessage
-	72, // 49: stagd.api.v1.GetServiceUsageRequest.window:type_name -> google.protobuf.Duration
-	55, // 50: stagd.api.v1.GetServiceUsageResponse.services:type_name -> stagd.api.v1.ServiceUsage
-	56, // 51: stagd.api.v1.ServiceUsage.points:type_name -> stagd.api.v1.UsagePoint
-	76, // 52: stagd.api.v1.ServiceUsage.sampled_at:type_name -> google.protobuf.Timestamp
-	76, // 53: stagd.api.v1.ServiceUsage.started_at:type_name -> google.protobuf.Timestamp
-	76, // 54: stagd.api.v1.UsagePoint.time:type_name -> google.protobuf.Timestamp
-	59, // 55: stagd.api.v1.ListBuildLogsResponse.builds:type_name -> stagd.api.v1.BuildLog
-	76, // 56: stagd.api.v1.ListLogsRequest.since:type_name -> google.protobuf.Timestamp
-	62, // 57: stagd.api.v1.ListLogsResponse.lines:type_name -> stagd.api.v1.LogLine
-	76, // 58: stagd.api.v1.LogLine.time:type_name -> google.protobuf.Timestamp
-	4,  // 59: stagd.api.v1.LogLine.level:type_name -> stagd.api.v1.LogLevel
-	63, // 60: stagd.api.v1.LogLine.fields:type_name -> stagd.api.v1.LogField
-	5,  // 61: stagd.api.v1.LogLine.format:type_name -> stagd.api.v1.LogFormat
-	76, // 62: stagd.api.v1.ListTracesRequest.since:type_name -> google.protobuf.Timestamp
-	76, // 63: stagd.api.v1.ListTracesRequest.until:type_name -> google.protobuf.Timestamp
-	72, // 64: stagd.api.v1.ListTracesRequest.min_duration:type_name -> google.protobuf.Duration
-	66, // 65: stagd.api.v1.ListTracesResponse.traces:type_name -> stagd.api.v1.TraceSummary
-	76, // 66: stagd.api.v1.TraceSummary.start_time:type_name -> google.protobuf.Timestamp
-	72, // 67: stagd.api.v1.TraceSummary.duration:type_name -> google.protobuf.Duration
-	69, // 68: stagd.api.v1.GetTraceResponse.spans:type_name -> stagd.api.v1.Span
-	6,  // 69: stagd.api.v1.Span.kind:type_name -> stagd.api.v1.SpanKind
-	76, // 70: stagd.api.v1.Span.start_time:type_name -> google.protobuf.Timestamp
-	72, // 71: stagd.api.v1.Span.duration:type_name -> google.protobuf.Duration
-	63, // 72: stagd.api.v1.Span.attributes:type_name -> stagd.api.v1.LogField
-	70, // 73: stagd.api.v1.Span.events:type_name -> stagd.api.v1.SpanEvent
-	76, // 74: stagd.api.v1.SpanEvent.time:type_name -> google.protobuf.Timestamp
-	63, // 75: stagd.api.v1.SpanEvent.attributes:type_name -> stagd.api.v1.LogField
-	16, // 76: stagd.api.v1.PreviewService.CreatePreview:input_type -> stagd.api.v1.CreatePreviewRequest
-	14, // 77: stagd.api.v1.PreviewService.ListSources:input_type -> stagd.api.v1.ListSourcesRequest
-	18, // 78: stagd.api.v1.PreviewService.GetPreview:input_type -> stagd.api.v1.GetPreviewRequest
-	20, // 79: stagd.api.v1.PreviewService.ListPreviews:input_type -> stagd.api.v1.ListPreviewsRequest
-	22, // 80: stagd.api.v1.PreviewService.WatchPreview:input_type -> stagd.api.v1.WatchPreviewRequest
-	35, // 81: stagd.api.v1.PreviewService.ListPreviewEvents:input_type -> stagd.api.v1.ListPreviewEventsRequest
-	24, // 82: stagd.api.v1.PreviewService.WakePreview:input_type -> stagd.api.v1.WakePreviewRequest
-	26, // 83: stagd.api.v1.PreviewService.DestroyPreview:input_type -> stagd.api.v1.DestroyPreviewRequest
-	28, // 84: stagd.api.v1.PreviewService.GetPreviewPolicy:input_type -> stagd.api.v1.GetPreviewPolicyRequest
-	30, // 85: stagd.api.v1.PreviewService.UpdatePreviewPolicy:input_type -> stagd.api.v1.UpdatePreviewPolicyRequest
-	32, // 86: stagd.api.v1.PreviewService.ValidateApp:input_type -> stagd.api.v1.ValidateAppRequest
-	41, // 87: stagd.api.v1.PreviewService.ListMail:input_type -> stagd.api.v1.ListMailRequest
-	45, // 88: stagd.api.v1.PreviewService.GetMail:input_type -> stagd.api.v1.GetMailRequest
-	49, // 89: stagd.api.v1.PreviewService.ClearMail:input_type -> stagd.api.v1.ClearMailRequest
-	51, // 90: stagd.api.v1.PreviewService.DeleteMail:input_type -> stagd.api.v1.DeleteMailRequest
-	38, // 91: stagd.api.v1.PreviewService.ListTexts:input_type -> stagd.api.v1.ListTextsRequest
-	53, // 92: stagd.api.v1.PreviewService.GetServiceUsage:input_type -> stagd.api.v1.GetServiceUsageRequest
-	60, // 93: stagd.api.v1.PreviewService.ListLogs:input_type -> stagd.api.v1.ListLogsRequest
-	57, // 94: stagd.api.v1.PreviewService.ListBuildLogs:input_type -> stagd.api.v1.ListBuildLogsRequest
-	64, // 95: stagd.api.v1.PreviewService.ListTraces:input_type -> stagd.api.v1.ListTracesRequest
-	67, // 96: stagd.api.v1.PreviewService.GetTrace:input_type -> stagd.api.v1.GetTraceRequest
-	17, // 97: stagd.api.v1.PreviewService.CreatePreview:output_type -> stagd.api.v1.CreatePreviewResponse
-	15, // 98: stagd.api.v1.PreviewService.ListSources:output_type -> stagd.api.v1.ListSourcesResponse
-	19, // 99: stagd.api.v1.PreviewService.GetPreview:output_type -> stagd.api.v1.GetPreviewResponse
-	21, // 100: stagd.api.v1.PreviewService.ListPreviews:output_type -> stagd.api.v1.ListPreviewsResponse
-	23, // 101: stagd.api.v1.PreviewService.WatchPreview:output_type -> stagd.api.v1.WatchPreviewResponse
-	37, // 102: stagd.api.v1.PreviewService.ListPreviewEvents:output_type -> stagd.api.v1.ListPreviewEventsResponse
-	25, // 103: stagd.api.v1.PreviewService.WakePreview:output_type -> stagd.api.v1.WakePreviewResponse
-	27, // 104: stagd.api.v1.PreviewService.DestroyPreview:output_type -> stagd.api.v1.DestroyPreviewResponse
-	29, // 105: stagd.api.v1.PreviewService.GetPreviewPolicy:output_type -> stagd.api.v1.GetPreviewPolicyResponse
-	31, // 106: stagd.api.v1.PreviewService.UpdatePreviewPolicy:output_type -> stagd.api.v1.UpdatePreviewPolicyResponse
-	34, // 107: stagd.api.v1.PreviewService.ValidateApp:output_type -> stagd.api.v1.ValidateAppResponse
-	44, // 108: stagd.api.v1.PreviewService.ListMail:output_type -> stagd.api.v1.ListMailResponse
-	48, // 109: stagd.api.v1.PreviewService.GetMail:output_type -> stagd.api.v1.GetMailResponse
-	50, // 110: stagd.api.v1.PreviewService.ClearMail:output_type -> stagd.api.v1.ClearMailResponse
-	52, // 111: stagd.api.v1.PreviewService.DeleteMail:output_type -> stagd.api.v1.DeleteMailResponse
-	40, // 112: stagd.api.v1.PreviewService.ListTexts:output_type -> stagd.api.v1.ListTextsResponse
-	54, // 113: stagd.api.v1.PreviewService.GetServiceUsage:output_type -> stagd.api.v1.GetServiceUsageResponse
-	61, // 114: stagd.api.v1.PreviewService.ListLogs:output_type -> stagd.api.v1.ListLogsResponse
-	58, // 115: stagd.api.v1.PreviewService.ListBuildLogs:output_type -> stagd.api.v1.ListBuildLogsResponse
-	65, // 116: stagd.api.v1.PreviewService.ListTraces:output_type -> stagd.api.v1.ListTracesResponse
-	68, // 117: stagd.api.v1.PreviewService.GetTrace:output_type -> stagd.api.v1.GetTraceResponse
-	97, // [97:118] is the sub-list for method output_type
-	76, // [76:97] is the sub-list for method input_type
-	76, // [76:76] is the sub-list for extension type_name
-	76, // [76:76] is the sub-list for extension extendee
-	0,  // [0:76] is the sub-list for field type_name
+	0,   // 0: stagd.api.v1.PreviewPolicy.access:type_name -> stagd.api.v1.PreviewAccess
+	80,  // 1: stagd.api.v1.PreviewPolicy.sleep_after:type_name -> google.protobuf.Duration
+	80,  // 2: stagd.api.v1.PreviewPolicy.expire_after:type_name -> google.protobuf.Duration
+	81,  // 3: stagd.api.v1.PreviewSeed.file:type_name -> stagd.api.v1.SeedFile
+	3,   // 4: stagd.api.v1.PreviewComponent.phase:type_name -> stagd.api.v1.ComponentPhase
+	82,  // 5: stagd.api.v1.Preview.repository:type_name -> stagd.api.v1.Repository
+	83,  // 6: stagd.api.v1.Preview.change:type_name -> stagd.api.v1.ChangeRequest
+	1,   // 7: stagd.api.v1.Preview.status:type_name -> stagd.api.v1.PreviewStatus
+	2,   // 8: stagd.api.v1.Preview.trigger:type_name -> stagd.api.v1.PreviewTrigger
+	84,  // 9: stagd.api.v1.Preview.create_time:type_name -> google.protobuf.Timestamp
+	84,  // 10: stagd.api.v1.Preview.update_time:type_name -> google.protobuf.Timestamp
+	84,  // 11: stagd.api.v1.Preview.expire_time:type_name -> google.protobuf.Timestamp
+	10,  // 12: stagd.api.v1.Preview.ingresses:type_name -> stagd.api.v1.PreviewIngress
+	9,   // 13: stagd.api.v1.Preview.components:type_name -> stagd.api.v1.PreviewComponent
+	0,   // 14: stagd.api.v1.Preview.access:type_name -> stagd.api.v1.PreviewAccess
+	13,  // 15: stagd.api.v1.Preview.compute:type_name -> stagd.api.v1.PreviewCompute
+	84,  // 16: stagd.api.v1.Preview.thumbnail_time:type_name -> google.protobuf.Timestamp
+	8,   // 17: stagd.api.v1.Preview.seed:type_name -> stagd.api.v1.PreviewSeed
+	8,   // 18: stagd.api.v1.Preview.seeds:type_name -> stagd.api.v1.PreviewSeed
+	85,  // 19: stagd.api.v1.PreviewCompute.provider:type_name -> stagd.api.v1.ComputeProvider
+	83,  // 20: stagd.api.v1.ListSourcesResponse.changes:type_name -> stagd.api.v1.ChangeRequest
+	11,  // 21: stagd.api.v1.CreatePreviewRequest.source:type_name -> stagd.api.v1.PreviewSource
+	12,  // 22: stagd.api.v1.CreatePreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	12,  // 23: stagd.api.v1.GetPreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	1,   // 24: stagd.api.v1.ListPreviewsRequest.statuses:type_name -> stagd.api.v1.PreviewStatus
+	12,  // 25: stagd.api.v1.ListPreviewsResponse.previews:type_name -> stagd.api.v1.Preview
+	12,  // 26: stagd.api.v1.WatchPreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	12,  // 27: stagd.api.v1.WakePreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	12,  // 28: stagd.api.v1.DestroyPreviewResponse.preview:type_name -> stagd.api.v1.Preview
+	7,   // 29: stagd.api.v1.GetPreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
+	7,   // 30: stagd.api.v1.UpdatePreviewPolicyRequest.policy:type_name -> stagd.api.v1.PreviewPolicy
+	7,   // 31: stagd.api.v1.UpdatePreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
+	79,  // 32: stagd.api.v1.ValidateAppRequest.files:type_name -> stagd.api.v1.ValidateAppRequest.FilesEntry
+	33,  // 33: stagd.api.v1.ValidateAppResponse.components:type_name -> stagd.api.v1.AppComponent
+	10,  // 34: stagd.api.v1.ValidateAppResponse.ingresses:type_name -> stagd.api.v1.PreviewIngress
+	86,  // 35: stagd.api.v1.ValidateAppResponse.config:type_name -> stagd.config.v1.Config
+	84,  // 36: stagd.api.v1.PreviewEvent.time:type_name -> google.protobuf.Timestamp
+	1,   // 37: stagd.api.v1.PreviewEvent.status:type_name -> stagd.api.v1.PreviewStatus
+	36,  // 38: stagd.api.v1.ListPreviewEventsResponse.events:type_name -> stagd.api.v1.PreviewEvent
+	39,  // 39: stagd.api.v1.ListTextsRequest.filter:type_name -> stagd.api.v1.TextFilter
+	84,  // 40: stagd.api.v1.TextMessage.send_time:type_name -> google.protobuf.Timestamp
+	40,  // 41: stagd.api.v1.ListTextsResponse.texts:type_name -> stagd.api.v1.TextMessage
+	39,  // 42: stagd.api.v1.WaitForTextsRequest.filter:type_name -> stagd.api.v1.TextFilter
+	80,  // 43: stagd.api.v1.WaitForTextsRequest.timeout:type_name -> google.protobuf.Duration
+	40,  // 44: stagd.api.v1.WaitForTextsResponse.texts:type_name -> stagd.api.v1.TextMessage
+	45,  // 45: stagd.api.v1.ListMailRequest.filter:type_name -> stagd.api.v1.MailFilter
+	46,  // 46: stagd.api.v1.MailSummary.from:type_name -> stagd.api.v1.MailAddress
+	46,  // 47: stagd.api.v1.MailSummary.to:type_name -> stagd.api.v1.MailAddress
+	84,  // 48: stagd.api.v1.MailSummary.receive_time:type_name -> google.protobuf.Timestamp
+	46,  // 49: stagd.api.v1.MailSummary.cc:type_name -> stagd.api.v1.MailAddress
+	46,  // 50: stagd.api.v1.MailSummary.bcc:type_name -> stagd.api.v1.MailAddress
+	47,  // 51: stagd.api.v1.ListMailResponse.messages:type_name -> stagd.api.v1.MailSummary
+	45,  // 52: stagd.api.v1.WaitForMailRequest.filter:type_name -> stagd.api.v1.MailFilter
+	80,  // 53: stagd.api.v1.WaitForMailRequest.timeout:type_name -> google.protobuf.Duration
+	47,  // 54: stagd.api.v1.WaitForMailResponse.messages:type_name -> stagd.api.v1.MailSummary
+	47,  // 55: stagd.api.v1.MailMessage.summary:type_name -> stagd.api.v1.MailSummary
+	46,  // 56: stagd.api.v1.MailMessage.cc:type_name -> stagd.api.v1.MailAddress
+	52,  // 57: stagd.api.v1.MailMessage.headers:type_name -> stagd.api.v1.MailHeader
+	54,  // 58: stagd.api.v1.MailMessage.attachments:type_name -> stagd.api.v1.MailAttachment
+	55,  // 59: stagd.api.v1.MailMessage.unfilled:type_name -> stagd.api.v1.UnfilledText
+	53,  // 60: stagd.api.v1.GetMailResponse.message:type_name -> stagd.api.v1.MailMessage
+	80,  // 61: stagd.api.v1.GetServiceUsageRequest.window:type_name -> google.protobuf.Duration
+	63,  // 62: stagd.api.v1.GetServiceUsageResponse.services:type_name -> stagd.api.v1.ServiceUsage
+	64,  // 63: stagd.api.v1.ServiceUsage.points:type_name -> stagd.api.v1.UsagePoint
+	84,  // 64: stagd.api.v1.ServiceUsage.sampled_at:type_name -> google.protobuf.Timestamp
+	84,  // 65: stagd.api.v1.ServiceUsage.started_at:type_name -> google.protobuf.Timestamp
+	84,  // 66: stagd.api.v1.UsagePoint.time:type_name -> google.protobuf.Timestamp
+	67,  // 67: stagd.api.v1.ListBuildLogsResponse.builds:type_name -> stagd.api.v1.BuildLog
+	84,  // 68: stagd.api.v1.ListLogsRequest.since:type_name -> google.protobuf.Timestamp
+	70,  // 69: stagd.api.v1.ListLogsResponse.lines:type_name -> stagd.api.v1.LogLine
+	84,  // 70: stagd.api.v1.LogLine.time:type_name -> google.protobuf.Timestamp
+	4,   // 71: stagd.api.v1.LogLine.level:type_name -> stagd.api.v1.LogLevel
+	71,  // 72: stagd.api.v1.LogLine.fields:type_name -> stagd.api.v1.LogField
+	5,   // 73: stagd.api.v1.LogLine.format:type_name -> stagd.api.v1.LogFormat
+	84,  // 74: stagd.api.v1.ListTracesRequest.since:type_name -> google.protobuf.Timestamp
+	84,  // 75: stagd.api.v1.ListTracesRequest.until:type_name -> google.protobuf.Timestamp
+	80,  // 76: stagd.api.v1.ListTracesRequest.min_duration:type_name -> google.protobuf.Duration
+	74,  // 77: stagd.api.v1.ListTracesResponse.traces:type_name -> stagd.api.v1.TraceSummary
+	84,  // 78: stagd.api.v1.TraceSummary.start_time:type_name -> google.protobuf.Timestamp
+	80,  // 79: stagd.api.v1.TraceSummary.duration:type_name -> google.protobuf.Duration
+	77,  // 80: stagd.api.v1.GetTraceResponse.spans:type_name -> stagd.api.v1.Span
+	6,   // 81: stagd.api.v1.Span.kind:type_name -> stagd.api.v1.SpanKind
+	84,  // 82: stagd.api.v1.Span.start_time:type_name -> google.protobuf.Timestamp
+	80,  // 83: stagd.api.v1.Span.duration:type_name -> google.protobuf.Duration
+	71,  // 84: stagd.api.v1.Span.attributes:type_name -> stagd.api.v1.LogField
+	78,  // 85: stagd.api.v1.Span.events:type_name -> stagd.api.v1.SpanEvent
+	84,  // 86: stagd.api.v1.SpanEvent.time:type_name -> google.protobuf.Timestamp
+	71,  // 87: stagd.api.v1.SpanEvent.attributes:type_name -> stagd.api.v1.LogField
+	16,  // 88: stagd.api.v1.PreviewService.CreatePreview:input_type -> stagd.api.v1.CreatePreviewRequest
+	14,  // 89: stagd.api.v1.PreviewService.ListSources:input_type -> stagd.api.v1.ListSourcesRequest
+	18,  // 90: stagd.api.v1.PreviewService.GetPreview:input_type -> stagd.api.v1.GetPreviewRequest
+	20,  // 91: stagd.api.v1.PreviewService.ListPreviews:input_type -> stagd.api.v1.ListPreviewsRequest
+	22,  // 92: stagd.api.v1.PreviewService.WatchPreview:input_type -> stagd.api.v1.WatchPreviewRequest
+	35,  // 93: stagd.api.v1.PreviewService.ListPreviewEvents:input_type -> stagd.api.v1.ListPreviewEventsRequest
+	24,  // 94: stagd.api.v1.PreviewService.WakePreview:input_type -> stagd.api.v1.WakePreviewRequest
+	26,  // 95: stagd.api.v1.PreviewService.DestroyPreview:input_type -> stagd.api.v1.DestroyPreviewRequest
+	28,  // 96: stagd.api.v1.PreviewService.GetPreviewPolicy:input_type -> stagd.api.v1.GetPreviewPolicyRequest
+	30,  // 97: stagd.api.v1.PreviewService.UpdatePreviewPolicy:input_type -> stagd.api.v1.UpdatePreviewPolicyRequest
+	32,  // 98: stagd.api.v1.PreviewService.ValidateApp:input_type -> stagd.api.v1.ValidateAppRequest
+	44,  // 99: stagd.api.v1.PreviewService.ListMail:input_type -> stagd.api.v1.ListMailRequest
+	51,  // 100: stagd.api.v1.PreviewService.GetMail:input_type -> stagd.api.v1.GetMailRequest
+	57,  // 101: stagd.api.v1.PreviewService.ClearMail:input_type -> stagd.api.v1.ClearMailRequest
+	59,  // 102: stagd.api.v1.PreviewService.DeleteMail:input_type -> stagd.api.v1.DeleteMailRequest
+	49,  // 103: stagd.api.v1.PreviewService.WaitForMail:input_type -> stagd.api.v1.WaitForMailRequest
+	38,  // 104: stagd.api.v1.PreviewService.ListTexts:input_type -> stagd.api.v1.ListTextsRequest
+	42,  // 105: stagd.api.v1.PreviewService.WaitForTexts:input_type -> stagd.api.v1.WaitForTextsRequest
+	61,  // 106: stagd.api.v1.PreviewService.GetServiceUsage:input_type -> stagd.api.v1.GetServiceUsageRequest
+	68,  // 107: stagd.api.v1.PreviewService.ListLogs:input_type -> stagd.api.v1.ListLogsRequest
+	65,  // 108: stagd.api.v1.PreviewService.ListBuildLogs:input_type -> stagd.api.v1.ListBuildLogsRequest
+	72,  // 109: stagd.api.v1.PreviewService.ListTraces:input_type -> stagd.api.v1.ListTracesRequest
+	75,  // 110: stagd.api.v1.PreviewService.GetTrace:input_type -> stagd.api.v1.GetTraceRequest
+	17,  // 111: stagd.api.v1.PreviewService.CreatePreview:output_type -> stagd.api.v1.CreatePreviewResponse
+	15,  // 112: stagd.api.v1.PreviewService.ListSources:output_type -> stagd.api.v1.ListSourcesResponse
+	19,  // 113: stagd.api.v1.PreviewService.GetPreview:output_type -> stagd.api.v1.GetPreviewResponse
+	21,  // 114: stagd.api.v1.PreviewService.ListPreviews:output_type -> stagd.api.v1.ListPreviewsResponse
+	23,  // 115: stagd.api.v1.PreviewService.WatchPreview:output_type -> stagd.api.v1.WatchPreviewResponse
+	37,  // 116: stagd.api.v1.PreviewService.ListPreviewEvents:output_type -> stagd.api.v1.ListPreviewEventsResponse
+	25,  // 117: stagd.api.v1.PreviewService.WakePreview:output_type -> stagd.api.v1.WakePreviewResponse
+	27,  // 118: stagd.api.v1.PreviewService.DestroyPreview:output_type -> stagd.api.v1.DestroyPreviewResponse
+	29,  // 119: stagd.api.v1.PreviewService.GetPreviewPolicy:output_type -> stagd.api.v1.GetPreviewPolicyResponse
+	31,  // 120: stagd.api.v1.PreviewService.UpdatePreviewPolicy:output_type -> stagd.api.v1.UpdatePreviewPolicyResponse
+	34,  // 121: stagd.api.v1.PreviewService.ValidateApp:output_type -> stagd.api.v1.ValidateAppResponse
+	48,  // 122: stagd.api.v1.PreviewService.ListMail:output_type -> stagd.api.v1.ListMailResponse
+	56,  // 123: stagd.api.v1.PreviewService.GetMail:output_type -> stagd.api.v1.GetMailResponse
+	58,  // 124: stagd.api.v1.PreviewService.ClearMail:output_type -> stagd.api.v1.ClearMailResponse
+	60,  // 125: stagd.api.v1.PreviewService.DeleteMail:output_type -> stagd.api.v1.DeleteMailResponse
+	50,  // 126: stagd.api.v1.PreviewService.WaitForMail:output_type -> stagd.api.v1.WaitForMailResponse
+	41,  // 127: stagd.api.v1.PreviewService.ListTexts:output_type -> stagd.api.v1.ListTextsResponse
+	43,  // 128: stagd.api.v1.PreviewService.WaitForTexts:output_type -> stagd.api.v1.WaitForTextsResponse
+	62,  // 129: stagd.api.v1.PreviewService.GetServiceUsage:output_type -> stagd.api.v1.GetServiceUsageResponse
+	69,  // 130: stagd.api.v1.PreviewService.ListLogs:output_type -> stagd.api.v1.ListLogsResponse
+	66,  // 131: stagd.api.v1.PreviewService.ListBuildLogs:output_type -> stagd.api.v1.ListBuildLogsResponse
+	73,  // 132: stagd.api.v1.PreviewService.ListTraces:output_type -> stagd.api.v1.ListTracesResponse
+	76,  // 133: stagd.api.v1.PreviewService.GetTrace:output_type -> stagd.api.v1.GetTraceResponse
+	111, // [111:134] is the sub-list for method output_type
+	88,  // [88:111] is the sub-list for method input_type
+	88,  // [88:88] is the sub-list for extension type_name
+	88,  // [88:88] is the sub-list for extension extendee
+	0,   // [0:88] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_previews_proto_init() }
@@ -5215,7 +5925,7 @@ func file_stagd_api_v1_previews_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_previews_proto_rawDesc), len(file_stagd_api_v1_previews_proto_rawDesc)),
 			NumEnums:      7,
-			NumMessages:   65,
+			NumMessages:   73,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
