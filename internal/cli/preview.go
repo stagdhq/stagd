@@ -55,6 +55,7 @@ func previewCommand() *cli.Command {
 			{Name: "destroy", Usage: "tear a preview down now", ArgsUsage: idArg, Action: previewDestroy},
 			previewMailCommand(),
 			previewTextsCommand(),
+			previewLogsCommand(),
 			{
 				Name:  "policy",
 				Usage: "who may open previews, and how their URLs look",
