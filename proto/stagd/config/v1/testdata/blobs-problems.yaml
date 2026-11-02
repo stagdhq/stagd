@@ -1,0 +1,10 @@
+# What services.azure_blob and services.s3 refuse: no integrations, a name
+# that can't be one, a name twice, a setting they haven't got.
+version: 1
+
+services:
+  azure_blob: {}
+  s3:
+    from: [Lab-Uploads, lab-exports, lab-exports]
+    buckets: [scratch]
+  azurite: {}

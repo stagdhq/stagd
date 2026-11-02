@@ -1,0 +1,20 @@
+{
+  "config": {
+    "version": 1,
+    "app": {},
+    "services": {
+      "azure_blob": {
+        "from": ["lab-files", "lab-images"]
+      },
+      "s3": {
+        "from": ["lab-uploads"]
+      }
+    },
+    "previews": {
+      "when": "on-demand"
+    },
+    "commands": {
+      "handled": "delete"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "problems": [
+    "services.azure_blob.from should name the org's Azure Blob Storage integrations to fork, e.g. azure_blob: { from: [lab-files] }",
+    "services.s3.from: \"Lab-Uploads\" can't be an integration's name: lowercase letters, digits and dashes",
+    "services.s3.from names \"lab-exports\" twice",
+    "services.s3: unknown setting \"buckets\"; it has from",
+    "services.azurite: Stagd runs Azurite as azure_blob, a fork of the org's containers: azure_blob: { from: [lab-files] }"
+  ]
+}

@@ -155,6 +155,44 @@ message Services {
   // Catches the text messages (SMS) the app sends through Amazon SNS, for the
   // dashboard's Messages tab: SNS is pointed at Stagd's mock in previews.
   Sms sms = 7;
+
+  // A fork of the org's Azure Blob Storage containers (blobfork): the app
+  // reads every file of the real ones, and what it writes or deletes stays
+  // in the preview. The app gets AZURE_STORAGE_CONNECTION_STRING.
+  AzureBlob azure_blob = 8;
+
+  // A fork of the org's S3 buckets (blobfork), as azure_blob is for Azure:
+  // the app gets AWS_ENDPOINT_URL_S3, and its own AWS key works there.
+  S3 s3 = 9;
+}
+
+// Forks Azure Blob Storage containers, each under its own name.
+message AzureBlob {
+  // The org's Azure Blob Storage integrations whose containers to fork, by
+  // name, as on the Integrations page. Each integration's SAS needs read and
+  // list (sp=rl), and nothing more.
+  repeated string from = 1 [(buf.validate.field).repeated = {
+    min_items: 1
+    unique: true
+    items: {
+      string: {pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"}
+    }
+  }];
+}
+
+// Forks S3 buckets, each under its own name.
+message S3 {
+  // The org's S3 integrations whose buckets to fork, by name, as on the
+  // Integrations page. They're read at one endpoint, in one region, with one
+  // key: integrations that differ in those can't be forked together. Each
+  // key needs s3:ListBucket and s3:GetObject, and nothing more.
+  repeated string from = 1 [(buf.validate.field).repeated = {
+    min_items: 1
+    unique: true
+    items: {
+      string: {pattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"}
+    }
+  }];
 }
 
 // Catches text messages: Amazon SNS, pointed at Stagd's mock

@@ -11,6 +11,22 @@
       },
       "type": "object"
     },
+    "AzureBlob": {
+      "additionalProperties": false,
+      "description": "Forks Azure Blob Storage containers, each under its own name.",
+      "properties": {
+        "from": {
+          "description": "The org's Azure Blob Storage integrations whose containers to fork, by name, as on the Integrations page. Each integration's SAS needs read and list (sp=rl), and nothing more.",
+          "items": {
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "Build": {
       "additionalProperties": false,
       "description": "A service's image: built from the repository, or one built elsewhere.",
@@ -535,10 +551,30 @@
       },
       "type": "object"
     },
+    "S3": {
+      "additionalProperties": false,
+      "description": "Forks S3 buckets, each under its own name.",
+      "properties": {
+        "from": {
+          "description": "The org's S3 integrations whose buckets to fork, by name, as on the Integrations page. They're read at one endpoint, in one region, with one key: integrations that differ in those can't be forked together. Each key needs s3:ListBucket and s3:GetObject, and nothing more.",
+          "items": {
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "Services": {
       "additionalProperties": false,
       "description": "What Stagd runs next to the app.",
       "properties": {
+        "azure_blob": {
+          "$ref": "#/$defs/AzureBlob",
+          "description": "A fork of the org's Azure Blob Storage containers (blobfork): the app reads every file of the real ones, and what it writes or deletes stays in the preview. The app gets AZURE_STORAGE_CONNECTION_STRING."
+        },
         "mail": {
           "$ref": "#/$defs/Mail",
           "description": "Captures the mail the app sends (Mailpit), for the dashboard and the preview's own inbox."
@@ -562,6 +598,10 @@
         "postgres": {
           "$ref": "#/$defs/Postgres",
           "description": "A Postgres database for the preview, started from a seed when there is one. The app gets its URL in DATABASE_URL."
+        },
+        "s3": {
+          "$ref": "#/$defs/S3",
+          "description": "A fork of the org's S3 buckets (blobfork), as azure_blob is for Azure: the app gets AWS_ENDPOINT_URL_S3, and its own AWS key works there."
         },
         "sms": {
           "$ref": "#/$defs/Sms",

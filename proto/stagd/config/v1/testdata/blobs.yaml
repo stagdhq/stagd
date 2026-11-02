@@ -1,0 +1,9 @@
+# services.azure_blob and services.s3: forks of the org's containers and
+# buckets, each named by its integration.
+version: 1
+
+services:
+  azure_blob:
+    from: [lab-files, lab-images]
+  s3:
+    from: [lab-uploads]
