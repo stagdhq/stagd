@@ -14,7 +14,7 @@ func TestStoreKeepsOneTokenPerAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := s.Save("https://api.stagd.dev", "prod-token"); err != nil {
+	if err := s.Save("https://app.stagd.dev", "prod-token"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -31,7 +31,7 @@ func TestStoreKeepsOneTokenPerAPI(t *testing.T) {
 		t.Fatalf("after delete: %v", err)
 	}
 
-	got, err = s.Load("https://api.stagd.dev")
+	got, err = s.Load("https://app.stagd.dev")
 	if err != nil || got != "prod-token" {
 		t.Fatalf("prod = %q, %v", got, err)
 	}
