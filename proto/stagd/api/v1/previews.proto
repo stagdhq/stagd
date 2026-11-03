@@ -572,6 +572,9 @@ message GetTestGuideResponse {
   repeated string emails = 3;
   // The question, to paste into a coding agent.
   string prompt = 4;
+  // Whether What to test is on in Settings → AI, with a model: a guide is
+  // written when the preview goes live, or when someone asks.
+  bool enabled = 5;
 }
 
 message RefreshTestGuideRequest {

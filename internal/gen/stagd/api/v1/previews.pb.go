@@ -3090,7 +3090,10 @@ type GetTestGuideResponse struct {
 	// The subjects of the mail the preview sent.
 	Emails []string `protobuf:"bytes,3,rep,name=emails,proto3" json:"emails,omitempty"`
 	// The question, to paste into a coding agent.
-	Prompt        string `protobuf:"bytes,4,opt,name=prompt,proto3" json:"prompt,omitempty"`
+	Prompt string `protobuf:"bytes,4,opt,name=prompt,proto3" json:"prompt,omitempty"`
+	// Whether What to test is on in Settings → AI, with a model: a guide is
+	// written when the preview goes live, or when someone asks.
+	Enabled       bool `protobuf:"varint,5,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3151,6 +3154,13 @@ func (x *GetTestGuideResponse) GetPrompt() string {
 		return x.Prompt
 	}
 	return ""
+}
+
+func (x *GetTestGuideResponse) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
 }
 
 type RefreshTestGuideRequest struct {
@@ -6879,14 +6889,15 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\afailure\x18\x01 \x01(\v2\x1c.stagd.api.v1.PreviewFailureR\afailure\"F\n" +
 	"\x13GetTestGuideRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12\x16\n" +
-	"\x06inputs\x18\x02 \x01(\bR\x06inputs\"\xb2\x01\n" +
+	"\x06inputs\x18\x02 \x01(\bR\x06inputs\"\xcc\x01\n" +
 	"\x14GetTestGuideResponse\x12-\n" +
 	"\x05guide\x18\x01 \x01(\v2\x17.stagd.api.v1.TestGuideR\x05guide\x12;\n" +
 	"\n" +
 	"candidates\x18\x02 \x03(\v2\x1b.stagd.api.v1.TestGuidePageR\n" +
 	"candidates\x12\x16\n" +
 	"\x06emails\x18\x03 \x03(\tR\x06emails\x12\x16\n" +
-	"\x06prompt\x18\x04 \x01(\tR\x06prompt\"2\n" +
+	"\x06prompt\x18\x04 \x01(\tR\x06prompt\x12\x18\n" +
+	"\aenabled\x18\x05 \x01(\bR\aenabled\"2\n" +
 	"\x17RefreshTestGuideRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"I\n" +
 	"\x18RefreshTestGuideResponse\x12-\n" +
