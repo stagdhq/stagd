@@ -588,6 +588,9 @@ message GetTestGuideResponse {
   // Whether What to test is on in Settings → AI, with a model: a guide is
   // written when the preview goes live, or when someone asks.
   bool enabled = 5;
+  // The latest run of each of the guide's things to try (RunTry), without
+  // screenshots; a try never run has none.
+  repeated TryRun runs = 6;
 }
 
 message RefreshTestGuideRequest {
