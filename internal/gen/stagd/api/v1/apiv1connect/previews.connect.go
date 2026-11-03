@@ -63,6 +63,9 @@ const (
 	// PreviewServiceRatePreviewFailureProcedure is the fully-qualified name of the PreviewService's
 	// RatePreviewFailure RPC.
 	PreviewServiceRatePreviewFailureProcedure = "/stagd.api.v1.PreviewService/RatePreviewFailure"
+	// PreviewServiceRatePreviewRiskProcedure is the fully-qualified name of the PreviewService's
+	// RatePreviewRisk RPC.
+	PreviewServiceRatePreviewRiskProcedure = "/stagd.api.v1.PreviewService/RatePreviewRisk"
 	// PreviewServiceGetPreviewPolicyProcedure is the fully-qualified name of the PreviewService's
 	// GetPreviewPolicy RPC.
 	PreviewServiceGetPreviewPolicyProcedure = "/stagd.api.v1.PreviewService/GetPreviewPolicy"
@@ -135,6 +138,8 @@ type PreviewServiceClient interface {
 	// it was explained from, for a coding agent to read with its own model.
 	GetPreviewFailure(context.Context, *connect.Request[v1.GetPreviewFailureRequest]) (*connect.Response[v1.GetPreviewFailureResponse], error)
 	RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error)
+	// RatePreviewRisk says whether a preview's risk assessment was right.
+	RatePreviewRisk(context.Context, *connect.Request[v1.RatePreviewRiskRequest]) (*connect.Response[v1.RatePreviewRiskResponse], error)
 	// GetPreviewPolicy returns who may open previews and how their URLs look:
 	// the org's default, or a repository's (its own, or the default it inherits).
 	GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error)
@@ -263,6 +268,12 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("RatePreviewFailure")),
 			connect.WithClientOptions(opts...),
 		),
+		ratePreviewRisk: connect.NewClient[v1.RatePreviewRiskRequest, v1.RatePreviewRiskResponse](
+			httpClient,
+			baseURL+PreviewServiceRatePreviewRiskProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("RatePreviewRisk")),
+			connect.WithClientOptions(opts...),
+		),
 		getPreviewPolicy: connect.NewClient[v1.GetPreviewPolicyRequest, v1.GetPreviewPolicyResponse](
 			httpClient,
 			baseURL+PreviewServiceGetPreviewPolicyProcedure,
@@ -368,6 +379,7 @@ type previewServiceClient struct {
 	destroyPreview      *connect.Client[v1.DestroyPreviewRequest, v1.DestroyPreviewResponse]
 	getPreviewFailure   *connect.Client[v1.GetPreviewFailureRequest, v1.GetPreviewFailureResponse]
 	ratePreviewFailure  *connect.Client[v1.RatePreviewFailureRequest, v1.RatePreviewFailureResponse]
+	ratePreviewRisk     *connect.Client[v1.RatePreviewRiskRequest, v1.RatePreviewRiskResponse]
 	getPreviewPolicy    *connect.Client[v1.GetPreviewPolicyRequest, v1.GetPreviewPolicyResponse]
 	updatePreviewPolicy *connect.Client[v1.UpdatePreviewPolicyRequest, v1.UpdatePreviewPolicyResponse]
 	validateApp         *connect.Client[v1.ValidateAppRequest, v1.ValidateAppResponse]
@@ -433,6 +445,11 @@ func (c *previewServiceClient) GetPreviewFailure(ctx context.Context, req *conne
 // RatePreviewFailure calls stagd.api.v1.PreviewService.RatePreviewFailure.
 func (c *previewServiceClient) RatePreviewFailure(ctx context.Context, req *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error) {
 	return c.ratePreviewFailure.CallUnary(ctx, req)
+}
+
+// RatePreviewRisk calls stagd.api.v1.PreviewService.RatePreviewRisk.
+func (c *previewServiceClient) RatePreviewRisk(ctx context.Context, req *connect.Request[v1.RatePreviewRiskRequest]) (*connect.Response[v1.RatePreviewRiskResponse], error) {
+	return c.ratePreviewRisk.CallUnary(ctx, req)
 }
 
 // GetPreviewPolicy calls stagd.api.v1.PreviewService.GetPreviewPolicy.
@@ -539,6 +556,8 @@ type PreviewServiceHandler interface {
 	// it was explained from, for a coding agent to read with its own model.
 	GetPreviewFailure(context.Context, *connect.Request[v1.GetPreviewFailureRequest]) (*connect.Response[v1.GetPreviewFailureResponse], error)
 	RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error)
+	// RatePreviewRisk says whether a preview's risk assessment was right.
+	RatePreviewRisk(context.Context, *connect.Request[v1.RatePreviewRiskRequest]) (*connect.Response[v1.RatePreviewRiskResponse], error)
 	// GetPreviewPolicy returns who may open previews and how their URLs look:
 	// the org's default, or a repository's (its own, or the default it inherits).
 	GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error)
@@ -663,6 +682,12 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		connect.WithSchema(previewServiceMethods.ByName("RatePreviewFailure")),
 		connect.WithHandlerOptions(opts...),
 	)
+	previewServiceRatePreviewRiskHandler := connect.NewUnaryHandler(
+		PreviewServiceRatePreviewRiskProcedure,
+		svc.RatePreviewRisk,
+		connect.WithSchema(previewServiceMethods.ByName("RatePreviewRisk")),
+		connect.WithHandlerOptions(opts...),
+	)
 	previewServiceGetPreviewPolicyHandler := connect.NewUnaryHandler(
 		PreviewServiceGetPreviewPolicyProcedure,
 		svc.GetPreviewPolicy,
@@ -775,6 +800,8 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceGetPreviewFailureHandler.ServeHTTP(w, r)
 		case PreviewServiceRatePreviewFailureProcedure:
 			previewServiceRatePreviewFailureHandler.ServeHTTP(w, r)
+		case PreviewServiceRatePreviewRiskProcedure:
+			previewServiceRatePreviewRiskHandler.ServeHTTP(w, r)
 		case PreviewServiceGetPreviewPolicyProcedure:
 			previewServiceGetPreviewPolicyHandler.ServeHTTP(w, r)
 		case PreviewServiceUpdatePreviewPolicyProcedure:
@@ -852,6 +879,10 @@ func (UnimplementedPreviewServiceHandler) GetPreviewFailure(context.Context, *co
 
 func (UnimplementedPreviewServiceHandler) RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.RatePreviewFailure is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) RatePreviewRisk(context.Context, *connect.Request[v1.RatePreviewRiskRequest]) (*connect.Response[v1.RatePreviewRiskResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.RatePreviewRisk is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error) {

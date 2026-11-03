@@ -17,6 +17,19 @@ service AiService {
 
 message AiSettings {
   FailureExplanations failure_explanations = 1;
+  RiskAssessments risk_assessments = 2;
+}
+
+// Assessing a pull request's merge risk with a model: its title,
+// description and changes, keys masked, are sent to the model on each push
+// that changes them.
+message RiskAssessments {
+  bool enabled = 1;
+  // One of the org's provider integrations; empty when none is picked, or
+  // it was deleted.
+  string integration_id = 2;
+  // One of the integration's models, e.g. claude-haiku-5-5.
+  string model = 3;
 }
 
 // Explaining a failed deploy with a model, when no rule knows why: the
@@ -58,6 +71,7 @@ message GetAiSettingsResponse {
 }
 
 message UpdateAiSettingsRequest {
+  // The features given are saved; one left out stays as it was.
   AiSettings settings = 1;
 }
 

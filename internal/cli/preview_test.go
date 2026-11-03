@@ -20,6 +20,7 @@ type fakePreviews struct {
 	steps   []apiv1.PreviewStatus
 	failure string
 	why     *apiv1.PreviewFailure
+	risk    *apiv1.PreviewRisk
 }
 
 func (f *fakePreviews) preview(s apiv1.PreviewStatus) *apiv1.Preview {
@@ -49,6 +50,10 @@ func (f *fakePreviews) GetPreview(_ context.Context, _ *connect.Request[apiv1.Ge
 
 	if p.GetStatus() == apiv1.PreviewStatus_PREVIEW_STATUS_FAILED {
 		p.Failure = f.why
+	}
+
+	if f.risk != nil {
+		p.Risk = f.risk
 	}
 
 	return connect.NewResponse(&apiv1.GetPreviewResponse{Preview: p}), nil
@@ -148,6 +153,30 @@ func TestPreviewCreateSaysWhyItFailed(t *testing.T) {
 
 	if strings.Contains(out, "error |") {
 		t.Errorf("the error is printed twice:\n%s", out)
+	}
+}
+
+func TestPreviewGetSaysTheMergeRisk(t *testing.T) {
+	srv := previewServer(t, &fakePreviews{
+		steps: []apiv1.PreviewStatus{apiv1.PreviewStatus_PREVIEW_STATUS_LIVE},
+		risk: &apiv1.PreviewRisk{
+			Level:     apiv1.PreviewRiskLevel_PREVIEW_RISK_LEVEL_HIGH,
+			Summary:   "A NOT NULL on invoices fails on existing rows.",
+			Reasons:   []*apiv1.PreviewRiskReason{{Text: "`tenant_id` becomes required.", Files: []string{"migrations/0042.sql"}}},
+			Sha:       "3d54034aa1",
+			ModelName: "Claude Haiku 5.5",
+		},
+	})
+
+	out, err := run(t, srv, "--token", "tok-1", "preview", "get", "p-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, want := range []string{"Merge risk: high. A NOT NULL on invoices fails on existing rows.", "  - `tenant_id` becomes required. (migrations/0042.sql)", "Assessed by Claude Haiku 5.5 at 3d54034"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output misses %q:\n%s", want, out)
+		}
 	}
 }
 

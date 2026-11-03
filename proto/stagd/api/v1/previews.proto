@@ -44,6 +44,8 @@ service PreviewService {
   // it was explained from, for a coding agent to read with its own model.
   rpc GetPreviewFailure(GetPreviewFailureRequest) returns (GetPreviewFailureResponse);
   rpc RatePreviewFailure(RatePreviewFailureRequest) returns (RatePreviewFailureResponse);
+  // RatePreviewRisk says whether a preview's risk assessment was right.
+  rpc RatePreviewRisk(RatePreviewRiskRequest) returns (RatePreviewRiskResponse);
   // GetPreviewPolicy returns who may open previews and how their URLs look:
   // the org's default, or a repository's (its own, or the default it inherits).
   rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse);
@@ -290,6 +292,9 @@ message Preview {
   // Why it failed, as far as Stagd can tell from what it failed on and the
   // logs it left: set when FAILED, unset when nothing was found to say.
   PreviewFailure failure = 23;
+  // The pull request's merge risk, as the org's model read its changes;
+  // unset when the org doesn't assess risk, or it isn't a pull request's.
+  PreviewRisk risk = 24;
 }
 
 // A failed deploy explained: where it failed, the lines that show why, and
@@ -329,6 +334,39 @@ message PreviewFailure {
   // secrets and keys masked, under "== <source>" headings; at most 64 KB.
   // Only from GetPreviewFailure.
   string log_excerpt = 14;
+}
+
+// PreviewRisk is how risky a pull request is to merge, as the org's model
+// read its title, description and changes, and why.
+message PreviewRisk {
+  PreviewRiskLevel level = 1;
+  // In a sentence.
+  string summary = 2;
+  repeated PreviewRiskReason reasons = 3;
+  // The commit it was assessed at: a later push with the same changes keeps
+  // it.
+  string sha = 4;
+  google.protobuf.Timestamp create_time = 5;
+  // The model, as people read it, e.g. Claude Haiku 5.5.
+  string model_name = 6;
+  // Its provider's integration kind: anthropic, openai, azure_openai.
+  string model_provider = 7;
+  // Whether someone in the org said it was right, and who.
+  PreviewFailureRating rating = 8;
+  string rated_by = 9;
+}
+
+enum PreviewRiskLevel {
+  PREVIEW_RISK_LEVEL_UNSPECIFIED = 0;
+  PREVIEW_RISK_LEVEL_LOW = 1;
+  PREVIEW_RISK_LEVEL_MEDIUM = 2;
+  PREVIEW_RISK_LEVEL_HIGH = 3;
+}
+
+// One reason, and the changed files it's about.
+message PreviewRiskReason {
+  string text = 1;
+  repeated string files = 2;
 }
 
 enum PreviewFailureRating {
@@ -451,6 +489,17 @@ message RatePreviewFailureRequest {
 
 message RatePreviewFailureResponse {
   PreviewFailure failure = 1;
+}
+
+message RatePreviewRiskRequest {
+  // The preview's id: its current risk assessment is rated.
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  // RIGHT or WRONG; UNSPECIFIED takes a rating back.
+  PreviewFailureRating rating = 2;
+}
+
+message RatePreviewRiskResponse {
+  PreviewRisk risk = 1;
 }
 
 message GetPreviewPolicyRequest {

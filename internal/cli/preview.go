@@ -417,6 +417,7 @@ func previewGet(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	fmt.Fprintf(w, "expires: %s\n", p.GetExpireTime().AsTime().Local().Format("2006-01-02 15:04"))
+	printRisk(w, p.GetRisk())
 
 	if len(p.GetIngresses()) == 0 {
 		fmt.Fprintf(w, "url:     %s\n", p.GetUrl())
@@ -437,6 +438,28 @@ func previewGet(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	return nil
+}
+
+// printRisk says how risky the pull request is to merge, as the org's model
+// read its changes, and why: each reason with its files. Nothing when the
+// org doesn't assess risk.
+func printRisk(w io.Writer, r *apiv1.PreviewRisk) {
+	if r == nil {
+		return
+	}
+
+	fmt.Fprintf(w, "\nMerge risk: %s. %s\n", label(r.GetLevel().String(), "PREVIEW_RISK_LEVEL_"), r.GetSummary())
+
+	for _, reason := range r.GetReasons() {
+		files := ""
+		if len(reason.GetFiles()) > 0 {
+			files = " (" + strings.Join(reason.GetFiles(), ", ") + ")"
+		}
+
+		fmt.Fprintf(w, "  - %s%s\n", reason.GetText(), files)
+	}
+
+	fmt.Fprintf(w, "Assessed by %s at %.7s\n", r.GetModelName(), r.GetSha())
 }
 
 // printFailure says why a preview failed, as far as Stagd could tell: the
