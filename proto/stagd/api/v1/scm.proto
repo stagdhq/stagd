@@ -39,6 +39,9 @@ service ScmService {
   // SetRepositoryHidden hides a repository from the org's lists, or shows it
   // again. Its previews are left as they are.
   rpc SetRepositoryHidden(SetRepositoryHiddenRequest) returns (SetRepositoryHiddenResponse);
+  // SetRepositoryAi says which of the org's AI features a repository leaves
+  // out. What's already written for its previews stays.
+  rpc SetRepositoryAi(SetRepositoryAiRequest) returns (SetRepositoryAiResponse);
 }
 
 enum ConnectionStatus {
@@ -154,5 +157,15 @@ message SetRepositoryHiddenRequest {
 }
 
 message SetRepositoryHiddenResponse {
+  Repository repository = 1;
+}
+
+message SetRepositoryAiRequest {
+  // A repository id or "owner/name".
+  string repository = 1 [(buf.validate.field).string.min_len = 1];
+  RepositoryAi ai = 2 [(buf.validate.field).required = true];
+}
+
+message SetRepositoryAiResponse {
   Repository repository = 1;
 }

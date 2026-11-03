@@ -25,6 +25,7 @@ type fakeScm struct {
 	deleted      string
 	enabled      map[string]bool
 	hidden       map[string]bool
+	ai           *apiv1.RepositoryAi
 }
 
 var acmeConnection = &apiv1.Connection{
@@ -83,7 +84,7 @@ func (f *fakeScm) SetPreviewsEnabled(_ context.Context, req *connect.Request[api
 
 func (f *fakeScm) ListRepositories(_ context.Context, req *connect.Request[apiv1.ListRepositoriesRequest]) (*connect.Response[apiv1.ListRepositoriesResponse], error) {
 	repos := []*apiv1.Repository{
-		{Id: "r-1", ConnectionId: "c-1", Provider: apiv1.ScmProvider_SCM_PROVIDER_GITHUB, FullName: "acme-inc/web", DefaultBranch: "main", Private: true},
+		{Id: "r-1", ConnectionId: "c-1", Provider: apiv1.ScmProvider_SCM_PROVIDER_GITHUB, FullName: "acme-inc/web", DefaultBranch: "main", Private: true, Ai: f.ai},
 		{Id: "r-2", ConnectionId: "c-1", Provider: apiv1.ScmProvider_SCM_PROVIDER_GITHUB, FullName: "acme-inc/.github", DefaultBranch: "main", Hidden: f.hidden["acme-inc/.github"]},
 	}
 
@@ -92,6 +93,16 @@ func (f *fakeScm) ListRepositories(_ context.Context, req *connect.Request[apiv1
 	}
 
 	return connect.NewResponse(&apiv1.ListRepositoriesResponse{Repositories: repos}), nil
+}
+
+func (f *fakeScm) SetRepositoryAi(_ context.Context, req *connect.Request[apiv1.SetRepositoryAiRequest]) (*connect.Response[apiv1.SetRepositoryAiResponse], error) {
+	if req.Msg.GetRepository() != "r-1" {
+		return nil, connect.NewError(connect.CodeNotFound, nil)
+	}
+
+	f.ai = req.Msg.GetAi()
+
+	return connect.NewResponse(&apiv1.SetRepositoryAiResponse{Repository: &apiv1.Repository{Id: "r-1", FullName: "acme-inc/web", Ai: f.ai}}), nil
 }
 
 func (f *fakeScm) SetRepositoryHidden(_ context.Context, req *connect.Request[apiv1.SetRepositoryHiddenRequest]) (*connect.Response[apiv1.SetRepositoryHiddenResponse], error) {
@@ -219,5 +230,31 @@ func TestReposHideAndUnhide(t *testing.T) {
 	out, err = run(t, srv, "--token", "tok-1", "repos", "unhide", "acme-inc/.github")
 	if err != nil || scm.hidden["acme-inc/.github"] || !strings.Contains(out, "in the org's lists again") {
 		t.Fatalf("unhide: %v\n%s", err, out)
+	}
+}
+
+func TestReposAi(t *testing.T) {
+	scm := &fakeScm{}
+	srv := scmServer(t, scm)
+
+	// Without flags: what it has, everything as the org has it.
+	out, err := run(t, srv, "--token", "tok-1", "repos", "ai", "acme-inc/web")
+	if err != nil || !strings.Contains(out, "merge risk            on, as the org has it") || scm.ai != nil {
+		t.Fatalf("show: %v %v\n%s", err, scm.ai, out)
+	}
+
+	// Off for one, the others kept.
+	out, err = run(t, srv, "--token", "tok-1", "repos", "ai", "acme-inc/web", "--guides", "off")
+	if err != nil || !scm.ai.GetTestGuidesOff() || scm.ai.GetRiskAssessmentsOff() || !strings.Contains(out, "what to test          off") {
+		t.Fatalf("off: %v %v\n%s", err, scm.ai, out)
+	}
+
+	out, err = run(t, srv, "--token", "tok-1", "repos", "ai", "acme-inc/web", "--risk", "off", "--guides", "on")
+	if err != nil || scm.ai.GetTestGuidesOff() || !scm.ai.GetRiskAssessmentsOff() {
+		t.Fatalf("both: %v %v\n%s", err, scm.ai, out)
+	}
+
+	if _, err := run(t, srv, "--token", "tok-1", "repos", "ai", "acme-inc/web", "--risk", "maybe"); err == nil {
+		t.Fatal("--risk maybe should fail")
 	}
 }
