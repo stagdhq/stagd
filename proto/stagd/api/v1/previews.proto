@@ -46,6 +46,13 @@ service PreviewService {
   rpc RatePreviewFailure(RatePreviewFailureRequest) returns (RatePreviewFailureResponse);
   // RatePreviewRisk says whether a preview's risk assessment was right.
   rpc RatePreviewRisk(RatePreviewRiskRequest) returns (RatePreviewRiskResponse);
+  // GetTestGuide answers what to test on a pull request's preview: the
+  // guide the org's model wrote, and, without one or when asked, what it's
+  // written from and the question to paste into a coding agent.
+  rpc GetTestGuide(GetTestGuideRequest) returns (GetTestGuideResponse);
+  // RefreshTestGuide writes the guide again now, from what the preview has
+  // served and sent since; at most once a minute.
+  rpc RefreshTestGuide(RefreshTestGuideRequest) returns (RefreshTestGuideResponse);
   // GetPreviewPolicy returns who may open previews and how their URLs look:
   // the org's default, or a repository's (its own, or the default it inherits).
   rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse);
@@ -369,6 +376,51 @@ message PreviewRiskReason {
   repeated string files = 2;
 }
 
+// TestGuide is what to test on a pull request's preview: what changed, the
+// pages and emails to check, and things to try.
+message TestGuide {
+  string summary = 1;
+  repeated TestGuidePage pages = 2;
+  repeated TestGuideEmail emails = 3;
+  repeated TestGuideTry tries = 4;
+  // The commit it was written at.
+  string sha = 5;
+  google.protobuf.Timestamp create_time = 6;
+  string model_name = 7;
+  string model_provider = 8;
+}
+
+// A page to check: its path, its URL in the preview (empty for a path with
+// parameters, e.g. /invoices/:id), and why.
+message TestGuidePage {
+  string path = 1;
+  string url = 2;
+  string why = 3;
+  // Where it's known from: changed (a changed file is the page), traces
+  // (the preview served it), home. Only on candidates.
+  string source = 4;
+  // The changed file it's from, for changed.
+  string file = 5;
+}
+
+message TestGuideEmail {
+  string subject = 1;
+  string why = 2;
+}
+
+message TestGuideTry {
+  // One action and what should happen.
+  string text = 1;
+  TestGuideTryCategory category = 2;
+}
+
+enum TestGuideTryCategory {
+  TEST_GUIDE_TRY_CATEGORY_UNSPECIFIED = 0;
+  TEST_GUIDE_TRY_CATEGORY_FUNCTIONAL = 1;
+  // It checks who may see or do something.
+  TEST_GUIDE_TRY_CATEGORY_ACCESS = 2;
+}
+
 enum PreviewFailureRating {
   PREVIEW_FAILURE_RATING_UNSPECIFIED = 0;
   PREVIEW_FAILURE_RATING_RIGHT = 1;
@@ -489,6 +541,34 @@ message RatePreviewFailureRequest {
 
 message RatePreviewFailureResponse {
   PreviewFailure failure = 1;
+}
+
+message GetTestGuideRequest {
+  // The preview's id.
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  // Also what a guide is written from, and the question, when there is a
+  // guide: they're always answered without one. Members only.
+  bool inputs = 2;
+}
+
+message GetTestGuideResponse {
+  // Unset when the org's model hasn't written one.
+  TestGuide guide = 1;
+  // The pages a guide may point to, unranked: the pull request's changed
+  // route files, the pages the preview served, its home.
+  repeated TestGuidePage candidates = 2;
+  // The subjects of the mail the preview sent.
+  repeated string emails = 3;
+  // The question, to paste into a coding agent.
+  string prompt = 4;
+}
+
+message RefreshTestGuideRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message RefreshTestGuideResponse {
+  TestGuide guide = 1;
 }
 
 message RatePreviewRiskRequest {

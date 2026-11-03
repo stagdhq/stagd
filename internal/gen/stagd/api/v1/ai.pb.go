@@ -25,6 +25,7 @@ type AiSettings struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	FailureExplanations *FailureExplanations   `protobuf:"bytes,1,opt,name=failure_explanations,json=failureExplanations,proto3" json:"failure_explanations,omitempty"`
 	RiskAssessments     *RiskAssessments       `protobuf:"bytes,2,opt,name=risk_assessments,json=riskAssessments,proto3" json:"risk_assessments,omitempty"`
+	TestGuides          *TestGuides            `protobuf:"bytes,3,opt,name=test_guides,json=testGuides,proto3" json:"test_guides,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -73,6 +74,77 @@ func (x *AiSettings) GetRiskAssessments() *RiskAssessments {
 	return nil
 }
 
+func (x *AiSettings) GetTestGuides() *TestGuides {
+	if x != nil {
+		return x.TestGuides
+	}
+	return nil
+}
+
+// Writing what to test on a pull request's preview with a model: its
+// title, description and changes, the pages they touch and the subjects of
+// the mail the preview sent, keys masked, are sent to the model when a
+// deploy goes live.
+type TestGuides struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	IntegrationId string                 `protobuf:"bytes,2,opt,name=integration_id,json=integrationId,proto3" json:"integration_id,omitempty"`
+	Model         string                 `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestGuides) Reset() {
+	*x = TestGuides{}
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestGuides) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestGuides) ProtoMessage() {}
+
+func (x *TestGuides) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestGuides.ProtoReflect.Descriptor instead.
+func (*TestGuides) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *TestGuides) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *TestGuides) GetIntegrationId() string {
+	if x != nil {
+		return x.IntegrationId
+	}
+	return ""
+}
+
+func (x *TestGuides) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
 // Assessing a pull request's merge risk with a model: its title,
 // description and changes, keys masked, are sent to the model on each push
 // that changes them.
@@ -90,7 +162,7 @@ type RiskAssessments struct {
 
 func (x *RiskAssessments) Reset() {
 	*x = RiskAssessments{}
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[1]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -102,7 +174,7 @@ func (x *RiskAssessments) String() string {
 func (*RiskAssessments) ProtoMessage() {}
 
 func (x *RiskAssessments) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[1]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -115,7 +187,7 @@ func (x *RiskAssessments) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RiskAssessments.ProtoReflect.Descriptor instead.
 func (*RiskAssessments) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{1}
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RiskAssessments) GetEnabled() bool {
@@ -156,7 +228,7 @@ type FailureExplanations struct {
 
 func (x *FailureExplanations) Reset() {
 	*x = FailureExplanations{}
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[2]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -168,7 +240,7 @@ func (x *FailureExplanations) String() string {
 func (*FailureExplanations) ProtoMessage() {}
 
 func (x *FailureExplanations) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[2]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -181,7 +253,7 @@ func (x *FailureExplanations) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FailureExplanations.ProtoReflect.Descriptor instead.
 func (*FailureExplanations) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{2}
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *FailureExplanations) GetEnabled() bool {
@@ -219,7 +291,7 @@ type AiModel struct {
 
 func (x *AiModel) Reset() {
 	*x = AiModel{}
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[3]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -231,7 +303,7 @@ func (x *AiModel) String() string {
 func (*AiModel) ProtoMessage() {}
 
 func (x *AiModel) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[3]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -244,7 +316,7 @@ func (x *AiModel) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AiModel.ProtoReflect.Descriptor instead.
 func (*AiModel) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{3}
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *AiModel) GetId() string {
@@ -290,7 +362,7 @@ type AiProvider struct {
 
 func (x *AiProvider) Reset() {
 	*x = AiProvider{}
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[4]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -302,7 +374,7 @@ func (x *AiProvider) String() string {
 func (*AiProvider) ProtoMessage() {}
 
 func (x *AiProvider) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[4]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -315,7 +387,7 @@ func (x *AiProvider) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AiProvider.ProtoReflect.Descriptor instead.
 func (*AiProvider) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{4}
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *AiProvider) GetIntegrationId() string {
@@ -354,7 +426,7 @@ type GetAiSettingsRequest struct {
 
 func (x *GetAiSettingsRequest) Reset() {
 	*x = GetAiSettingsRequest{}
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -366,7 +438,7 @@ func (x *GetAiSettingsRequest) String() string {
 func (*GetAiSettingsRequest) ProtoMessage() {}
 
 func (x *GetAiSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -379,7 +451,7 @@ func (x *GetAiSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAiSettingsRequest.ProtoReflect.Descriptor instead.
 func (*GetAiSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{5}
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{6}
 }
 
 type GetAiSettingsResponse struct {
@@ -392,7 +464,7 @@ type GetAiSettingsResponse struct {
 
 func (x *GetAiSettingsResponse) Reset() {
 	*x = GetAiSettingsResponse{}
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -404,7 +476,7 @@ func (x *GetAiSettingsResponse) String() string {
 func (*GetAiSettingsResponse) ProtoMessage() {}
 
 func (x *GetAiSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -417,7 +489,7 @@ func (x *GetAiSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAiSettingsResponse.ProtoReflect.Descriptor instead.
 func (*GetAiSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{6}
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetAiSettingsResponse) GetSettings() *AiSettings {
@@ -444,7 +516,7 @@ type UpdateAiSettingsRequest struct {
 
 func (x *UpdateAiSettingsRequest) Reset() {
 	*x = UpdateAiSettingsRequest{}
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +528,7 @@ func (x *UpdateAiSettingsRequest) String() string {
 func (*UpdateAiSettingsRequest) ProtoMessage() {}
 
 func (x *UpdateAiSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +541,7 @@ func (x *UpdateAiSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAiSettingsRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAiSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{7}
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateAiSettingsRequest) GetSettings() *AiSettings {
@@ -488,7 +560,7 @@ type UpdateAiSettingsResponse struct {
 
 func (x *UpdateAiSettingsResponse) Reset() {
 	*x = UpdateAiSettingsResponse{}
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -500,7 +572,7 @@ func (x *UpdateAiSettingsResponse) String() string {
 func (*UpdateAiSettingsResponse) ProtoMessage() {}
 
 func (x *UpdateAiSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_ai_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_ai_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -513,7 +585,7 @@ func (x *UpdateAiSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAiSettingsResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAiSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{8}
+	return file_stagd_api_v1_ai_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateAiSettingsResponse) GetSettings() *AiSettings {
@@ -527,11 +599,18 @@ var File_stagd_api_v1_ai_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_ai_proto_rawDesc = "" +
 	"\n" +
-	"\x15stagd/api/v1/ai.proto\x12\fstagd.api.v1\"\xac\x01\n" +
+	"\x15stagd/api/v1/ai.proto\x12\fstagd.api.v1\"\xe7\x01\n" +
 	"\n" +
 	"AiSettings\x12T\n" +
 	"\x14failure_explanations\x18\x01 \x01(\v2!.stagd.api.v1.FailureExplanationsR\x13failureExplanations\x12H\n" +
-	"\x10risk_assessments\x18\x02 \x01(\v2\x1d.stagd.api.v1.RiskAssessmentsR\x0friskAssessments\"h\n" +
+	"\x10risk_assessments\x18\x02 \x01(\v2\x1d.stagd.api.v1.RiskAssessmentsR\x0friskAssessments\x129\n" +
+	"\vtest_guides\x18\x03 \x01(\v2\x18.stagd.api.v1.TestGuidesR\n" +
+	"testGuides\"c\n" +
+	"\n" +
+	"TestGuides\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12%\n" +
+	"\x0eintegration_id\x18\x02 \x01(\tR\rintegrationId\x12\x14\n" +
+	"\x05model\x18\x03 \x01(\tR\x05model\"h\n" +
 	"\x0fRiskAssessments\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12%\n" +
 	"\x0eintegration_id\x18\x02 \x01(\tR\rintegrationId\x12\x14\n" +
@@ -576,35 +655,37 @@ func file_stagd_api_v1_ai_proto_rawDescGZIP() []byte {
 	return file_stagd_api_v1_ai_proto_rawDescData
 }
 
-var file_stagd_api_v1_ai_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_stagd_api_v1_ai_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_stagd_api_v1_ai_proto_goTypes = []any{
 	(*AiSettings)(nil),               // 0: stagd.api.v1.AiSettings
-	(*RiskAssessments)(nil),          // 1: stagd.api.v1.RiskAssessments
-	(*FailureExplanations)(nil),      // 2: stagd.api.v1.FailureExplanations
-	(*AiModel)(nil),                  // 3: stagd.api.v1.AiModel
-	(*AiProvider)(nil),               // 4: stagd.api.v1.AiProvider
-	(*GetAiSettingsRequest)(nil),     // 5: stagd.api.v1.GetAiSettingsRequest
-	(*GetAiSettingsResponse)(nil),    // 6: stagd.api.v1.GetAiSettingsResponse
-	(*UpdateAiSettingsRequest)(nil),  // 7: stagd.api.v1.UpdateAiSettingsRequest
-	(*UpdateAiSettingsResponse)(nil), // 8: stagd.api.v1.UpdateAiSettingsResponse
+	(*TestGuides)(nil),               // 1: stagd.api.v1.TestGuides
+	(*RiskAssessments)(nil),          // 2: stagd.api.v1.RiskAssessments
+	(*FailureExplanations)(nil),      // 3: stagd.api.v1.FailureExplanations
+	(*AiModel)(nil),                  // 4: stagd.api.v1.AiModel
+	(*AiProvider)(nil),               // 5: stagd.api.v1.AiProvider
+	(*GetAiSettingsRequest)(nil),     // 6: stagd.api.v1.GetAiSettingsRequest
+	(*GetAiSettingsResponse)(nil),    // 7: stagd.api.v1.GetAiSettingsResponse
+	(*UpdateAiSettingsRequest)(nil),  // 8: stagd.api.v1.UpdateAiSettingsRequest
+	(*UpdateAiSettingsResponse)(nil), // 9: stagd.api.v1.UpdateAiSettingsResponse
 }
 var file_stagd_api_v1_ai_proto_depIdxs = []int32{
-	2, // 0: stagd.api.v1.AiSettings.failure_explanations:type_name -> stagd.api.v1.FailureExplanations
-	1, // 1: stagd.api.v1.AiSettings.risk_assessments:type_name -> stagd.api.v1.RiskAssessments
-	3, // 2: stagd.api.v1.AiProvider.models:type_name -> stagd.api.v1.AiModel
-	0, // 3: stagd.api.v1.GetAiSettingsResponse.settings:type_name -> stagd.api.v1.AiSettings
-	4, // 4: stagd.api.v1.GetAiSettingsResponse.providers:type_name -> stagd.api.v1.AiProvider
-	0, // 5: stagd.api.v1.UpdateAiSettingsRequest.settings:type_name -> stagd.api.v1.AiSettings
-	0, // 6: stagd.api.v1.UpdateAiSettingsResponse.settings:type_name -> stagd.api.v1.AiSettings
-	5, // 7: stagd.api.v1.AiService.GetAiSettings:input_type -> stagd.api.v1.GetAiSettingsRequest
-	7, // 8: stagd.api.v1.AiService.UpdateAiSettings:input_type -> stagd.api.v1.UpdateAiSettingsRequest
-	6, // 9: stagd.api.v1.AiService.GetAiSettings:output_type -> stagd.api.v1.GetAiSettingsResponse
-	8, // 10: stagd.api.v1.AiService.UpdateAiSettings:output_type -> stagd.api.v1.UpdateAiSettingsResponse
-	9, // [9:11] is the sub-list for method output_type
-	7, // [7:9] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	3,  // 0: stagd.api.v1.AiSettings.failure_explanations:type_name -> stagd.api.v1.FailureExplanations
+	2,  // 1: stagd.api.v1.AiSettings.risk_assessments:type_name -> stagd.api.v1.RiskAssessments
+	1,  // 2: stagd.api.v1.AiSettings.test_guides:type_name -> stagd.api.v1.TestGuides
+	4,  // 3: stagd.api.v1.AiProvider.models:type_name -> stagd.api.v1.AiModel
+	0,  // 4: stagd.api.v1.GetAiSettingsResponse.settings:type_name -> stagd.api.v1.AiSettings
+	5,  // 5: stagd.api.v1.GetAiSettingsResponse.providers:type_name -> stagd.api.v1.AiProvider
+	0,  // 6: stagd.api.v1.UpdateAiSettingsRequest.settings:type_name -> stagd.api.v1.AiSettings
+	0,  // 7: stagd.api.v1.UpdateAiSettingsResponse.settings:type_name -> stagd.api.v1.AiSettings
+	6,  // 8: stagd.api.v1.AiService.GetAiSettings:input_type -> stagd.api.v1.GetAiSettingsRequest
+	8,  // 9: stagd.api.v1.AiService.UpdateAiSettings:input_type -> stagd.api.v1.UpdateAiSettingsRequest
+	7,  // 10: stagd.api.v1.AiService.GetAiSettings:output_type -> stagd.api.v1.GetAiSettingsResponse
+	9,  // 11: stagd.api.v1.AiService.UpdateAiSettings:output_type -> stagd.api.v1.UpdateAiSettingsResponse
+	10, // [10:12] is the sub-list for method output_type
+	8,  // [8:10] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_ai_proto_init() }
@@ -618,7 +699,7 @@ func file_stagd_api_v1_ai_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_ai_proto_rawDesc), len(file_stagd_api_v1_ai_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

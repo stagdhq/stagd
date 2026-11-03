@@ -18,6 +18,17 @@ service AiService {
 message AiSettings {
   FailureExplanations failure_explanations = 1;
   RiskAssessments risk_assessments = 2;
+  TestGuides test_guides = 3;
+}
+
+// Writing what to test on a pull request's preview with a model: its
+// title, description and changes, the pages they touch and the subjects of
+// the mail the preview sent, keys masked, are sent to the model when a
+// deploy goes live.
+message TestGuides {
+  bool enabled = 1;
+  string integration_id = 2;
+  string model = 3;
 }
 
 // Assessing a pull request's merge risk with a model: its title,
