@@ -1218,6 +1218,9 @@ message TryRun {
   int64 output_tokens = 12;
   google.protobuf.Duration duration = 13;
   google.protobuf.Timestamp run_time = 14;
+  // The page where it ended, on the dashboard's origin, for people in the
+  // org; empty when there's none.
+  string screenshot_url = 15;
 }
 
 // What the model did in the browser, and what came of it.
@@ -1228,4 +1231,6 @@ message TryStep {
   string why = 2;
   // Empty when it worked; what went wrong otherwise.
   string error = 3;
+  // The page after it, as screenshot_url is.
+  string screenshot_url = 4;
 }

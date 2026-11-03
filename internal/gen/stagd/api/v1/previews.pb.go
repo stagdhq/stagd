@@ -7351,6 +7351,9 @@ type TryRun struct {
 	OutputTokens  int64                  `protobuf:"varint,12,opt,name=output_tokens,json=outputTokens,proto3" json:"output_tokens,omitempty"`
 	Duration      *durationpb.Duration   `protobuf:"bytes,13,opt,name=duration,proto3" json:"duration,omitempty"`
 	RunTime       *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=run_time,json=runTime,proto3" json:"run_time,omitempty"`
+	// The page where it ended, on the dashboard's origin, for people in the
+	// org; empty when there's none.
+	ScreenshotUrl string `protobuf:"bytes,15,opt,name=screenshot_url,json=screenshotUrl,proto3" json:"screenshot_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7483,6 +7486,13 @@ func (x *TryRun) GetRunTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *TryRun) GetScreenshotUrl() string {
+	if x != nil {
+		return x.ScreenshotUrl
+	}
+	return ""
+}
+
 // What the model did in the browser, and what came of it.
 type TryStep struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -7491,7 +7501,9 @@ type TryStep struct {
 	// What the model meant by it.
 	Why string `protobuf:"bytes,2,opt,name=why,proto3" json:"why,omitempty"`
 	// Empty when it worked; what went wrong otherwise.
-	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	// The page after it, as screenshot_url is.
+	ScreenshotUrl string `protobuf:"bytes,4,opt,name=screenshot_url,json=screenshotUrl,proto3" json:"screenshot_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7543,6 +7555,13 @@ func (x *TryStep) GetWhy() string {
 func (x *TryStep) GetError() string {
 	if x != nil {
 		return x.Error
+	}
+	return ""
+}
+
+func (x *TryStep) GetScreenshotUrl() string {
+	if x != nil {
+		return x.ScreenshotUrl
 	}
 	return ""
 }
@@ -8082,7 +8101,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x03try\x18\x02 \x01(\x05B\a\xbaH\x04\x1a\x02(\x01R\x03try\x12\x16\n" +
 	"\x06tester\x18\x03 \x01(\tR\x06tester\"8\n" +
 	"\x0eRunTryResponse\x12&\n" +
-	"\x03run\x18\x01 \x01(\v2\x14.stagd.api.v1.TryRunR\x03run\"\xed\x03\n" +
+	"\x03run\x18\x01 \x01(\v2\x14.stagd.api.v1.TryRunR\x03run\"\x94\x04\n" +
 	"\x06TryRun\x12\x10\n" +
 	"\x03try\x18\x01 \x01(\x05R\x03try\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x12\x16\n" +
@@ -8101,11 +8120,13 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\finput_tokens\x18\v \x01(\x03R\vinputTokens\x12#\n" +
 	"\routput_tokens\x18\f \x01(\x03R\foutputTokens\x125\n" +
 	"\bduration\x18\r \x01(\v2\x19.google.protobuf.DurationR\bduration\x125\n" +
-	"\brun_time\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\arunTime\"I\n" +
+	"\brun_time\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\arunTime\x12%\n" +
+	"\x0escreenshot_url\x18\x0f \x01(\tR\rscreenshotUrl\"p\n" +
 	"\aTryStep\x12\x16\n" +
 	"\x06action\x18\x01 \x01(\tR\x06action\x12\x10\n" +
 	"\x03why\x18\x02 \x01(\tR\x03why\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error*b\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x12%\n" +
+	"\x0escreenshot_url\x18\x04 \x01(\tR\rscreenshotUrl*b\n" +
 	"\rPreviewAccess\x12\x1e\n" +
 	"\x1aPREVIEW_ACCESS_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12PREVIEW_ACCESS_ORG\x10\x01\x12\x19\n" +
