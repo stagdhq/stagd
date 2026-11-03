@@ -1,0 +1,32 @@
+# Users Stagd signs in as: a form with a test login's fixed code, one with
+# the code from the email the app sends, and an API's token in a header.
+services:
+  mail: {}
+testers:
+  admin: { email: admin@acme.test, note: "org admin, sees billing", sign_in: test-code }
+  member: { email: member@acme.test, sign_in: email-code }
+  api: { token: "${API_TOKEN}", sign_in: token }
+sign_in:
+  test-code:
+    form:
+      url: /login
+      steps:
+        - fill: { field: Email, value: "${tester.email}" }
+        - click: Send code
+        - fill: { field: Code, value: "123456" }
+        - click: Sign in
+    signed_in: { text: Sign out }
+  email-code:
+    form:
+      url: /login
+      steps:
+        - fill: { field: Email, value: "${tester.email}" }
+        - click: Send code
+        - wait_for_mail: { subject: Your code, within: 1m, code: 'code is (\w{6})' }
+        - fill: { field: Code, value: "${mail.code}" }
+        - click: Sign in
+        - wait_for: Welcome back
+    signed_in: { url: /dashboard }
+  token:
+    headers: { Authorization: "Bearer ${tester.token}" }
+    signed_in: { request: /api/me }

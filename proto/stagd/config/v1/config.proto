@@ -73,6 +73,22 @@ message Config {
   // The compute connection previews run on, by its name on Settings →
   // Compute, e.g. kind. Left out, the org's default.
   string compute = 14;
+
+  // The users Stagd signs in as on the preview, by name, e.g. admin or
+  // member: users the app already has, in its seed or let in by a test
+  // login. Stagd signs in as them to check the sign-in works, and later to
+  // run tests; people see them on the preview's QA tab.
+  map<string, Tester> testers = 15 [
+    (buf.validate.field).map.max_pairs = 20,
+    (buf.validate.field).map.keys.string.pattern = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+  ];
+
+  // How the app signs people in, by name, e.g. email-otp or token. A tester
+  // names the one it uses; with only one, every tester uses it.
+  map<string, SignIn> sign_in = 16 [
+    (buf.validate.field).map.max_pairs = 10,
+    (buf.validate.field).map.keys.string.pattern = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+  ];
 }
 
 // Where the app is described: a compose file only, for now (Helm, Kustomize
@@ -517,4 +533,114 @@ message Lifecycle {
     gte: {seconds: 3600}
     lte: {seconds: 172800}
   }];
+}
+
+// A user Stagd signs in as. Its values are what the sign-in's steps and
+// headers use as ${tester.email}, ${tester.username}, ${tester.password}
+// and ${tester.token}; each may be plain, or a secret of Stagd's written as
+// "${NAME}".
+message Tester {
+  // Who they are, for people and models, e.g. "org admin, sees billing".
+  string note = 1 [(buf.validate.field).string.max_len = 200];
+
+  string email = 2;
+  string username = 3;
+  string password = 4;
+  string token = 5;
+
+  // The sign-in it uses, by its name under sign_in; left out when there's
+  // only one.
+  string sign_in = 6;
+}
+
+// One way the app signs people in: a form a browser fills in, or headers
+// sent with every request (an API's token). Exactly one of form and headers.
+message SignIn {
+  Form form = 1;
+
+  // Sent with every request, e.g. Authorization: "Bearer ${tester.token}".
+  map<string, string> headers = 2;
+
+  // How Stagd tells the sign-in worked.
+  SignedIn signed_in = 3 [(buf.validate.field).required = true];
+}
+
+// A sign-in page, and the steps a browser takes on it.
+message Form {
+  // The page's path on the primary ingress, e.g. /login.
+  string url = 1 [(buf.validate.field).string.pattern = "^/[^ #]*$"];
+
+  repeated Step steps = 2 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 20
+  }];
+}
+
+// One thing the browser does. Values may use ${tester.*}, secrets as
+// "${NAME}", and, after wait_for_mail, ${mail.code} and ${mail.link}.
+message Step {
+  oneof step {
+    option (buf.validate.oneof).required = true;
+
+    // Types into a field, found by its label, placeholder or name.
+    Fill fill = 1;
+
+    // Clicks a button or link, found by its text.
+    string click = 2;
+
+    // Goes to a path on the preview, or ${mail.link}.
+    string open = 3;
+
+    // Waits for this text to show on the page.
+    string wait_for = 4;
+
+    // Waits for an email the step before sent, and reads its code or link.
+    WaitForMail wait_for_mail = 5;
+  }
+}
+
+message Fill {
+  string field = 1 [(buf.validate.field).string.min_len = 1];
+  string value = 2;
+}
+
+// An email in the preview's inbox (services: { mail: {} }), sent after the
+// step before this one started.
+message WaitForMail {
+  // Who it's to: ${tester.email} by default.
+  string to = 1;
+
+  // Part of its subject, when the app sends other mail too.
+  string subject = 2;
+
+  // How long to wait: 30s by default, 5s to 2m.
+  google.protobuf.Duration within = 3 [(buf.validate.field).duration = {
+    gte: {seconds: 5}
+    lte: {seconds: 120}
+  }];
+
+  // A regular expression for ${mail.code}, its first group the code: by
+  // default the first 4 to 8 digits on their own in the subject, then the
+  // text.
+  string code = 4;
+
+  // A regular expression for ${mail.link}, matched against the links to the
+  // preview: by default the first.
+  string link = 5;
+}
+
+// How Stagd tells a sign-in worked. Exactly one.
+message SignedIn {
+  oneof signed_in {
+    option (buf.validate.oneof).required = true;
+
+    // This text shows on the page, e.g. Sign out.
+    string text = 1;
+
+    // The browser ends on this path, e.g. /dashboard; a * matches the rest.
+    string url = 2;
+
+    // A GET of this path answers 2xx, e.g. /api/me: for headers.
+    string request = 3;
+  }
 }

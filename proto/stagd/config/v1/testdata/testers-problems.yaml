@@ -1,0 +1,20 @@
+# What a sign-in can get wrong: which one a tester uses, what it needs, and
+# the mail it reads.
+testers:
+  admin: { email: admin@acme.test }
+  api: { sign_in: token }
+  ghost: { email: g@acme.test, sign_in: sso }
+  nameless: { username: bot, sign_in: form-code }
+sign_in:
+  form-code:
+    form:
+      url: login
+      steps:
+        - fill: { field: Email, value: "${tester.email}" }
+        - fill: { field: Code, value: "${mail.code}" }
+        - wait_for_mail: {}
+        - press: Enter
+    signed_in: { text: Sign out }
+  token:
+    headers: { Authorization: "Bearer ${tester.secret}" }
+    signed_in: { text: Hello }

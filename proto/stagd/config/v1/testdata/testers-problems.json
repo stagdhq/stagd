@@ -1,0 +1,13 @@
+{
+  "problems": [
+    "sign_in.form-code.form.url should be the sign-in page's path, e.g. /login",
+    "sign_in.form-code.form.steps[2].fill.value: ${mail.code} needs a wait_for_mail step before it",
+    "sign_in.form-code.form.steps[3]: wait_for_mail reads the preview's inbox: add services: { mail: {} }",
+    "sign_in.form-code.form.steps[4] should be one of fill, click, open, wait_for, wait_for_mail, e.g. - click: Sign in",
+    "sign_in.token.headers.Authorization: ${tester.secret} isn't a tester's: use email, username, password or token",
+    "sign_in.token.signed_in: with headers, Stagd tells by a request, e.g. signed_in: { request: /api/me }",
+    "testers.admin should say which sign_in it uses: form-code or token",
+    "testers.ghost.sign_in: there's no sign_in.sso",
+    "testers.nameless has no email, which sign_in.form-code uses"
+  ]
+}

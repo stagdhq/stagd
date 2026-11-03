@@ -78,7 +78,15 @@ type Config struct {
 	Lifecycle *Lifecycle `protobuf:"bytes,13,opt,name=lifecycle,proto3" json:"lifecycle,omitempty"`
 	// The compute connection previews run on, by its name on Settings →
 	// Compute, e.g. kind. Left out, the org's default.
-	Compute       string `protobuf:"bytes,14,opt,name=compute,proto3" json:"compute,omitempty"`
+	Compute string `protobuf:"bytes,14,opt,name=compute,proto3" json:"compute,omitempty"`
+	// The users Stagd signs in as on the preview, by name, e.g. admin or
+	// member: users the app already has, in its seed or let in by a test
+	// login. Stagd signs in as them to check the sign-in works, and later to
+	// run tests; people see them on the preview's QA tab.
+	Testers map[string]*Tester `protobuf:"bytes,15,rep,name=testers,proto3" json:"testers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// How the app signs people in, by name, e.g. email-otp or token. A tester
+	// names the one it uses; with only one, every tester uses it.
+	SignIn        map[string]*SignIn `protobuf:"bytes,16,rep,name=sign_in,json=signIn,proto3" json:"sign_in,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -209,6 +217,20 @@ func (x *Config) GetCompute() string {
 		return x.Compute
 	}
 	return ""
+}
+
+func (x *Config) GetTesters() map[string]*Tester {
+	if x != nil {
+		return x.Testers
+	}
+	return nil
+}
+
+func (x *Config) GetSignIn() map[string]*SignIn {
+	if x != nil {
+		return x.SignIn
+	}
+	return nil
 }
 
 // Where the app is described: a compose file only, for now (Helm, Kustomize
@@ -1629,11 +1651,597 @@ func (x *Lifecycle) GetExpireAfter() *durationpb.Duration {
 	return nil
 }
 
+// A user Stagd signs in as. Its values are what the sign-in's steps and
+// headers use as ${tester.email}, ${tester.username}, ${tester.password}
+// and ${tester.token}; each may be plain, or a secret of Stagd's written as
+// "${NAME}".
+type Tester struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Who they are, for people and models, e.g. "org admin, sees billing".
+	Note     string `protobuf:"bytes,1,opt,name=note,proto3" json:"note,omitempty"`
+	Email    string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	Username string `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	Password string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	Token    string `protobuf:"bytes,5,opt,name=token,proto3" json:"token,omitempty"`
+	// The sign-in it uses, by its name under sign_in; left out when there's
+	// only one.
+	SignIn        string `protobuf:"bytes,6,opt,name=sign_in,json=signIn,proto3" json:"sign_in,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tester) Reset() {
+	*x = Tester{}
+	mi := &file_stagd_config_v1_config_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tester) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tester) ProtoMessage() {}
+
+func (x *Tester) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_config_v1_config_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tester.ProtoReflect.Descriptor instead.
+func (*Tester) Descriptor() ([]byte, []int) {
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *Tester) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *Tester) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *Tester) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *Tester) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *Tester) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *Tester) GetSignIn() string {
+	if x != nil {
+		return x.SignIn
+	}
+	return ""
+}
+
+// One way the app signs people in: a form a browser fills in, or headers
+// sent with every request (an API's token). Exactly one of form and headers.
+type SignIn struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Form  *Form                  `protobuf:"bytes,1,opt,name=form,proto3" json:"form,omitempty"`
+	// Sent with every request, e.g. Authorization: "Bearer ${tester.token}".
+	Headers map[string]string `protobuf:"bytes,2,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// How Stagd tells the sign-in worked.
+	SignedIn      *SignedIn `protobuf:"bytes,3,opt,name=signed_in,json=signedIn,proto3" json:"signed_in,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SignIn) Reset() {
+	*x = SignIn{}
+	mi := &file_stagd_config_v1_config_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignIn) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignIn) ProtoMessage() {}
+
+func (x *SignIn) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_config_v1_config_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignIn.ProtoReflect.Descriptor instead.
+func (*SignIn) Descriptor() ([]byte, []int) {
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *SignIn) GetForm() *Form {
+	if x != nil {
+		return x.Form
+	}
+	return nil
+}
+
+func (x *SignIn) GetHeaders() map[string]string {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
+}
+
+func (x *SignIn) GetSignedIn() *SignedIn {
+	if x != nil {
+		return x.SignedIn
+	}
+	return nil
+}
+
+// A sign-in page, and the steps a browser takes on it.
+type Form struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The page's path on the primary ingress, e.g. /login.
+	Url           string  `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Steps         []*Step `protobuf:"bytes,2,rep,name=steps,proto3" json:"steps,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Form) Reset() {
+	*x = Form{}
+	mi := &file_stagd_config_v1_config_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Form) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Form) ProtoMessage() {}
+
+func (x *Form) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_config_v1_config_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Form.ProtoReflect.Descriptor instead.
+func (*Form) Descriptor() ([]byte, []int) {
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *Form) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *Form) GetSteps() []*Step {
+	if x != nil {
+		return x.Steps
+	}
+	return nil
+}
+
+// One thing the browser does. Values may use ${tester.*}, secrets as
+// "${NAME}", and, after wait_for_mail, ${mail.code} and ${mail.link}.
+type Step struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Step:
+	//
+	//	*Step_Fill
+	//	*Step_Click
+	//	*Step_Open
+	//	*Step_WaitFor
+	//	*Step_WaitForMail
+	Step          isStep_Step `protobuf_oneof:"step"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Step) Reset() {
+	*x = Step{}
+	mi := &file_stagd_config_v1_config_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Step) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Step) ProtoMessage() {}
+
+func (x *Step) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_config_v1_config_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Step.ProtoReflect.Descriptor instead.
+func (*Step) Descriptor() ([]byte, []int) {
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *Step) GetStep() isStep_Step {
+	if x != nil {
+		return x.Step
+	}
+	return nil
+}
+
+func (x *Step) GetFill() *Fill {
+	if x != nil {
+		if x, ok := x.Step.(*Step_Fill); ok {
+			return x.Fill
+		}
+	}
+	return nil
+}
+
+func (x *Step) GetClick() string {
+	if x != nil {
+		if x, ok := x.Step.(*Step_Click); ok {
+			return x.Click
+		}
+	}
+	return ""
+}
+
+func (x *Step) GetOpen() string {
+	if x != nil {
+		if x, ok := x.Step.(*Step_Open); ok {
+			return x.Open
+		}
+	}
+	return ""
+}
+
+func (x *Step) GetWaitFor() string {
+	if x != nil {
+		if x, ok := x.Step.(*Step_WaitFor); ok {
+			return x.WaitFor
+		}
+	}
+	return ""
+}
+
+func (x *Step) GetWaitForMail() *WaitForMail {
+	if x != nil {
+		if x, ok := x.Step.(*Step_WaitForMail); ok {
+			return x.WaitForMail
+		}
+	}
+	return nil
+}
+
+type isStep_Step interface {
+	isStep_Step()
+}
+
+type Step_Fill struct {
+	// Types into a field, found by its label, placeholder or name.
+	Fill *Fill `protobuf:"bytes,1,opt,name=fill,proto3,oneof"`
+}
+
+type Step_Click struct {
+	// Clicks a button or link, found by its text.
+	Click string `protobuf:"bytes,2,opt,name=click,proto3,oneof"`
+}
+
+type Step_Open struct {
+	// Goes to a path on the preview, or ${mail.link}.
+	Open string `protobuf:"bytes,3,opt,name=open,proto3,oneof"`
+}
+
+type Step_WaitFor struct {
+	// Waits for this text to show on the page.
+	WaitFor string `protobuf:"bytes,4,opt,name=wait_for,json=waitFor,proto3,oneof"`
+}
+
+type Step_WaitForMail struct {
+	// Waits for an email the step before sent, and reads its code or link.
+	WaitForMail *WaitForMail `protobuf:"bytes,5,opt,name=wait_for_mail,json=waitForMail,proto3,oneof"`
+}
+
+func (*Step_Fill) isStep_Step() {}
+
+func (*Step_Click) isStep_Step() {}
+
+func (*Step_Open) isStep_Step() {}
+
+func (*Step_WaitFor) isStep_Step() {}
+
+func (*Step_WaitForMail) isStep_Step() {}
+
+type Fill struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Field         string                 `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Fill) Reset() {
+	*x = Fill{}
+	mi := &file_stagd_config_v1_config_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Fill) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Fill) ProtoMessage() {}
+
+func (x *Fill) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_config_v1_config_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Fill.ProtoReflect.Descriptor instead.
+func (*Fill) Descriptor() ([]byte, []int) {
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *Fill) GetField() string {
+	if x != nil {
+		return x.Field
+	}
+	return ""
+}
+
+func (x *Fill) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+// An email in the preview's inbox (services: { mail: {} }), sent after the
+// step before this one started.
+type WaitForMail struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Who it's to: ${tester.email} by default.
+	To string `protobuf:"bytes,1,opt,name=to,proto3" json:"to,omitempty"`
+	// Part of its subject, when the app sends other mail too.
+	Subject string `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
+	// How long to wait: 30s by default, 5s to 2m.
+	Within *durationpb.Duration `protobuf:"bytes,3,opt,name=within,proto3" json:"within,omitempty"`
+	// A regular expression for ${mail.code}, its first group the code: by
+	// default the first 4 to 8 digits on their own in the subject, then the
+	// text.
+	Code string `protobuf:"bytes,4,opt,name=code,proto3" json:"code,omitempty"`
+	// A regular expression for ${mail.link}, matched against the links to the
+	// preview: by default the first.
+	Link          string `protobuf:"bytes,5,opt,name=link,proto3" json:"link,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WaitForMail) Reset() {
+	*x = WaitForMail{}
+	mi := &file_stagd_config_v1_config_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WaitForMail) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WaitForMail) ProtoMessage() {}
+
+func (x *WaitForMail) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_config_v1_config_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WaitForMail.ProtoReflect.Descriptor instead.
+func (*WaitForMail) Descriptor() ([]byte, []int) {
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *WaitForMail) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+func (x *WaitForMail) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *WaitForMail) GetWithin() *durationpb.Duration {
+	if x != nil {
+		return x.Within
+	}
+	return nil
+}
+
+func (x *WaitForMail) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *WaitForMail) GetLink() string {
+	if x != nil {
+		return x.Link
+	}
+	return ""
+}
+
+// How Stagd tells a sign-in worked. Exactly one.
+type SignedIn struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to SignedIn:
+	//
+	//	*SignedIn_Text
+	//	*SignedIn_Url
+	//	*SignedIn_Request
+	SignedIn      isSignedIn_SignedIn `protobuf_oneof:"signed_in"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SignedIn) Reset() {
+	*x = SignedIn{}
+	mi := &file_stagd_config_v1_config_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignedIn) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignedIn) ProtoMessage() {}
+
+func (x *SignedIn) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_config_v1_config_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignedIn.ProtoReflect.Descriptor instead.
+func (*SignedIn) Descriptor() ([]byte, []int) {
+	return file_stagd_config_v1_config_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *SignedIn) GetSignedIn() isSignedIn_SignedIn {
+	if x != nil {
+		return x.SignedIn
+	}
+	return nil
+}
+
+func (x *SignedIn) GetText() string {
+	if x != nil {
+		if x, ok := x.SignedIn.(*SignedIn_Text); ok {
+			return x.Text
+		}
+	}
+	return ""
+}
+
+func (x *SignedIn) GetUrl() string {
+	if x != nil {
+		if x, ok := x.SignedIn.(*SignedIn_Url); ok {
+			return x.Url
+		}
+	}
+	return ""
+}
+
+func (x *SignedIn) GetRequest() string {
+	if x != nil {
+		if x, ok := x.SignedIn.(*SignedIn_Request); ok {
+			return x.Request
+		}
+	}
+	return ""
+}
+
+type isSignedIn_SignedIn interface {
+	isSignedIn_SignedIn()
+}
+
+type SignedIn_Text struct {
+	// This text shows on the page, e.g. Sign out.
+	Text string `protobuf:"bytes,1,opt,name=text,proto3,oneof"`
+}
+
+type SignedIn_Url struct {
+	// The browser ends on this path, e.g. /dashboard; a * matches the rest.
+	Url string `protobuf:"bytes,2,opt,name=url,proto3,oneof"`
+}
+
+type SignedIn_Request struct {
+	// A GET of this path answers 2xx, e.g. /api/me: for headers.
+	Request string `protobuf:"bytes,3,opt,name=request,proto3,oneof"`
+}
+
+func (*SignedIn_Text) isSignedIn_SignedIn() {}
+
+func (*SignedIn_Url) isSignedIn_SignedIn() {}
+
+func (*SignedIn_Request) isSignedIn_SignedIn() {}
+
 var File_stagd_config_v1_config_proto protoreflect.FileDescriptor
 
 const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"\x1cstagd/config/v1/config.proto\x12\x0fstagd.config.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\"\x93\t\n" +
+	"\x1cstagd/config/v1/config.proto\x12\x0fstagd.config.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\"\x98\f\n" +
 	"\x06Config\x12!\n" +
 	"\aversion\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02\b\x01R\aversion\x12&\n" +
 	"\x03app\x18\x02 \x01(\v2\x14.stagd.config.v1.AppR\x03app\x12k\n" +
@@ -1651,7 +2259,10 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"registries\x18\f \x03(\v2'.stagd.config.v1.Config.RegistriesEntryB:\xbaH7\x9a\x014\"2r02.^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?$R\n" +
 	"registries\x128\n" +
 	"\tlifecycle\x18\r \x01(\v2\x1a.stagd.config.v1.LifecycleR\tlifecycle\x12\x18\n" +
-	"\acompute\x18\x0e \x01(\tR\acompute\x1aT\n" +
+	"\acompute\x18\x0e \x01(\tR\acompute\x12m\n" +
+	"\atesters\x18\x0f \x03(\v2$.stagd.config.v1.Config.TestersEntryB-\xbaH*\x9a\x01'\x10\x14\"#r!2\x1f^[a-z0-9]([a-z0-9-]*[a-z0-9])?$R\atesters\x12k\n" +
+	"\asign_in\x18\x10 \x03(\v2#.stagd.config.v1.Config.SignInEntryB-\xbaH*\x9a\x01'\x10\n" +
+	"\"#r!2\x1f^[a-z0-9]([a-z0-9-]*[a-z0-9])?$R\x06signIn\x1aT\n" +
 	"\fIngressEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
 	"\x05value\x18\x02 \x01(\v2\x18.stagd.config.v1.IngressR\x05value:\x028\x01\x1aP\n" +
@@ -1664,7 +2275,13 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aX\n" +
 	"\x0fRegistriesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12/\n" +
-	"\x05value\x18\x02 \x01(\v2\x19.stagd.config.v1.RegistryR\x05value:\x028\x01\"\x1f\n" +
+	"\x05value\x18\x02 \x01(\v2\x19.stagd.config.v1.RegistryR\x05value:\x028\x01\x1aS\n" +
+	"\fTestersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12-\n" +
+	"\x05value\x18\x02 \x01(\v2\x17.stagd.config.v1.TesterR\x05value:\x028\x01\x1aR\n" +
+	"\vSignInEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12-\n" +
+	"\x05value\x18\x02 \x01(\v2\x17.stagd.config.v1.SignInR\x05value:\x028\x01\"\x1f\n" +
 	"\x03App\x12\x18\n" +
 	"\acompose\x18\x01 \x01(\tR\acompose\"g\n" +
 	"\aIngress\x12!\n" +
@@ -1770,7 +2387,46 @@ const file_stagd_config_v1_config_proto_rawDesc = "" +
 	"\vsleep_after\x18\x01 \x01(\v2\x19.google.protobuf.DurationB\x11\xbaH\x0e\xaa\x01\v\"\x04\b\x80\xa3\x052\x03\b\x8c\x15R\n" +
 	"sleepAfter\x12O\n" +
 	"\fexpire_after\x18\x02 \x01(\v2\x19.google.protobuf.DurationB\x11\xbaH\x0e\xaa\x01\v\"\x04\b\x80\xc6\n" +
-	"2\x03\b\x90\x1cR\vexpireAfterB\xc0\x01\n" +
+	"2\x03\b\x90\x1cR\vexpireAfter\"\xa3\x01\n" +
+	"\x06Tester\x12\x1c\n" +
+	"\x04note\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\xc8\x01R\x04note\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
+	"\busername\x18\x03 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x14\n" +
+	"\x05token\x18\x05 \x01(\tR\x05token\x12\x17\n" +
+	"\asign_in\x18\x06 \x01(\tR\x06signIn\"\xef\x01\n" +
+	"\x06SignIn\x12)\n" +
+	"\x04form\x18\x01 \x01(\v2\x15.stagd.config.v1.FormR\x04form\x12>\n" +
+	"\aheaders\x18\x02 \x03(\v2$.stagd.config.v1.SignIn.HeadersEntryR\aheaders\x12>\n" +
+	"\tsigned_in\x18\x03 \x01(\v2\x19.stagd.config.v1.SignedInB\x06\xbaH\x03\xc8\x01\x01R\bsignedIn\x1a:\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"c\n" +
+	"\x04Form\x12\"\n" +
+	"\x03url\x18\x01 \x01(\tB\x10\xbaH\rr\v2\t^/[^ #]*$R\x03url\x127\n" +
+	"\x05steps\x18\x02 \x03(\v2\x15.stagd.config.v1.StepB\n" +
+	"\xbaH\a\x92\x01\x04\b\x01\x10\x14R\x05steps\"\xd1\x01\n" +
+	"\x04Step\x12+\n" +
+	"\x04fill\x18\x01 \x01(\v2\x15.stagd.config.v1.FillH\x00R\x04fill\x12\x16\n" +
+	"\x05click\x18\x02 \x01(\tH\x00R\x05click\x12\x14\n" +
+	"\x04open\x18\x03 \x01(\tH\x00R\x04open\x12\x1b\n" +
+	"\bwait_for\x18\x04 \x01(\tH\x00R\awaitFor\x12B\n" +
+	"\rwait_for_mail\x18\x05 \x01(\v2\x1c.stagd.config.v1.WaitForMailH\x00R\vwaitForMailB\r\n" +
+	"\x04step\x12\x05\xbaH\x02\b\x01\";\n" +
+	"\x04Fill\x12\x1d\n" +
+	"\x05field\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05field\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\xa2\x01\n" +
+	"\vWaitForMail\x12\x0e\n" +
+	"\x02to\x18\x01 \x01(\tR\x02to\x12\x18\n" +
+	"\asubject\x18\x02 \x01(\tR\asubject\x12A\n" +
+	"\x06within\x18\x03 \x01(\v2\x19.google.protobuf.DurationB\x0e\xbaH\v\xaa\x01\b\"\x02\bx2\x02\b\x05R\x06within\x12\x12\n" +
+	"\x04code\x18\x04 \x01(\tR\x04code\x12\x12\n" +
+	"\x04link\x18\x05 \x01(\tR\x04link\"d\n" +
+	"\bSignedIn\x12\x14\n" +
+	"\x04text\x18\x01 \x01(\tH\x00R\x04text\x12\x12\n" +
+	"\x03url\x18\x02 \x01(\tH\x00R\x03url\x12\x1a\n" +
+	"\arequest\x18\x03 \x01(\tH\x00R\arequestB\x12\n" +
+	"\tsigned_in\x12\x05\xbaH\x02\b\x01B\xc0\x01\n" +
 	"\x13com.stagd.config.v1B\vConfigProtoP\x01Z>github.com/stagdhq/stagd/internal/gen/stagd/config/v1;configv1\xa2\x02\x03SCX\xaa\x02\x0fStagd.Config.V1\xca\x02\x0fStagd\\Config\\V1\xe2\x02\x1bStagd\\Config\\V1\\GPBMetadata\xea\x02\x11Stagd::Config::V1b\x06proto3"
 
 var (
@@ -1785,7 +2441,7 @@ func file_stagd_config_v1_config_proto_rawDescGZIP() []byte {
 	return file_stagd_config_v1_config_proto_rawDescData
 }
 
-var file_stagd_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_stagd_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
 var file_stagd_config_v1_config_proto_goTypes = []any{
 	(*Config)(nil),              // 0: stagd.config.v1.Config
 	(*App)(nil),                 // 1: stagd.config.v1.App
@@ -1809,55 +2465,76 @@ var file_stagd_config_v1_config_proto_goTypes = []any{
 	(*Wait)(nil),                // 19: stagd.config.v1.Wait
 	(*Registry)(nil),            // 20: stagd.config.v1.Registry
 	(*Lifecycle)(nil),           // 21: stagd.config.v1.Lifecycle
-	nil,                         // 22: stagd.config.v1.Config.IngressEntry
-	nil,                         // 23: stagd.config.v1.Config.BuildEntry
-	nil,                         // 24: stagd.config.v1.Config.EnvEntry
-	nil,                         // 25: stagd.config.v1.Config.RegistriesEntry
-	nil,                         // 26: stagd.config.v1.Build.ArgsEntry
-	nil,                         // 27: stagd.config.v1.OTelExport.HeadersEntry
-	nil,                         // 28: stagd.config.v1.Neon.ParamsEntry
-	nil,                         // 29: stagd.config.v1.Neon.EnvEntry
-	(*durationpb.Duration)(nil), // 30: google.protobuf.Duration
+	(*Tester)(nil),              // 22: stagd.config.v1.Tester
+	(*SignIn)(nil),              // 23: stagd.config.v1.SignIn
+	(*Form)(nil),                // 24: stagd.config.v1.Form
+	(*Step)(nil),                // 25: stagd.config.v1.Step
+	(*Fill)(nil),                // 26: stagd.config.v1.Fill
+	(*WaitForMail)(nil),         // 27: stagd.config.v1.WaitForMail
+	(*SignedIn)(nil),            // 28: stagd.config.v1.SignedIn
+	nil,                         // 29: stagd.config.v1.Config.IngressEntry
+	nil,                         // 30: stagd.config.v1.Config.BuildEntry
+	nil,                         // 31: stagd.config.v1.Config.EnvEntry
+	nil,                         // 32: stagd.config.v1.Config.RegistriesEntry
+	nil,                         // 33: stagd.config.v1.Config.TestersEntry
+	nil,                         // 34: stagd.config.v1.Config.SignInEntry
+	nil,                         // 35: stagd.config.v1.Build.ArgsEntry
+	nil,                         // 36: stagd.config.v1.OTelExport.HeadersEntry
+	nil,                         // 37: stagd.config.v1.Neon.ParamsEntry
+	nil,                         // 38: stagd.config.v1.Neon.EnvEntry
+	nil,                         // 39: stagd.config.v1.SignIn.HeadersEntry
+	(*durationpb.Duration)(nil), // 40: google.protobuf.Duration
 }
 var file_stagd_config_v1_config_proto_depIdxs = []int32{
 	1,  // 0: stagd.config.v1.Config.app:type_name -> stagd.config.v1.App
-	22, // 1: stagd.config.v1.Config.ingress:type_name -> stagd.config.v1.Config.IngressEntry
-	23, // 2: stagd.config.v1.Config.build:type_name -> stagd.config.v1.Config.BuildEntry
+	29, // 1: stagd.config.v1.Config.ingress:type_name -> stagd.config.v1.Config.IngressEntry
+	30, // 2: stagd.config.v1.Config.build:type_name -> stagd.config.v1.Config.BuildEntry
 	4,  // 3: stagd.config.v1.Config.services:type_name -> stagd.config.v1.Services
-	24, // 4: stagd.config.v1.Config.env:type_name -> stagd.config.v1.Config.EnvEntry
+	31, // 4: stagd.config.v1.Config.env:type_name -> stagd.config.v1.Config.EnvEntry
 	15, // 5: stagd.config.v1.Config.database:type_name -> stagd.config.v1.Database
 	17, // 6: stagd.config.v1.Config.previews:type_name -> stagd.config.v1.Previews
 	18, // 7: stagd.config.v1.Config.commands:type_name -> stagd.config.v1.Commands
 	19, // 8: stagd.config.v1.Config.wait:type_name -> stagd.config.v1.Wait
-	25, // 9: stagd.config.v1.Config.registries:type_name -> stagd.config.v1.Config.RegistriesEntry
+	32, // 9: stagd.config.v1.Config.registries:type_name -> stagd.config.v1.Config.RegistriesEntry
 	21, // 10: stagd.config.v1.Config.lifecycle:type_name -> stagd.config.v1.Lifecycle
-	26, // 11: stagd.config.v1.Build.args:type_name -> stagd.config.v1.Build.ArgsEntry
-	30, // 12: stagd.config.v1.Build.wait:type_name -> google.protobuf.Duration
-	8,  // 13: stagd.config.v1.Services.mail:type_name -> stagd.config.v1.Mail
-	13, // 14: stagd.config.v1.Services.otel:type_name -> stagd.config.v1.OTel
-	9,  // 15: stagd.config.v1.Services.postgres:type_name -> stagd.config.v1.Postgres
-	10, // 16: stagd.config.v1.Services.mysql:type_name -> stagd.config.v1.MySQL
-	11, // 17: stagd.config.v1.Services.mariadb:type_name -> stagd.config.v1.MariaDB
-	12, // 18: stagd.config.v1.Services.mongodb:type_name -> stagd.config.v1.MongoDB
-	7,  // 19: stagd.config.v1.Services.sms:type_name -> stagd.config.v1.Sms
-	5,  // 20: stagd.config.v1.Services.azure_blob:type_name -> stagd.config.v1.AzureBlob
-	6,  // 21: stagd.config.v1.Services.s3:type_name -> stagd.config.v1.S3
-	14, // 22: stagd.config.v1.OTel.export:type_name -> stagd.config.v1.OTelExport
-	27, // 23: stagd.config.v1.OTelExport.headers:type_name -> stagd.config.v1.OTelExport.HeadersEntry
-	16, // 24: stagd.config.v1.Database.neon:type_name -> stagd.config.v1.Neon
-	28, // 25: stagd.config.v1.Neon.params:type_name -> stagd.config.v1.Neon.ParamsEntry
-	29, // 26: stagd.config.v1.Neon.env:type_name -> stagd.config.v1.Neon.EnvEntry
-	30, // 27: stagd.config.v1.Wait.timeout:type_name -> google.protobuf.Duration
-	30, // 28: stagd.config.v1.Lifecycle.sleep_after:type_name -> google.protobuf.Duration
-	30, // 29: stagd.config.v1.Lifecycle.expire_after:type_name -> google.protobuf.Duration
-	2,  // 30: stagd.config.v1.Config.IngressEntry.value:type_name -> stagd.config.v1.Ingress
-	3,  // 31: stagd.config.v1.Config.BuildEntry.value:type_name -> stagd.config.v1.Build
-	20, // 32: stagd.config.v1.Config.RegistriesEntry.value:type_name -> stagd.config.v1.Registry
-	33, // [33:33] is the sub-list for method output_type
-	33, // [33:33] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	33, // 11: stagd.config.v1.Config.testers:type_name -> stagd.config.v1.Config.TestersEntry
+	34, // 12: stagd.config.v1.Config.sign_in:type_name -> stagd.config.v1.Config.SignInEntry
+	35, // 13: stagd.config.v1.Build.args:type_name -> stagd.config.v1.Build.ArgsEntry
+	40, // 14: stagd.config.v1.Build.wait:type_name -> google.protobuf.Duration
+	8,  // 15: stagd.config.v1.Services.mail:type_name -> stagd.config.v1.Mail
+	13, // 16: stagd.config.v1.Services.otel:type_name -> stagd.config.v1.OTel
+	9,  // 17: stagd.config.v1.Services.postgres:type_name -> stagd.config.v1.Postgres
+	10, // 18: stagd.config.v1.Services.mysql:type_name -> stagd.config.v1.MySQL
+	11, // 19: stagd.config.v1.Services.mariadb:type_name -> stagd.config.v1.MariaDB
+	12, // 20: stagd.config.v1.Services.mongodb:type_name -> stagd.config.v1.MongoDB
+	7,  // 21: stagd.config.v1.Services.sms:type_name -> stagd.config.v1.Sms
+	5,  // 22: stagd.config.v1.Services.azure_blob:type_name -> stagd.config.v1.AzureBlob
+	6,  // 23: stagd.config.v1.Services.s3:type_name -> stagd.config.v1.S3
+	14, // 24: stagd.config.v1.OTel.export:type_name -> stagd.config.v1.OTelExport
+	36, // 25: stagd.config.v1.OTelExport.headers:type_name -> stagd.config.v1.OTelExport.HeadersEntry
+	16, // 26: stagd.config.v1.Database.neon:type_name -> stagd.config.v1.Neon
+	37, // 27: stagd.config.v1.Neon.params:type_name -> stagd.config.v1.Neon.ParamsEntry
+	38, // 28: stagd.config.v1.Neon.env:type_name -> stagd.config.v1.Neon.EnvEntry
+	40, // 29: stagd.config.v1.Wait.timeout:type_name -> google.protobuf.Duration
+	40, // 30: stagd.config.v1.Lifecycle.sleep_after:type_name -> google.protobuf.Duration
+	40, // 31: stagd.config.v1.Lifecycle.expire_after:type_name -> google.protobuf.Duration
+	24, // 32: stagd.config.v1.SignIn.form:type_name -> stagd.config.v1.Form
+	39, // 33: stagd.config.v1.SignIn.headers:type_name -> stagd.config.v1.SignIn.HeadersEntry
+	28, // 34: stagd.config.v1.SignIn.signed_in:type_name -> stagd.config.v1.SignedIn
+	25, // 35: stagd.config.v1.Form.steps:type_name -> stagd.config.v1.Step
+	26, // 36: stagd.config.v1.Step.fill:type_name -> stagd.config.v1.Fill
+	27, // 37: stagd.config.v1.Step.wait_for_mail:type_name -> stagd.config.v1.WaitForMail
+	40, // 38: stagd.config.v1.WaitForMail.within:type_name -> google.protobuf.Duration
+	2,  // 39: stagd.config.v1.Config.IngressEntry.value:type_name -> stagd.config.v1.Ingress
+	3,  // 40: stagd.config.v1.Config.BuildEntry.value:type_name -> stagd.config.v1.Build
+	20, // 41: stagd.config.v1.Config.RegistriesEntry.value:type_name -> stagd.config.v1.Registry
+	22, // 42: stagd.config.v1.Config.TestersEntry.value:type_name -> stagd.config.v1.Tester
+	23, // 43: stagd.config.v1.Config.SignInEntry.value:type_name -> stagd.config.v1.SignIn
+	44, // [44:44] is the sub-list for method output_type
+	44, // [44:44] is the sub-list for method input_type
+	44, // [44:44] is the sub-list for extension type_name
+	44, // [44:44] is the sub-list for extension extendee
+	0,  // [0:44] is the sub-list for field type_name
 }
 
 func init() { file_stagd_config_v1_config_proto_init() }
@@ -1873,13 +2550,25 @@ func file_stagd_config_v1_config_proto_init() {
 		(*Previews_When)(nil),
 		(*Previews_Label)(nil),
 	}
+	file_stagd_config_v1_config_proto_msgTypes[25].OneofWrappers = []any{
+		(*Step_Fill)(nil),
+		(*Step_Click)(nil),
+		(*Step_Open)(nil),
+		(*Step_WaitFor)(nil),
+		(*Step_WaitForMail)(nil),
+	}
+	file_stagd_config_v1_config_proto_msgTypes[28].OneofWrappers = []any{
+		(*SignedIn_Text)(nil),
+		(*SignedIn_Url)(nil),
+		(*SignedIn_Request)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_config_v1_config_proto_rawDesc), len(file_stagd_config_v1_config_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   30,
+			NumMessages:   40,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
