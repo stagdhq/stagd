@@ -54,6 +54,7 @@ func previewCommand() *cli.Command {
 			{Name: "wake", Usage: "start a sleeping preview again", ArgsUsage: idArg, Flags: []cli.Flag{noWait}, Action: previewWake},
 			{Name: "destroy", Usage: "tear a preview down now", ArgsUsage: idArg, Action: previewDestroy},
 			previewMailCommand(),
+			previewTestersCommand(),
 			previewTextsCommand(),
 			previewLogsCommand(),
 			previewUsageCommand(),

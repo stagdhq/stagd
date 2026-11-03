@@ -72,6 +72,12 @@ const (
 	// PreviewServiceRefreshTestGuideProcedure is the fully-qualified name of the PreviewService's
 	// RefreshTestGuide RPC.
 	PreviewServiceRefreshTestGuideProcedure = "/stagd.api.v1.PreviewService/RefreshTestGuide"
+	// PreviewServiceListTestersProcedure is the fully-qualified name of the PreviewService's
+	// ListTesters RPC.
+	PreviewServiceListTestersProcedure = "/stagd.api.v1.PreviewService/ListTesters"
+	// PreviewServiceCheckTestersProcedure is the fully-qualified name of the PreviewService's
+	// CheckTesters RPC.
+	PreviewServiceCheckTestersProcedure = "/stagd.api.v1.PreviewService/CheckTesters"
 	// PreviewServiceGetPreviewPolicyProcedure is the fully-qualified name of the PreviewService's
 	// GetPreviewPolicy RPC.
 	PreviewServiceGetPreviewPolicyProcedure = "/stagd.api.v1.PreviewService/GetPreviewPolicy"
@@ -153,6 +159,12 @@ type PreviewServiceClient interface {
 	// RefreshTestGuide writes the guide again now, from what the preview has
 	// served and sent since; at most once a minute.
 	RefreshTestGuide(context.Context, *connect.Request[v1.RefreshTestGuideRequest]) (*connect.Response[v1.RefreshTestGuideResponse], error)
+	// ListTesters lists the users stagd.yaml names for signing in to the
+	// preview (testers), and how each signs in.
+	ListTesters(context.Context, *connect.Request[v1.ListTestersRequest]) (*connect.Response[v1.ListTestersResponse], error)
+	// CheckTesters signs in to the preview as each tester, as stagd.yaml says,
+	// and says how each step went.
+	CheckTesters(context.Context, *connect.Request[v1.CheckTestersRequest]) (*connect.Response[v1.CheckTestersResponse], error)
 	// GetPreviewPolicy returns who may open previews and how their URLs look:
 	// the org's default, or a repository's (its own, or the default it inherits).
 	GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error)
@@ -299,6 +311,18 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("RefreshTestGuide")),
 			connect.WithClientOptions(opts...),
 		),
+		listTesters: connect.NewClient[v1.ListTestersRequest, v1.ListTestersResponse](
+			httpClient,
+			baseURL+PreviewServiceListTestersProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("ListTesters")),
+			connect.WithClientOptions(opts...),
+		),
+		checkTesters: connect.NewClient[v1.CheckTestersRequest, v1.CheckTestersResponse](
+			httpClient,
+			baseURL+PreviewServiceCheckTestersProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("CheckTesters")),
+			connect.WithClientOptions(opts...),
+		),
 		getPreviewPolicy: connect.NewClient[v1.GetPreviewPolicyRequest, v1.GetPreviewPolicyResponse](
 			httpClient,
 			baseURL+PreviewServiceGetPreviewPolicyProcedure,
@@ -407,6 +431,8 @@ type previewServiceClient struct {
 	ratePreviewRisk     *connect.Client[v1.RatePreviewRiskRequest, v1.RatePreviewRiskResponse]
 	getTestGuide        *connect.Client[v1.GetTestGuideRequest, v1.GetTestGuideResponse]
 	refreshTestGuide    *connect.Client[v1.RefreshTestGuideRequest, v1.RefreshTestGuideResponse]
+	listTesters         *connect.Client[v1.ListTestersRequest, v1.ListTestersResponse]
+	checkTesters        *connect.Client[v1.CheckTestersRequest, v1.CheckTestersResponse]
 	getPreviewPolicy    *connect.Client[v1.GetPreviewPolicyRequest, v1.GetPreviewPolicyResponse]
 	updatePreviewPolicy *connect.Client[v1.UpdatePreviewPolicyRequest, v1.UpdatePreviewPolicyResponse]
 	validateApp         *connect.Client[v1.ValidateAppRequest, v1.ValidateAppResponse]
@@ -487,6 +513,16 @@ func (c *previewServiceClient) GetTestGuide(ctx context.Context, req *connect.Re
 // RefreshTestGuide calls stagd.api.v1.PreviewService.RefreshTestGuide.
 func (c *previewServiceClient) RefreshTestGuide(ctx context.Context, req *connect.Request[v1.RefreshTestGuideRequest]) (*connect.Response[v1.RefreshTestGuideResponse], error) {
 	return c.refreshTestGuide.CallUnary(ctx, req)
+}
+
+// ListTesters calls stagd.api.v1.PreviewService.ListTesters.
+func (c *previewServiceClient) ListTesters(ctx context.Context, req *connect.Request[v1.ListTestersRequest]) (*connect.Response[v1.ListTestersResponse], error) {
+	return c.listTesters.CallUnary(ctx, req)
+}
+
+// CheckTesters calls stagd.api.v1.PreviewService.CheckTesters.
+func (c *previewServiceClient) CheckTesters(ctx context.Context, req *connect.Request[v1.CheckTestersRequest]) (*connect.Response[v1.CheckTestersResponse], error) {
+	return c.checkTesters.CallUnary(ctx, req)
 }
 
 // GetPreviewPolicy calls stagd.api.v1.PreviewService.GetPreviewPolicy.
@@ -602,6 +638,12 @@ type PreviewServiceHandler interface {
 	// RefreshTestGuide writes the guide again now, from what the preview has
 	// served and sent since; at most once a minute.
 	RefreshTestGuide(context.Context, *connect.Request[v1.RefreshTestGuideRequest]) (*connect.Response[v1.RefreshTestGuideResponse], error)
+	// ListTesters lists the users stagd.yaml names for signing in to the
+	// preview (testers), and how each signs in.
+	ListTesters(context.Context, *connect.Request[v1.ListTestersRequest]) (*connect.Response[v1.ListTestersResponse], error)
+	// CheckTesters signs in to the preview as each tester, as stagd.yaml says,
+	// and says how each step went.
+	CheckTesters(context.Context, *connect.Request[v1.CheckTestersRequest]) (*connect.Response[v1.CheckTestersResponse], error)
 	// GetPreviewPolicy returns who may open previews and how their URLs look:
 	// the org's default, or a repository's (its own, or the default it inherits).
 	GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error)
@@ -744,6 +786,18 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		connect.WithSchema(previewServiceMethods.ByName("RefreshTestGuide")),
 		connect.WithHandlerOptions(opts...),
 	)
+	previewServiceListTestersHandler := connect.NewUnaryHandler(
+		PreviewServiceListTestersProcedure,
+		svc.ListTesters,
+		connect.WithSchema(previewServiceMethods.ByName("ListTesters")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceCheckTestersHandler := connect.NewUnaryHandler(
+		PreviewServiceCheckTestersProcedure,
+		svc.CheckTesters,
+		connect.WithSchema(previewServiceMethods.ByName("CheckTesters")),
+		connect.WithHandlerOptions(opts...),
+	)
 	previewServiceGetPreviewPolicyHandler := connect.NewUnaryHandler(
 		PreviewServiceGetPreviewPolicyProcedure,
 		svc.GetPreviewPolicy,
@@ -862,6 +916,10 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceGetTestGuideHandler.ServeHTTP(w, r)
 		case PreviewServiceRefreshTestGuideProcedure:
 			previewServiceRefreshTestGuideHandler.ServeHTTP(w, r)
+		case PreviewServiceListTestersProcedure:
+			previewServiceListTestersHandler.ServeHTTP(w, r)
+		case PreviewServiceCheckTestersProcedure:
+			previewServiceCheckTestersHandler.ServeHTTP(w, r)
 		case PreviewServiceGetPreviewPolicyProcedure:
 			previewServiceGetPreviewPolicyHandler.ServeHTTP(w, r)
 		case PreviewServiceUpdatePreviewPolicyProcedure:
@@ -951,6 +1009,14 @@ func (UnimplementedPreviewServiceHandler) GetTestGuide(context.Context, *connect
 
 func (UnimplementedPreviewServiceHandler) RefreshTestGuide(context.Context, *connect.Request[v1.RefreshTestGuideRequest]) (*connect.Response[v1.RefreshTestGuideResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.RefreshTestGuide is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) ListTesters(context.Context, *connect.Request[v1.ListTestersRequest]) (*connect.Response[v1.ListTestersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListTesters is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) CheckTesters(context.Context, *connect.Request[v1.CheckTestersRequest]) (*connect.Response[v1.CheckTestersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.CheckTesters is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error) {

@@ -1131,7 +1131,10 @@ type Preview struct {
 	Failure *PreviewFailure `protobuf:"bytes,23,opt,name=failure,proto3" json:"failure,omitempty"`
 	// The pull request's merge risk, as the org's model read its changes;
 	// unset when the org doesn't assess risk, or it isn't a pull request's.
-	Risk          *PreviewRisk `protobuf:"bytes,24,opt,name=risk,proto3" json:"risk,omitempty"`
+	Risk *PreviewRisk `protobuf:"bytes,24,opt,name=risk,proto3" json:"risk,omitempty"`
+	// How many testers its stagd.yaml names (ListTesters), as at its last
+	// deploy.
+	Testers       int32 `protobuf:"varint,25,opt,name=testers,proto3" json:"testers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1332,6 +1335,13 @@ func (x *Preview) GetRisk() *PreviewRisk {
 		return x.Risk
 	}
 	return nil
+}
+
+func (x *Preview) GetTesters() int32 {
+	if x != nil {
+		return x.Testers
+	}
+	return 0
 }
 
 // A failed deploy explained: where it failed, the lines that show why, and
@@ -6690,6 +6700,464 @@ func (x *SpanEvent) GetAttributes() []*LogField {
 	return nil
 }
 
+type ListTestersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTestersRequest) Reset() {
+	*x = ListTestersRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[91]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTestersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTestersRequest) ProtoMessage() {}
+
+func (x *ListTestersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[91]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTestersRequest.ProtoReflect.Descriptor instead.
+func (*ListTestersRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{91}
+}
+
+func (x *ListTestersRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type ListTestersResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// In stagd.yaml's order, as at the preview's last deploy.
+	Testers       []*PreviewTester `protobuf:"bytes,1,rep,name=testers,proto3" json:"testers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTestersResponse) Reset() {
+	*x = ListTestersResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[92]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTestersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTestersResponse) ProtoMessage() {}
+
+func (x *ListTestersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[92]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTestersResponse.ProtoReflect.Descriptor instead.
+func (*ListTestersResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{92}
+}
+
+func (x *ListTestersResponse) GetTesters() []*PreviewTester {
+	if x != nil {
+		return x.Testers
+	}
+	return nil
+}
+
+// A user Stagd signs in as on the preview (stagd.yaml's testers).
+type PreviewTester struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Name     string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Note     string                 `protobuf:"bytes,2,opt,name=note,proto3" json:"note,omitempty"`
+	Email    string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Username string                 `protobuf:"bytes,4,opt,name=username,proto3" json:"username,omitempty"`
+	// The sign-in it uses, by its name under stagd.yaml's sign_in.
+	SignIn string `protobuf:"bytes,5,opt,name=sign_in,json=signIn,proto3" json:"sign_in,omitempty"`
+	// How to sign in as it, for a person, e.g. "email, then code 123456",
+	// with values written in stagd.yaml; a secret only by its name.
+	How string `protobuf:"bytes,6,opt,name=how,proto3" json:"how,omitempty"`
+	// The password, when stagd.yaml has it written out; for members.
+	Password string `protobuf:"bytes,7,opt,name=password,proto3" json:"password,omitempty"`
+	// The secret it's from, when stagd.yaml names one, e.g. ADMIN_PASSWORD.
+	PasswordSecret string `protobuf:"bytes,8,opt,name=password_secret,json=passwordSecret,proto3" json:"password_secret,omitempty"`
+	// Whether it signs in with headers (an API's token) rather than a form.
+	Headers       bool `protobuf:"varint,9,opt,name=headers,proto3" json:"headers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewTester) Reset() {
+	*x = PreviewTester{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[93]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewTester) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewTester) ProtoMessage() {}
+
+func (x *PreviewTester) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[93]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewTester.ProtoReflect.Descriptor instead.
+func (*PreviewTester) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{93}
+}
+
+func (x *PreviewTester) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PreviewTester) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *PreviewTester) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *PreviewTester) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *PreviewTester) GetSignIn() string {
+	if x != nil {
+		return x.SignIn
+	}
+	return ""
+}
+
+func (x *PreviewTester) GetHow() string {
+	if x != nil {
+		return x.How
+	}
+	return ""
+}
+
+func (x *PreviewTester) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *PreviewTester) GetPasswordSecret() string {
+	if x != nil {
+		return x.PasswordSecret
+	}
+	return ""
+}
+
+func (x *PreviewTester) GetHeaders() bool {
+	if x != nil {
+		return x.Headers
+	}
+	return false
+}
+
+type CheckTestersRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Testers by name; every one when empty.
+	Names         []string `protobuf:"bytes,2,rep,name=names,proto3" json:"names,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckTestersRequest) Reset() {
+	*x = CheckTestersRequest{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[94]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckTestersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckTestersRequest) ProtoMessage() {}
+
+func (x *CheckTestersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[94]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckTestersRequest.ProtoReflect.Descriptor instead.
+func (*CheckTestersRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{94}
+}
+
+func (x *CheckTestersRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CheckTestersRequest) GetNames() []string {
+	if x != nil {
+		return x.Names
+	}
+	return nil
+}
+
+type CheckTestersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Checks        []*TesterCheck         `protobuf:"bytes,1,rep,name=checks,proto3" json:"checks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckTestersResponse) Reset() {
+	*x = CheckTestersResponse{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[95]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckTestersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckTestersResponse) ProtoMessage() {}
+
+func (x *CheckTestersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[95]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckTestersResponse.ProtoReflect.Descriptor instead.
+func (*CheckTestersResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{95}
+}
+
+func (x *CheckTestersResponse) GetChecks() []*TesterCheck {
+	if x != nil {
+		return x.Checks
+	}
+	return nil
+}
+
+// How signing in as one tester went.
+type TesterCheck struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Ok    bool                   `protobuf:"varint,2,opt,name=ok,proto3" json:"ok,omitempty"`
+	// Why it didn't work, e.g. "step 3: no field named Code".
+	Error string        `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Steps []*TesterStep `protobuf:"bytes,4,rep,name=steps,proto3" json:"steps,omitempty"`
+	// Where the browser ended, for a form.
+	Url string `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	// The page when it stopped, as a JPEG, when it didn't work.
+	Screenshot    []byte `protobuf:"bytes,6,opt,name=screenshot,proto3" json:"screenshot,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TesterCheck) Reset() {
+	*x = TesterCheck{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[96]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TesterCheck) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TesterCheck) ProtoMessage() {}
+
+func (x *TesterCheck) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[96]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TesterCheck.ProtoReflect.Descriptor instead.
+func (*TesterCheck) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{96}
+}
+
+func (x *TesterCheck) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TesterCheck) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *TesterCheck) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *TesterCheck) GetSteps() []*TesterStep {
+	if x != nil {
+		return x.Steps
+	}
+	return nil
+}
+
+func (x *TesterCheck) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *TesterCheck) GetScreenshot() []byte {
+	if x != nil {
+		return x.Screenshot
+	}
+	return nil
+}
+
+type TesterStep struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// What it did, e.g. "fill Email" or "wait for mail to admin@acme.test".
+	Text          string               `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	Ok            bool                 `protobuf:"varint,2,opt,name=ok,proto3" json:"ok,omitempty"`
+	Error         string               `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Duration      *durationpb.Duration `protobuf:"bytes,4,opt,name=duration,proto3" json:"duration,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TesterStep) Reset() {
+	*x = TesterStep{}
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[97]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TesterStep) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TesterStep) ProtoMessage() {}
+
+func (x *TesterStep) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_previews_proto_msgTypes[97]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TesterStep.ProtoReflect.Descriptor instead.
+func (*TesterStep) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_previews_proto_rawDescGZIP(), []int{97}
+}
+
+func (x *TesterStep) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *TesterStep) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *TesterStep) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *TesterStep) GetDuration() *durationpb.Duration {
+	if x != nil {
+		return x.Duration
+	}
+	return nil
+}
+
 var File_stagd_api_v1_previews_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_previews_proto_rawDesc = "" +
@@ -6728,7 +7196,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\rchange_number\x18\x01 \x01(\x03B\a\xbaH\x04\"\x02 \x00H\x00R\fchangeNumber\x12!\n" +
 	"\x06branch\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x06branch\x12,\n" +
 	"\x03sha\x18\x03 \x01(\tB\x1a\xbaH\x17r\x152\x13^([0-9a-f]{7,40})?$R\x03shaB\r\n" +
-	"\x04kind\x12\x05\xbaH\x02\b\x01\"\xbe\b\n" +
+	"\x04kind\x12\x05\xbaH\x02\b\x01\"\xd8\b\n" +
 	"\aPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x128\n" +
 	"\n" +
@@ -6762,7 +7230,8 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x04seed\x18\x15 \x01(\v2\x19.stagd.api.v1.PreviewSeedR\x04seed\x12/\n" +
 	"\x05seeds\x18\x16 \x03(\v2\x19.stagd.api.v1.PreviewSeedR\x05seeds\x126\n" +
 	"\afailure\x18\x17 \x01(\v2\x1c.stagd.api.v1.PreviewFailureR\afailure\x12-\n" +
-	"\x04risk\x18\x18 \x01(\v2\x19.stagd.api.v1.PreviewRiskR\x04risk\"\xa6\x04\n" +
+	"\x04risk\x18\x18 \x01(\v2\x19.stagd.api.v1.PreviewRiskR\x04risk\x12\x18\n" +
+	"\atesters\x18\x19 \x01(\x05R\atesters\"\xa6\x04\n" +
 	"\x0ePreviewFailure\x12\x14\n" +
 	"\x05stage\x18\x01 \x01(\tR\x05stage\x12\x18\n" +
 	"\aservice\x18\x02 \x01(\tR\aservice\x12\x14\n" +
@@ -7183,7 +7652,41 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x126\n" +
 	"\n" +
 	"attributes\x18\x03 \x03(\v2\x16.stagd.api.v1.LogFieldR\n" +
-	"attributes*b\n" +
+	"attributes\"-\n" +
+	"\x12ListTestersRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"L\n" +
+	"\x13ListTestersResponse\x125\n" +
+	"\atesters\x18\x01 \x03(\v2\x1b.stagd.api.v1.PreviewTesterR\atesters\"\xf3\x01\n" +
+	"\rPreviewTester\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04note\x18\x02 \x01(\tR\x04note\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1a\n" +
+	"\busername\x18\x04 \x01(\tR\busername\x12\x17\n" +
+	"\asign_in\x18\x05 \x01(\tR\x06signIn\x12\x10\n" +
+	"\x03how\x18\x06 \x01(\tR\x03how\x12\x1a\n" +
+	"\bpassword\x18\a \x01(\tR\bpassword\x12'\n" +
+	"\x0fpassword_secret\x18\b \x01(\tR\x0epasswordSecret\x12\x18\n" +
+	"\aheaders\x18\t \x01(\bR\aheaders\"D\n" +
+	"\x13CheckTestersRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12\x14\n" +
+	"\x05names\x18\x02 \x03(\tR\x05names\"I\n" +
+	"\x14CheckTestersResponse\x121\n" +
+	"\x06checks\x18\x01 \x03(\v2\x19.stagd.api.v1.TesterCheckR\x06checks\"\xa9\x01\n" +
+	"\vTesterCheck\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
+	"\x02ok\x18\x02 \x01(\bR\x02ok\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x12.\n" +
+	"\x05steps\x18\x04 \x03(\v2\x18.stagd.api.v1.TesterStepR\x05steps\x12\x10\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\x12\x1e\n" +
+	"\n" +
+	"screenshot\x18\x06 \x01(\fR\n" +
+	"screenshot\"}\n" +
+	"\n" +
+	"TesterStep\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\x12\x0e\n" +
+	"\x02ok\x18\x02 \x01(\bR\x02ok\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x125\n" +
+	"\bduration\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\bduration*b\n" +
 	"\rPreviewAccess\x12\x1e\n" +
 	"\x1aPREVIEW_ACCESS_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12PREVIEW_ACCESS_ORG\x10\x01\x12\x19\n" +
@@ -7244,7 +7747,7 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x10SPAN_KIND_SERVER\x10\x02\x12\x14\n" +
 	"\x10SPAN_KIND_CLIENT\x10\x03\x12\x16\n" +
 	"\x12SPAN_KIND_PRODUCER\x10\x04\x12\x16\n" +
-	"\x12SPAN_KIND_CONSUMER\x10\x052\xae\x13\n" +
+	"\x12SPAN_KIND_CONSUMER\x10\x052\xd9\x14\n" +
 	"\x0ePreviewService\x12X\n" +
 	"\rCreatePreview\x12\".stagd.api.v1.CreatePreviewRequest\x1a#.stagd.api.v1.CreatePreviewResponse\x12R\n" +
 	"\vListSources\x12 .stagd.api.v1.ListSourcesRequest\x1a!.stagd.api.v1.ListSourcesResponse\x12O\n" +
@@ -7259,7 +7762,9 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x12RatePreviewFailure\x12'.stagd.api.v1.RatePreviewFailureRequest\x1a(.stagd.api.v1.RatePreviewFailureResponse\x12^\n" +
 	"\x0fRatePreviewRisk\x12$.stagd.api.v1.RatePreviewRiskRequest\x1a%.stagd.api.v1.RatePreviewRiskResponse\x12U\n" +
 	"\fGetTestGuide\x12!.stagd.api.v1.GetTestGuideRequest\x1a\".stagd.api.v1.GetTestGuideResponse\x12a\n" +
-	"\x10RefreshTestGuide\x12%.stagd.api.v1.RefreshTestGuideRequest\x1a&.stagd.api.v1.RefreshTestGuideResponse\x12a\n" +
+	"\x10RefreshTestGuide\x12%.stagd.api.v1.RefreshTestGuideRequest\x1a&.stagd.api.v1.RefreshTestGuideResponse\x12R\n" +
+	"\vListTesters\x12 .stagd.api.v1.ListTestersRequest\x1a!.stagd.api.v1.ListTestersResponse\x12U\n" +
+	"\fCheckTesters\x12!.stagd.api.v1.CheckTestersRequest\x1a\".stagd.api.v1.CheckTestersResponse\x12a\n" +
 	"\x10GetPreviewPolicy\x12%.stagd.api.v1.GetPreviewPolicyRequest\x1a&.stagd.api.v1.GetPreviewPolicyResponse\x12j\n" +
 	"\x13UpdatePreviewPolicy\x12(.stagd.api.v1.UpdatePreviewPolicyRequest\x1a).stagd.api.v1.UpdatePreviewPolicyResponse\x12R\n" +
 	"\vValidateApp\x12 .stagd.api.v1.ValidateAppRequest\x1a!.stagd.api.v1.ValidateAppResponse\x12I\n" +
@@ -7292,7 +7797,7 @@ func file_stagd_api_v1_previews_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_previews_proto_enumTypes = make([]protoimpl.EnumInfo, 11)
-var file_stagd_api_v1_previews_proto_msgTypes = make([]protoimpl.MessageInfo, 92)
+var file_stagd_api_v1_previews_proto_msgTypes = make([]protoimpl.MessageInfo, 99)
 var file_stagd_api_v1_previews_proto_goTypes = []any{
 	(PreviewAccess)(0),                  // 0: stagd.api.v1.PreviewAccess
 	(PreviewStatus)(0),                  // 1: stagd.api.v1.PreviewStatus
@@ -7396,53 +7901,60 @@ var file_stagd_api_v1_previews_proto_goTypes = []any{
 	(*GetTraceResponse)(nil),            // 99: stagd.api.v1.GetTraceResponse
 	(*Span)(nil),                        // 100: stagd.api.v1.Span
 	(*SpanEvent)(nil),                   // 101: stagd.api.v1.SpanEvent
-	nil,                                 // 102: stagd.api.v1.ValidateAppRequest.FilesEntry
-	(*durationpb.Duration)(nil),         // 103: google.protobuf.Duration
-	(*SeedFile)(nil),                    // 104: stagd.api.v1.SeedFile
-	(*Repository)(nil),                  // 105: stagd.api.v1.Repository
-	(*ChangeRequest)(nil),               // 106: stagd.api.v1.ChangeRequest
-	(*timestamppb.Timestamp)(nil),       // 107: google.protobuf.Timestamp
-	(ComputeProvider)(0),                // 108: stagd.api.v1.ComputeProvider
-	(*v1.Config)(nil),                   // 109: stagd.config.v1.Config
+	(*ListTestersRequest)(nil),          // 102: stagd.api.v1.ListTestersRequest
+	(*ListTestersResponse)(nil),         // 103: stagd.api.v1.ListTestersResponse
+	(*PreviewTester)(nil),               // 104: stagd.api.v1.PreviewTester
+	(*CheckTestersRequest)(nil),         // 105: stagd.api.v1.CheckTestersRequest
+	(*CheckTestersResponse)(nil),        // 106: stagd.api.v1.CheckTestersResponse
+	(*TesterCheck)(nil),                 // 107: stagd.api.v1.TesterCheck
+	(*TesterStep)(nil),                  // 108: stagd.api.v1.TesterStep
+	nil,                                 // 109: stagd.api.v1.ValidateAppRequest.FilesEntry
+	(*durationpb.Duration)(nil),         // 110: google.protobuf.Duration
+	(*SeedFile)(nil),                    // 111: stagd.api.v1.SeedFile
+	(*Repository)(nil),                  // 112: stagd.api.v1.Repository
+	(*ChangeRequest)(nil),               // 113: stagd.api.v1.ChangeRequest
+	(*timestamppb.Timestamp)(nil),       // 114: google.protobuf.Timestamp
+	(ComputeProvider)(0),                // 115: stagd.api.v1.ComputeProvider
+	(*v1.Config)(nil),                   // 116: stagd.config.v1.Config
 }
 var file_stagd_api_v1_previews_proto_depIdxs = []int32{
 	0,   // 0: stagd.api.v1.PreviewPolicy.access:type_name -> stagd.api.v1.PreviewAccess
-	103, // 1: stagd.api.v1.PreviewPolicy.sleep_after:type_name -> google.protobuf.Duration
-	103, // 2: stagd.api.v1.PreviewPolicy.expire_after:type_name -> google.protobuf.Duration
-	104, // 3: stagd.api.v1.PreviewSeed.file:type_name -> stagd.api.v1.SeedFile
+	110, // 1: stagd.api.v1.PreviewPolicy.sleep_after:type_name -> google.protobuf.Duration
+	110, // 2: stagd.api.v1.PreviewPolicy.expire_after:type_name -> google.protobuf.Duration
+	111, // 3: stagd.api.v1.PreviewSeed.file:type_name -> stagd.api.v1.SeedFile
 	3,   // 4: stagd.api.v1.PreviewComponent.phase:type_name -> stagd.api.v1.ComponentPhase
-	105, // 5: stagd.api.v1.Preview.repository:type_name -> stagd.api.v1.Repository
-	106, // 6: stagd.api.v1.Preview.change:type_name -> stagd.api.v1.ChangeRequest
+	112, // 5: stagd.api.v1.Preview.repository:type_name -> stagd.api.v1.Repository
+	113, // 6: stagd.api.v1.Preview.change:type_name -> stagd.api.v1.ChangeRequest
 	1,   // 7: stagd.api.v1.Preview.status:type_name -> stagd.api.v1.PreviewStatus
 	2,   // 8: stagd.api.v1.Preview.trigger:type_name -> stagd.api.v1.PreviewTrigger
-	107, // 9: stagd.api.v1.Preview.create_time:type_name -> google.protobuf.Timestamp
-	107, // 10: stagd.api.v1.Preview.update_time:type_name -> google.protobuf.Timestamp
-	107, // 11: stagd.api.v1.Preview.expire_time:type_name -> google.protobuf.Timestamp
+	114, // 9: stagd.api.v1.Preview.create_time:type_name -> google.protobuf.Timestamp
+	114, // 10: stagd.api.v1.Preview.update_time:type_name -> google.protobuf.Timestamp
+	114, // 11: stagd.api.v1.Preview.expire_time:type_name -> google.protobuf.Timestamp
 	14,  // 12: stagd.api.v1.Preview.ingresses:type_name -> stagd.api.v1.PreviewIngress
 	13,  // 13: stagd.api.v1.Preview.components:type_name -> stagd.api.v1.PreviewComponent
 	0,   // 14: stagd.api.v1.Preview.access:type_name -> stagd.api.v1.PreviewAccess
 	26,  // 15: stagd.api.v1.Preview.compute:type_name -> stagd.api.v1.PreviewCompute
-	107, // 16: stagd.api.v1.Preview.thumbnail_time:type_name -> google.protobuf.Timestamp
+	114, // 16: stagd.api.v1.Preview.thumbnail_time:type_name -> google.protobuf.Timestamp
 	12,  // 17: stagd.api.v1.Preview.seed:type_name -> stagd.api.v1.PreviewSeed
 	12,  // 18: stagd.api.v1.Preview.seeds:type_name -> stagd.api.v1.PreviewSeed
 	17,  // 19: stagd.api.v1.Preview.failure:type_name -> stagd.api.v1.PreviewFailure
 	18,  // 20: stagd.api.v1.Preview.risk:type_name -> stagd.api.v1.PreviewRisk
 	7,   // 21: stagd.api.v1.PreviewFailure.confidence:type_name -> stagd.api.v1.PreviewFailureConfidence
 	25,  // 22: stagd.api.v1.PreviewFailure.evidence:type_name -> stagd.api.v1.PreviewFailureEvidence
-	107, // 23: stagd.api.v1.PreviewFailure.create_time:type_name -> google.protobuf.Timestamp
+	114, // 23: stagd.api.v1.PreviewFailure.create_time:type_name -> google.protobuf.Timestamp
 	6,   // 24: stagd.api.v1.PreviewFailure.rating:type_name -> stagd.api.v1.PreviewFailureRating
 	4,   // 25: stagd.api.v1.PreviewRisk.level:type_name -> stagd.api.v1.PreviewRiskLevel
 	19,  // 26: stagd.api.v1.PreviewRisk.reasons:type_name -> stagd.api.v1.PreviewRiskReason
-	107, // 27: stagd.api.v1.PreviewRisk.create_time:type_name -> google.protobuf.Timestamp
+	114, // 27: stagd.api.v1.PreviewRisk.create_time:type_name -> google.protobuf.Timestamp
 	6,   // 28: stagd.api.v1.PreviewRisk.rating:type_name -> stagd.api.v1.PreviewFailureRating
 	20,  // 29: stagd.api.v1.PreviewRiskReason.lines:type_name -> stagd.api.v1.PreviewRiskLine
 	22,  // 30: stagd.api.v1.TestGuide.pages:type_name -> stagd.api.v1.TestGuidePage
 	23,  // 31: stagd.api.v1.TestGuide.emails:type_name -> stagd.api.v1.TestGuideEmail
 	24,  // 32: stagd.api.v1.TestGuide.tries:type_name -> stagd.api.v1.TestGuideTry
-	107, // 33: stagd.api.v1.TestGuide.create_time:type_name -> google.protobuf.Timestamp
+	114, // 33: stagd.api.v1.TestGuide.create_time:type_name -> google.protobuf.Timestamp
 	5,   // 34: stagd.api.v1.TestGuideTry.category:type_name -> stagd.api.v1.TestGuideTryCategory
-	108, // 35: stagd.api.v1.PreviewCompute.provider:type_name -> stagd.api.v1.ComputeProvider
-	106, // 36: stagd.api.v1.ListSourcesResponse.changes:type_name -> stagd.api.v1.ChangeRequest
+	115, // 35: stagd.api.v1.PreviewCompute.provider:type_name -> stagd.api.v1.ComputeProvider
+	113, // 36: stagd.api.v1.ListSourcesResponse.changes:type_name -> stagd.api.v1.ChangeRequest
 	15,  // 37: stagd.api.v1.CreatePreviewRequest.source:type_name -> stagd.api.v1.PreviewSource
 	16,  // 38: stagd.api.v1.CreatePreviewResponse.preview:type_name -> stagd.api.v1.Preview
 	16,  // 39: stagd.api.v1.GetPreviewResponse.preview:type_name -> stagd.api.v1.Preview
@@ -7462,28 +7974,28 @@ var file_stagd_api_v1_previews_proto_depIdxs = []int32{
 	11,  // 53: stagd.api.v1.GetPreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
 	11,  // 54: stagd.api.v1.UpdatePreviewPolicyRequest.policy:type_name -> stagd.api.v1.PreviewPolicy
 	11,  // 55: stagd.api.v1.UpdatePreviewPolicyResponse.policy:type_name -> stagd.api.v1.PreviewPolicy
-	102, // 56: stagd.api.v1.ValidateAppRequest.files:type_name -> stagd.api.v1.ValidateAppRequest.FilesEntry
+	109, // 56: stagd.api.v1.ValidateAppRequest.files:type_name -> stagd.api.v1.ValidateAppRequest.FilesEntry
 	56,  // 57: stagd.api.v1.ValidateAppResponse.components:type_name -> stagd.api.v1.AppComponent
 	14,  // 58: stagd.api.v1.ValidateAppResponse.ingresses:type_name -> stagd.api.v1.PreviewIngress
-	109, // 59: stagd.api.v1.ValidateAppResponse.config:type_name -> stagd.config.v1.Config
-	107, // 60: stagd.api.v1.PreviewEvent.time:type_name -> google.protobuf.Timestamp
+	116, // 59: stagd.api.v1.ValidateAppResponse.config:type_name -> stagd.config.v1.Config
+	114, // 60: stagd.api.v1.PreviewEvent.time:type_name -> google.protobuf.Timestamp
 	1,   // 61: stagd.api.v1.PreviewEvent.status:type_name -> stagd.api.v1.PreviewStatus
 	59,  // 62: stagd.api.v1.ListPreviewEventsResponse.events:type_name -> stagd.api.v1.PreviewEvent
 	62,  // 63: stagd.api.v1.ListTextsRequest.filter:type_name -> stagd.api.v1.TextFilter
-	107, // 64: stagd.api.v1.TextMessage.send_time:type_name -> google.protobuf.Timestamp
+	114, // 64: stagd.api.v1.TextMessage.send_time:type_name -> google.protobuf.Timestamp
 	63,  // 65: stagd.api.v1.ListTextsResponse.texts:type_name -> stagd.api.v1.TextMessage
 	62,  // 66: stagd.api.v1.WaitForTextsRequest.filter:type_name -> stagd.api.v1.TextFilter
-	103, // 67: stagd.api.v1.WaitForTextsRequest.timeout:type_name -> google.protobuf.Duration
+	110, // 67: stagd.api.v1.WaitForTextsRequest.timeout:type_name -> google.protobuf.Duration
 	63,  // 68: stagd.api.v1.WaitForTextsResponse.texts:type_name -> stagd.api.v1.TextMessage
 	68,  // 69: stagd.api.v1.ListMailRequest.filter:type_name -> stagd.api.v1.MailFilter
 	69,  // 70: stagd.api.v1.MailSummary.from:type_name -> stagd.api.v1.MailAddress
 	69,  // 71: stagd.api.v1.MailSummary.to:type_name -> stagd.api.v1.MailAddress
-	107, // 72: stagd.api.v1.MailSummary.receive_time:type_name -> google.protobuf.Timestamp
+	114, // 72: stagd.api.v1.MailSummary.receive_time:type_name -> google.protobuf.Timestamp
 	69,  // 73: stagd.api.v1.MailSummary.cc:type_name -> stagd.api.v1.MailAddress
 	69,  // 74: stagd.api.v1.MailSummary.bcc:type_name -> stagd.api.v1.MailAddress
 	70,  // 75: stagd.api.v1.ListMailResponse.messages:type_name -> stagd.api.v1.MailSummary
 	68,  // 76: stagd.api.v1.WaitForMailRequest.filter:type_name -> stagd.api.v1.MailFilter
-	103, // 77: stagd.api.v1.WaitForMailRequest.timeout:type_name -> google.protobuf.Duration
+	110, // 77: stagd.api.v1.WaitForMailRequest.timeout:type_name -> google.protobuf.Duration
 	70,  // 78: stagd.api.v1.WaitForMailResponse.messages:type_name -> stagd.api.v1.MailSummary
 	70,  // 79: stagd.api.v1.MailMessage.summary:type_name -> stagd.api.v1.MailSummary
 	69,  // 80: stagd.api.v1.MailMessage.cc:type_name -> stagd.api.v1.MailAddress
@@ -7491,94 +8003,102 @@ var file_stagd_api_v1_previews_proto_depIdxs = []int32{
 	77,  // 82: stagd.api.v1.MailMessage.attachments:type_name -> stagd.api.v1.MailAttachment
 	78,  // 83: stagd.api.v1.MailMessage.unfilled:type_name -> stagd.api.v1.UnfilledText
 	76,  // 84: stagd.api.v1.GetMailResponse.message:type_name -> stagd.api.v1.MailMessage
-	103, // 85: stagd.api.v1.GetServiceUsageRequest.window:type_name -> google.protobuf.Duration
+	110, // 85: stagd.api.v1.GetServiceUsageRequest.window:type_name -> google.protobuf.Duration
 	86,  // 86: stagd.api.v1.GetServiceUsageResponse.services:type_name -> stagd.api.v1.ServiceUsage
 	87,  // 87: stagd.api.v1.ServiceUsage.points:type_name -> stagd.api.v1.UsagePoint
-	107, // 88: stagd.api.v1.ServiceUsage.sampled_at:type_name -> google.protobuf.Timestamp
-	107, // 89: stagd.api.v1.ServiceUsage.started_at:type_name -> google.protobuf.Timestamp
-	107, // 90: stagd.api.v1.UsagePoint.time:type_name -> google.protobuf.Timestamp
+	114, // 88: stagd.api.v1.ServiceUsage.sampled_at:type_name -> google.protobuf.Timestamp
+	114, // 89: stagd.api.v1.ServiceUsage.started_at:type_name -> google.protobuf.Timestamp
+	114, // 90: stagd.api.v1.UsagePoint.time:type_name -> google.protobuf.Timestamp
 	90,  // 91: stagd.api.v1.ListBuildLogsResponse.builds:type_name -> stagd.api.v1.BuildLog
-	107, // 92: stagd.api.v1.ListLogsRequest.since:type_name -> google.protobuf.Timestamp
+	114, // 92: stagd.api.v1.ListLogsRequest.since:type_name -> google.protobuf.Timestamp
 	93,  // 93: stagd.api.v1.ListLogsResponse.lines:type_name -> stagd.api.v1.LogLine
-	107, // 94: stagd.api.v1.LogLine.time:type_name -> google.protobuf.Timestamp
+	114, // 94: stagd.api.v1.LogLine.time:type_name -> google.protobuf.Timestamp
 	8,   // 95: stagd.api.v1.LogLine.level:type_name -> stagd.api.v1.LogLevel
 	94,  // 96: stagd.api.v1.LogLine.fields:type_name -> stagd.api.v1.LogField
 	9,   // 97: stagd.api.v1.LogLine.format:type_name -> stagd.api.v1.LogFormat
-	107, // 98: stagd.api.v1.ListTracesRequest.since:type_name -> google.protobuf.Timestamp
-	107, // 99: stagd.api.v1.ListTracesRequest.until:type_name -> google.protobuf.Timestamp
-	103, // 100: stagd.api.v1.ListTracesRequest.min_duration:type_name -> google.protobuf.Duration
+	114, // 98: stagd.api.v1.ListTracesRequest.since:type_name -> google.protobuf.Timestamp
+	114, // 99: stagd.api.v1.ListTracesRequest.until:type_name -> google.protobuf.Timestamp
+	110, // 100: stagd.api.v1.ListTracesRequest.min_duration:type_name -> google.protobuf.Duration
 	97,  // 101: stagd.api.v1.ListTracesResponse.traces:type_name -> stagd.api.v1.TraceSummary
-	107, // 102: stagd.api.v1.TraceSummary.start_time:type_name -> google.protobuf.Timestamp
-	103, // 103: stagd.api.v1.TraceSummary.duration:type_name -> google.protobuf.Duration
+	114, // 102: stagd.api.v1.TraceSummary.start_time:type_name -> google.protobuf.Timestamp
+	110, // 103: stagd.api.v1.TraceSummary.duration:type_name -> google.protobuf.Duration
 	100, // 104: stagd.api.v1.GetTraceResponse.spans:type_name -> stagd.api.v1.Span
 	10,  // 105: stagd.api.v1.Span.kind:type_name -> stagd.api.v1.SpanKind
-	107, // 106: stagd.api.v1.Span.start_time:type_name -> google.protobuf.Timestamp
-	103, // 107: stagd.api.v1.Span.duration:type_name -> google.protobuf.Duration
+	114, // 106: stagd.api.v1.Span.start_time:type_name -> google.protobuf.Timestamp
+	110, // 107: stagd.api.v1.Span.duration:type_name -> google.protobuf.Duration
 	94,  // 108: stagd.api.v1.Span.attributes:type_name -> stagd.api.v1.LogField
 	101, // 109: stagd.api.v1.Span.events:type_name -> stagd.api.v1.SpanEvent
-	107, // 110: stagd.api.v1.SpanEvent.time:type_name -> google.protobuf.Timestamp
+	114, // 110: stagd.api.v1.SpanEvent.time:type_name -> google.protobuf.Timestamp
 	94,  // 111: stagd.api.v1.SpanEvent.attributes:type_name -> stagd.api.v1.LogField
-	29,  // 112: stagd.api.v1.PreviewService.CreatePreview:input_type -> stagd.api.v1.CreatePreviewRequest
-	27,  // 113: stagd.api.v1.PreviewService.ListSources:input_type -> stagd.api.v1.ListSourcesRequest
-	31,  // 114: stagd.api.v1.PreviewService.GetPreview:input_type -> stagd.api.v1.GetPreviewRequest
-	33,  // 115: stagd.api.v1.PreviewService.ListPreviews:input_type -> stagd.api.v1.ListPreviewsRequest
-	35,  // 116: stagd.api.v1.PreviewService.WatchPreview:input_type -> stagd.api.v1.WatchPreviewRequest
-	58,  // 117: stagd.api.v1.PreviewService.ListPreviewEvents:input_type -> stagd.api.v1.ListPreviewEventsRequest
-	37,  // 118: stagd.api.v1.PreviewService.WakePreview:input_type -> stagd.api.v1.WakePreviewRequest
-	39,  // 119: stagd.api.v1.PreviewService.DestroyPreview:input_type -> stagd.api.v1.DestroyPreviewRequest
-	41,  // 120: stagd.api.v1.PreviewService.GetPreviewFailure:input_type -> stagd.api.v1.GetPreviewFailureRequest
-	43,  // 121: stagd.api.v1.PreviewService.RatePreviewFailure:input_type -> stagd.api.v1.RatePreviewFailureRequest
-	49,  // 122: stagd.api.v1.PreviewService.RatePreviewRisk:input_type -> stagd.api.v1.RatePreviewRiskRequest
-	45,  // 123: stagd.api.v1.PreviewService.GetTestGuide:input_type -> stagd.api.v1.GetTestGuideRequest
-	47,  // 124: stagd.api.v1.PreviewService.RefreshTestGuide:input_type -> stagd.api.v1.RefreshTestGuideRequest
-	51,  // 125: stagd.api.v1.PreviewService.GetPreviewPolicy:input_type -> stagd.api.v1.GetPreviewPolicyRequest
-	53,  // 126: stagd.api.v1.PreviewService.UpdatePreviewPolicy:input_type -> stagd.api.v1.UpdatePreviewPolicyRequest
-	55,  // 127: stagd.api.v1.PreviewService.ValidateApp:input_type -> stagd.api.v1.ValidateAppRequest
-	67,  // 128: stagd.api.v1.PreviewService.ListMail:input_type -> stagd.api.v1.ListMailRequest
-	74,  // 129: stagd.api.v1.PreviewService.GetMail:input_type -> stagd.api.v1.GetMailRequest
-	80,  // 130: stagd.api.v1.PreviewService.ClearMail:input_type -> stagd.api.v1.ClearMailRequest
-	82,  // 131: stagd.api.v1.PreviewService.DeleteMail:input_type -> stagd.api.v1.DeleteMailRequest
-	72,  // 132: stagd.api.v1.PreviewService.WaitForMail:input_type -> stagd.api.v1.WaitForMailRequest
-	61,  // 133: stagd.api.v1.PreviewService.ListTexts:input_type -> stagd.api.v1.ListTextsRequest
-	65,  // 134: stagd.api.v1.PreviewService.WaitForTexts:input_type -> stagd.api.v1.WaitForTextsRequest
-	84,  // 135: stagd.api.v1.PreviewService.GetServiceUsage:input_type -> stagd.api.v1.GetServiceUsageRequest
-	91,  // 136: stagd.api.v1.PreviewService.ListLogs:input_type -> stagd.api.v1.ListLogsRequest
-	88,  // 137: stagd.api.v1.PreviewService.ListBuildLogs:input_type -> stagd.api.v1.ListBuildLogsRequest
-	95,  // 138: stagd.api.v1.PreviewService.ListTraces:input_type -> stagd.api.v1.ListTracesRequest
-	98,  // 139: stagd.api.v1.PreviewService.GetTrace:input_type -> stagd.api.v1.GetTraceRequest
-	30,  // 140: stagd.api.v1.PreviewService.CreatePreview:output_type -> stagd.api.v1.CreatePreviewResponse
-	28,  // 141: stagd.api.v1.PreviewService.ListSources:output_type -> stagd.api.v1.ListSourcesResponse
-	32,  // 142: stagd.api.v1.PreviewService.GetPreview:output_type -> stagd.api.v1.GetPreviewResponse
-	34,  // 143: stagd.api.v1.PreviewService.ListPreviews:output_type -> stagd.api.v1.ListPreviewsResponse
-	36,  // 144: stagd.api.v1.PreviewService.WatchPreview:output_type -> stagd.api.v1.WatchPreviewResponse
-	60,  // 145: stagd.api.v1.PreviewService.ListPreviewEvents:output_type -> stagd.api.v1.ListPreviewEventsResponse
-	38,  // 146: stagd.api.v1.PreviewService.WakePreview:output_type -> stagd.api.v1.WakePreviewResponse
-	40,  // 147: stagd.api.v1.PreviewService.DestroyPreview:output_type -> stagd.api.v1.DestroyPreviewResponse
-	42,  // 148: stagd.api.v1.PreviewService.GetPreviewFailure:output_type -> stagd.api.v1.GetPreviewFailureResponse
-	44,  // 149: stagd.api.v1.PreviewService.RatePreviewFailure:output_type -> stagd.api.v1.RatePreviewFailureResponse
-	50,  // 150: stagd.api.v1.PreviewService.RatePreviewRisk:output_type -> stagd.api.v1.RatePreviewRiskResponse
-	46,  // 151: stagd.api.v1.PreviewService.GetTestGuide:output_type -> stagd.api.v1.GetTestGuideResponse
-	48,  // 152: stagd.api.v1.PreviewService.RefreshTestGuide:output_type -> stagd.api.v1.RefreshTestGuideResponse
-	52,  // 153: stagd.api.v1.PreviewService.GetPreviewPolicy:output_type -> stagd.api.v1.GetPreviewPolicyResponse
-	54,  // 154: stagd.api.v1.PreviewService.UpdatePreviewPolicy:output_type -> stagd.api.v1.UpdatePreviewPolicyResponse
-	57,  // 155: stagd.api.v1.PreviewService.ValidateApp:output_type -> stagd.api.v1.ValidateAppResponse
-	71,  // 156: stagd.api.v1.PreviewService.ListMail:output_type -> stagd.api.v1.ListMailResponse
-	79,  // 157: stagd.api.v1.PreviewService.GetMail:output_type -> stagd.api.v1.GetMailResponse
-	81,  // 158: stagd.api.v1.PreviewService.ClearMail:output_type -> stagd.api.v1.ClearMailResponse
-	83,  // 159: stagd.api.v1.PreviewService.DeleteMail:output_type -> stagd.api.v1.DeleteMailResponse
-	73,  // 160: stagd.api.v1.PreviewService.WaitForMail:output_type -> stagd.api.v1.WaitForMailResponse
-	64,  // 161: stagd.api.v1.PreviewService.ListTexts:output_type -> stagd.api.v1.ListTextsResponse
-	66,  // 162: stagd.api.v1.PreviewService.WaitForTexts:output_type -> stagd.api.v1.WaitForTextsResponse
-	85,  // 163: stagd.api.v1.PreviewService.GetServiceUsage:output_type -> stagd.api.v1.GetServiceUsageResponse
-	92,  // 164: stagd.api.v1.PreviewService.ListLogs:output_type -> stagd.api.v1.ListLogsResponse
-	89,  // 165: stagd.api.v1.PreviewService.ListBuildLogs:output_type -> stagd.api.v1.ListBuildLogsResponse
-	96,  // 166: stagd.api.v1.PreviewService.ListTraces:output_type -> stagd.api.v1.ListTracesResponse
-	99,  // 167: stagd.api.v1.PreviewService.GetTrace:output_type -> stagd.api.v1.GetTraceResponse
-	140, // [140:168] is the sub-list for method output_type
-	112, // [112:140] is the sub-list for method input_type
-	112, // [112:112] is the sub-list for extension type_name
-	112, // [112:112] is the sub-list for extension extendee
-	0,   // [0:112] is the sub-list for field type_name
+	104, // 112: stagd.api.v1.ListTestersResponse.testers:type_name -> stagd.api.v1.PreviewTester
+	107, // 113: stagd.api.v1.CheckTestersResponse.checks:type_name -> stagd.api.v1.TesterCheck
+	108, // 114: stagd.api.v1.TesterCheck.steps:type_name -> stagd.api.v1.TesterStep
+	110, // 115: stagd.api.v1.TesterStep.duration:type_name -> google.protobuf.Duration
+	29,  // 116: stagd.api.v1.PreviewService.CreatePreview:input_type -> stagd.api.v1.CreatePreviewRequest
+	27,  // 117: stagd.api.v1.PreviewService.ListSources:input_type -> stagd.api.v1.ListSourcesRequest
+	31,  // 118: stagd.api.v1.PreviewService.GetPreview:input_type -> stagd.api.v1.GetPreviewRequest
+	33,  // 119: stagd.api.v1.PreviewService.ListPreviews:input_type -> stagd.api.v1.ListPreviewsRequest
+	35,  // 120: stagd.api.v1.PreviewService.WatchPreview:input_type -> stagd.api.v1.WatchPreviewRequest
+	58,  // 121: stagd.api.v1.PreviewService.ListPreviewEvents:input_type -> stagd.api.v1.ListPreviewEventsRequest
+	37,  // 122: stagd.api.v1.PreviewService.WakePreview:input_type -> stagd.api.v1.WakePreviewRequest
+	39,  // 123: stagd.api.v1.PreviewService.DestroyPreview:input_type -> stagd.api.v1.DestroyPreviewRequest
+	41,  // 124: stagd.api.v1.PreviewService.GetPreviewFailure:input_type -> stagd.api.v1.GetPreviewFailureRequest
+	43,  // 125: stagd.api.v1.PreviewService.RatePreviewFailure:input_type -> stagd.api.v1.RatePreviewFailureRequest
+	49,  // 126: stagd.api.v1.PreviewService.RatePreviewRisk:input_type -> stagd.api.v1.RatePreviewRiskRequest
+	45,  // 127: stagd.api.v1.PreviewService.GetTestGuide:input_type -> stagd.api.v1.GetTestGuideRequest
+	47,  // 128: stagd.api.v1.PreviewService.RefreshTestGuide:input_type -> stagd.api.v1.RefreshTestGuideRequest
+	102, // 129: stagd.api.v1.PreviewService.ListTesters:input_type -> stagd.api.v1.ListTestersRequest
+	105, // 130: stagd.api.v1.PreviewService.CheckTesters:input_type -> stagd.api.v1.CheckTestersRequest
+	51,  // 131: stagd.api.v1.PreviewService.GetPreviewPolicy:input_type -> stagd.api.v1.GetPreviewPolicyRequest
+	53,  // 132: stagd.api.v1.PreviewService.UpdatePreviewPolicy:input_type -> stagd.api.v1.UpdatePreviewPolicyRequest
+	55,  // 133: stagd.api.v1.PreviewService.ValidateApp:input_type -> stagd.api.v1.ValidateAppRequest
+	67,  // 134: stagd.api.v1.PreviewService.ListMail:input_type -> stagd.api.v1.ListMailRequest
+	74,  // 135: stagd.api.v1.PreviewService.GetMail:input_type -> stagd.api.v1.GetMailRequest
+	80,  // 136: stagd.api.v1.PreviewService.ClearMail:input_type -> stagd.api.v1.ClearMailRequest
+	82,  // 137: stagd.api.v1.PreviewService.DeleteMail:input_type -> stagd.api.v1.DeleteMailRequest
+	72,  // 138: stagd.api.v1.PreviewService.WaitForMail:input_type -> stagd.api.v1.WaitForMailRequest
+	61,  // 139: stagd.api.v1.PreviewService.ListTexts:input_type -> stagd.api.v1.ListTextsRequest
+	65,  // 140: stagd.api.v1.PreviewService.WaitForTexts:input_type -> stagd.api.v1.WaitForTextsRequest
+	84,  // 141: stagd.api.v1.PreviewService.GetServiceUsage:input_type -> stagd.api.v1.GetServiceUsageRequest
+	91,  // 142: stagd.api.v1.PreviewService.ListLogs:input_type -> stagd.api.v1.ListLogsRequest
+	88,  // 143: stagd.api.v1.PreviewService.ListBuildLogs:input_type -> stagd.api.v1.ListBuildLogsRequest
+	95,  // 144: stagd.api.v1.PreviewService.ListTraces:input_type -> stagd.api.v1.ListTracesRequest
+	98,  // 145: stagd.api.v1.PreviewService.GetTrace:input_type -> stagd.api.v1.GetTraceRequest
+	30,  // 146: stagd.api.v1.PreviewService.CreatePreview:output_type -> stagd.api.v1.CreatePreviewResponse
+	28,  // 147: stagd.api.v1.PreviewService.ListSources:output_type -> stagd.api.v1.ListSourcesResponse
+	32,  // 148: stagd.api.v1.PreviewService.GetPreview:output_type -> stagd.api.v1.GetPreviewResponse
+	34,  // 149: stagd.api.v1.PreviewService.ListPreviews:output_type -> stagd.api.v1.ListPreviewsResponse
+	36,  // 150: stagd.api.v1.PreviewService.WatchPreview:output_type -> stagd.api.v1.WatchPreviewResponse
+	60,  // 151: stagd.api.v1.PreviewService.ListPreviewEvents:output_type -> stagd.api.v1.ListPreviewEventsResponse
+	38,  // 152: stagd.api.v1.PreviewService.WakePreview:output_type -> stagd.api.v1.WakePreviewResponse
+	40,  // 153: stagd.api.v1.PreviewService.DestroyPreview:output_type -> stagd.api.v1.DestroyPreviewResponse
+	42,  // 154: stagd.api.v1.PreviewService.GetPreviewFailure:output_type -> stagd.api.v1.GetPreviewFailureResponse
+	44,  // 155: stagd.api.v1.PreviewService.RatePreviewFailure:output_type -> stagd.api.v1.RatePreviewFailureResponse
+	50,  // 156: stagd.api.v1.PreviewService.RatePreviewRisk:output_type -> stagd.api.v1.RatePreviewRiskResponse
+	46,  // 157: stagd.api.v1.PreviewService.GetTestGuide:output_type -> stagd.api.v1.GetTestGuideResponse
+	48,  // 158: stagd.api.v1.PreviewService.RefreshTestGuide:output_type -> stagd.api.v1.RefreshTestGuideResponse
+	103, // 159: stagd.api.v1.PreviewService.ListTesters:output_type -> stagd.api.v1.ListTestersResponse
+	106, // 160: stagd.api.v1.PreviewService.CheckTesters:output_type -> stagd.api.v1.CheckTestersResponse
+	52,  // 161: stagd.api.v1.PreviewService.GetPreviewPolicy:output_type -> stagd.api.v1.GetPreviewPolicyResponse
+	54,  // 162: stagd.api.v1.PreviewService.UpdatePreviewPolicy:output_type -> stagd.api.v1.UpdatePreviewPolicyResponse
+	57,  // 163: stagd.api.v1.PreviewService.ValidateApp:output_type -> stagd.api.v1.ValidateAppResponse
+	71,  // 164: stagd.api.v1.PreviewService.ListMail:output_type -> stagd.api.v1.ListMailResponse
+	79,  // 165: stagd.api.v1.PreviewService.GetMail:output_type -> stagd.api.v1.GetMailResponse
+	81,  // 166: stagd.api.v1.PreviewService.ClearMail:output_type -> stagd.api.v1.ClearMailResponse
+	83,  // 167: stagd.api.v1.PreviewService.DeleteMail:output_type -> stagd.api.v1.DeleteMailResponse
+	73,  // 168: stagd.api.v1.PreviewService.WaitForMail:output_type -> stagd.api.v1.WaitForMailResponse
+	64,  // 169: stagd.api.v1.PreviewService.ListTexts:output_type -> stagd.api.v1.ListTextsResponse
+	66,  // 170: stagd.api.v1.PreviewService.WaitForTexts:output_type -> stagd.api.v1.WaitForTextsResponse
+	85,  // 171: stagd.api.v1.PreviewService.GetServiceUsage:output_type -> stagd.api.v1.GetServiceUsageResponse
+	92,  // 172: stagd.api.v1.PreviewService.ListLogs:output_type -> stagd.api.v1.ListLogsResponse
+	89,  // 173: stagd.api.v1.PreviewService.ListBuildLogs:output_type -> stagd.api.v1.ListBuildLogsResponse
+	96,  // 174: stagd.api.v1.PreviewService.ListTraces:output_type -> stagd.api.v1.ListTracesResponse
+	99,  // 175: stagd.api.v1.PreviewService.GetTrace:output_type -> stagd.api.v1.GetTraceResponse
+	146, // [146:176] is the sub-list for method output_type
+	116, // [116:146] is the sub-list for method input_type
+	116, // [116:116] is the sub-list for extension type_name
+	116, // [116:116] is the sub-list for extension extendee
+	0,   // [0:116] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_previews_proto_init() }
@@ -7599,7 +8119,7 @@ func file_stagd_api_v1_previews_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_previews_proto_rawDesc), len(file_stagd_api_v1_previews_proto_rawDesc)),
 			NumEnums:      11,
-			NumMessages:   92,
+			NumMessages:   99,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

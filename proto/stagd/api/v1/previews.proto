@@ -53,6 +53,12 @@ service PreviewService {
   // RefreshTestGuide writes the guide again now, from what the preview has
   // served and sent since; at most once a minute.
   rpc RefreshTestGuide(RefreshTestGuideRequest) returns (RefreshTestGuideResponse);
+  // ListTesters lists the users stagd.yaml names for signing in to the
+  // preview (testers), and how each signs in.
+  rpc ListTesters(ListTestersRequest) returns (ListTestersResponse);
+  // CheckTesters signs in to the preview as each tester, as stagd.yaml says,
+  // and says how each step went.
+  rpc CheckTesters(CheckTestersRequest) returns (CheckTestersResponse);
   // GetPreviewPolicy returns who may open previews and how their URLs look:
   // the org's default, or a repository's (its own, or the default it inherits).
   rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse);
@@ -302,6 +308,9 @@ message Preview {
   // The pull request's merge risk, as the org's model read its changes;
   // unset when the org doesn't assess risk, or it isn't a pull request's.
   PreviewRisk risk = 24;
+  // How many testers its stagd.yaml names (ListTesters), as at its last
+  // deploy.
+  int32 testers = 25;
 }
 
 // A failed deploy explained: where it failed, the lines that show why, and
@@ -1098,4 +1107,63 @@ message SpanEvent {
   string name = 1;
   google.protobuf.Timestamp time = 2;
   repeated LogField attributes = 3;
+}
+
+message ListTestersRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message ListTestersResponse {
+  // In stagd.yaml's order, as at the preview's last deploy.
+  repeated PreviewTester testers = 1;
+}
+
+// A user Stagd signs in as on the preview (stagd.yaml's testers).
+message PreviewTester {
+  string name = 1;
+  string note = 2;
+  string email = 3;
+  string username = 4;
+  // The sign-in it uses, by its name under stagd.yaml's sign_in.
+  string sign_in = 5;
+  // How to sign in as it, for a person, e.g. "email, then code 123456",
+  // with values written in stagd.yaml; a secret only by its name.
+  string how = 6;
+  // The password, when stagd.yaml has it written out; for members.
+  string password = 7;
+  // The secret it's from, when stagd.yaml names one, e.g. ADMIN_PASSWORD.
+  string password_secret = 8;
+  // Whether it signs in with headers (an API's token) rather than a form.
+  bool headers = 9;
+}
+
+message CheckTestersRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  // Testers by name; every one when empty.
+  repeated string names = 2;
+}
+
+message CheckTestersResponse {
+  repeated TesterCheck checks = 1;
+}
+
+// How signing in as one tester went.
+message TesterCheck {
+  string name = 1;
+  bool ok = 2;
+  // Why it didn't work, e.g. "step 3: no field named Code".
+  string error = 3;
+  repeated TesterStep steps = 4;
+  // Where the browser ended, for a form.
+  string url = 5;
+  // The page when it stopped, as a JPEG, when it didn't work.
+  bytes screenshot = 6;
+}
+
+message TesterStep {
+  // What it did, e.g. "fill Email" or "wait for mail to admin@acme.test".
+  string text = 1;
+  bool ok = 2;
+  string error = 3;
+  google.protobuf.Duration duration = 4;
 }
