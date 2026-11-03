@@ -57,6 +57,12 @@ const (
 	// PreviewServiceDestroyPreviewProcedure is the fully-qualified name of the PreviewService's
 	// DestroyPreview RPC.
 	PreviewServiceDestroyPreviewProcedure = "/stagd.api.v1.PreviewService/DestroyPreview"
+	// PreviewServiceGetPreviewFailureProcedure is the fully-qualified name of the PreviewService's
+	// GetPreviewFailure RPC.
+	PreviewServiceGetPreviewFailureProcedure = "/stagd.api.v1.PreviewService/GetPreviewFailure"
+	// PreviewServiceRatePreviewFailureProcedure is the fully-qualified name of the PreviewService's
+	// RatePreviewFailure RPC.
+	PreviewServiceRatePreviewFailureProcedure = "/stagd.api.v1.PreviewService/RatePreviewFailure"
 	// PreviewServiceGetPreviewPolicyProcedure is the fully-qualified name of the PreviewService's
 	// GetPreviewPolicy RPC.
 	PreviewServiceGetPreviewPolicyProcedure = "/stagd.api.v1.PreviewService/GetPreviewPolicy"
@@ -122,6 +128,13 @@ type PreviewServiceClient interface {
 	WakePreview(context.Context, *connect.Request[v1.WakePreviewRequest]) (*connect.Response[v1.WakePreviewResponse], error)
 	// DestroyPreview tears a preview down now.
 	DestroyPreview(context.Context, *connect.Request[v1.DestroyPreviewRequest]) (*connect.Response[v1.DestroyPreviewResponse], error)
+	// RatePreviewFailure says whether a failed preview's explanation was
+	// right: kept with it, so wrong rules and answers show up.
+	// GetPreviewFailure answers what was collected about a failed preview's
+	// current failure: its explanation, and the masked error and log lines
+	// it was explained from, for a coding agent to read with its own model.
+	GetPreviewFailure(context.Context, *connect.Request[v1.GetPreviewFailureRequest]) (*connect.Response[v1.GetPreviewFailureResponse], error)
+	RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error)
 	// GetPreviewPolicy returns who may open previews and how their URLs look:
 	// the org's default, or a repository's (its own, or the default it inherits).
 	GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error)
@@ -238,6 +251,18 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("DestroyPreview")),
 			connect.WithClientOptions(opts...),
 		),
+		getPreviewFailure: connect.NewClient[v1.GetPreviewFailureRequest, v1.GetPreviewFailureResponse](
+			httpClient,
+			baseURL+PreviewServiceGetPreviewFailureProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("GetPreviewFailure")),
+			connect.WithClientOptions(opts...),
+		),
+		ratePreviewFailure: connect.NewClient[v1.RatePreviewFailureRequest, v1.RatePreviewFailureResponse](
+			httpClient,
+			baseURL+PreviewServiceRatePreviewFailureProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("RatePreviewFailure")),
+			connect.WithClientOptions(opts...),
+		),
 		getPreviewPolicy: connect.NewClient[v1.GetPreviewPolicyRequest, v1.GetPreviewPolicyResponse](
 			httpClient,
 			baseURL+PreviewServiceGetPreviewPolicyProcedure,
@@ -341,6 +366,8 @@ type previewServiceClient struct {
 	listPreviewEvents   *connect.Client[v1.ListPreviewEventsRequest, v1.ListPreviewEventsResponse]
 	wakePreview         *connect.Client[v1.WakePreviewRequest, v1.WakePreviewResponse]
 	destroyPreview      *connect.Client[v1.DestroyPreviewRequest, v1.DestroyPreviewResponse]
+	getPreviewFailure   *connect.Client[v1.GetPreviewFailureRequest, v1.GetPreviewFailureResponse]
+	ratePreviewFailure  *connect.Client[v1.RatePreviewFailureRequest, v1.RatePreviewFailureResponse]
 	getPreviewPolicy    *connect.Client[v1.GetPreviewPolicyRequest, v1.GetPreviewPolicyResponse]
 	updatePreviewPolicy *connect.Client[v1.UpdatePreviewPolicyRequest, v1.UpdatePreviewPolicyResponse]
 	validateApp         *connect.Client[v1.ValidateAppRequest, v1.ValidateAppResponse]
@@ -396,6 +423,16 @@ func (c *previewServiceClient) WakePreview(ctx context.Context, req *connect.Req
 // DestroyPreview calls stagd.api.v1.PreviewService.DestroyPreview.
 func (c *previewServiceClient) DestroyPreview(ctx context.Context, req *connect.Request[v1.DestroyPreviewRequest]) (*connect.Response[v1.DestroyPreviewResponse], error) {
 	return c.destroyPreview.CallUnary(ctx, req)
+}
+
+// GetPreviewFailure calls stagd.api.v1.PreviewService.GetPreviewFailure.
+func (c *previewServiceClient) GetPreviewFailure(ctx context.Context, req *connect.Request[v1.GetPreviewFailureRequest]) (*connect.Response[v1.GetPreviewFailureResponse], error) {
+	return c.getPreviewFailure.CallUnary(ctx, req)
+}
+
+// RatePreviewFailure calls stagd.api.v1.PreviewService.RatePreviewFailure.
+func (c *previewServiceClient) RatePreviewFailure(ctx context.Context, req *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error) {
+	return c.ratePreviewFailure.CallUnary(ctx, req)
 }
 
 // GetPreviewPolicy calls stagd.api.v1.PreviewService.GetPreviewPolicy.
@@ -495,6 +532,13 @@ type PreviewServiceHandler interface {
 	WakePreview(context.Context, *connect.Request[v1.WakePreviewRequest]) (*connect.Response[v1.WakePreviewResponse], error)
 	// DestroyPreview tears a preview down now.
 	DestroyPreview(context.Context, *connect.Request[v1.DestroyPreviewRequest]) (*connect.Response[v1.DestroyPreviewResponse], error)
+	// RatePreviewFailure says whether a failed preview's explanation was
+	// right: kept with it, so wrong rules and answers show up.
+	// GetPreviewFailure answers what was collected about a failed preview's
+	// current failure: its explanation, and the masked error and log lines
+	// it was explained from, for a coding agent to read with its own model.
+	GetPreviewFailure(context.Context, *connect.Request[v1.GetPreviewFailureRequest]) (*connect.Response[v1.GetPreviewFailureResponse], error)
+	RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error)
 	// GetPreviewPolicy returns who may open previews and how their URLs look:
 	// the org's default, or a repository's (its own, or the default it inherits).
 	GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error)
@@ -607,6 +651,18 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		connect.WithSchema(previewServiceMethods.ByName("DestroyPreview")),
 		connect.WithHandlerOptions(opts...),
 	)
+	previewServiceGetPreviewFailureHandler := connect.NewUnaryHandler(
+		PreviewServiceGetPreviewFailureProcedure,
+		svc.GetPreviewFailure,
+		connect.WithSchema(previewServiceMethods.ByName("GetPreviewFailure")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceRatePreviewFailureHandler := connect.NewUnaryHandler(
+		PreviewServiceRatePreviewFailureProcedure,
+		svc.RatePreviewFailure,
+		connect.WithSchema(previewServiceMethods.ByName("RatePreviewFailure")),
+		connect.WithHandlerOptions(opts...),
+	)
 	previewServiceGetPreviewPolicyHandler := connect.NewUnaryHandler(
 		PreviewServiceGetPreviewPolicyProcedure,
 		svc.GetPreviewPolicy,
@@ -715,6 +771,10 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceWakePreviewHandler.ServeHTTP(w, r)
 		case PreviewServiceDestroyPreviewProcedure:
 			previewServiceDestroyPreviewHandler.ServeHTTP(w, r)
+		case PreviewServiceGetPreviewFailureProcedure:
+			previewServiceGetPreviewFailureHandler.ServeHTTP(w, r)
+		case PreviewServiceRatePreviewFailureProcedure:
+			previewServiceRatePreviewFailureHandler.ServeHTTP(w, r)
 		case PreviewServiceGetPreviewPolicyProcedure:
 			previewServiceGetPreviewPolicyHandler.ServeHTTP(w, r)
 		case PreviewServiceUpdatePreviewPolicyProcedure:
@@ -784,6 +844,14 @@ func (UnimplementedPreviewServiceHandler) WakePreview(context.Context, *connect.
 
 func (UnimplementedPreviewServiceHandler) DestroyPreview(context.Context, *connect.Request[v1.DestroyPreviewRequest]) (*connect.Response[v1.DestroyPreviewResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.DestroyPreview is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) GetPreviewFailure(context.Context, *connect.Request[v1.GetPreviewFailureRequest]) (*connect.Response[v1.GetPreviewFailureResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.GetPreviewFailure is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.RatePreviewFailure is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error) {

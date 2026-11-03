@@ -37,6 +37,13 @@ service PreviewService {
   rpc WakePreview(WakePreviewRequest) returns (WakePreviewResponse);
   // DestroyPreview tears a preview down now.
   rpc DestroyPreview(DestroyPreviewRequest) returns (DestroyPreviewResponse);
+  // RatePreviewFailure says whether a failed preview's explanation was
+  // right: kept with it, so wrong rules and answers show up.
+  // GetPreviewFailure answers what was collected about a failed preview's
+  // current failure: its explanation, and the masked error and log lines
+  // it was explained from, for a coding agent to read with its own model.
+  rpc GetPreviewFailure(GetPreviewFailureRequest) returns (GetPreviewFailureResponse);
+  rpc RatePreviewFailure(RatePreviewFailureRequest) returns (RatePreviewFailureResponse);
   // GetPreviewPolicy returns who may open previews and how their URLs look:
   // the org's default, or a repository's (its own, or the default it inherits).
   rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse);
@@ -312,6 +319,22 @@ message PreviewFailure {
   // The integration kind of the model's provider: anthropic, openai,
   // azure_openai; empty when Stagd's rules explained it.
   string model_provider = 10;
+  // Whether someone in the org said the explanation was right.
+  PreviewFailureRating rating = 11;
+  // Who said so, by name or email; empty when nobody has.
+  string rated_by = 12;
+  // Stagd's error, keys masked. Only from GetPreviewFailure.
+  string error = 13;
+  // The failing service's last log lines (its build's, for a build),
+  // secrets and keys masked, under "== <source>" headings; at most 64 KB.
+  // Only from GetPreviewFailure.
+  string log_excerpt = 14;
+}
+
+enum PreviewFailureRating {
+  PREVIEW_FAILURE_RATING_UNSPECIFIED = 0;
+  PREVIEW_FAILURE_RATING_RIGHT = 1;
+  PREVIEW_FAILURE_RATING_WRONG = 2;
 }
 
 enum PreviewFailureConfidence {
@@ -408,6 +431,26 @@ message DestroyPreviewRequest {
 
 message DestroyPreviewResponse {
   Preview preview = 1;
+}
+
+message GetPreviewFailureRequest {
+  // The failed preview's id.
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetPreviewFailureResponse {
+  PreviewFailure failure = 1;
+}
+
+message RatePreviewFailureRequest {
+  // The failed preview's id: its current failure is rated.
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  // RIGHT or WRONG; UNSPECIFIED takes a rating back.
+  PreviewFailureRating rating = 2;
+}
+
+message RatePreviewFailureResponse {
+  PreviewFailure failure = 1;
 }
 
 message GetPreviewPolicyRequest {
