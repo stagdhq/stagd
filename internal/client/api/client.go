@@ -26,6 +26,8 @@ type Clients struct {
 	Scm      apiv1connect.ScmServiceClient
 	Compute  apiv1connect.ComputeServiceClient
 	Previews apiv1connect.PreviewServiceClient
+	// The same service, for calls that run something and answer when it's done (RunTry, CheckTesters).
+	Running  apiv1connect.PreviewServiceClient
 	Secrets  apiv1connect.SecretServiceClient
 	Activity apiv1connect.ActivityServiceClient
 
@@ -52,6 +54,14 @@ func New(cfg Config) (*Clients, error) {
 		ResponseHeaderTimeout: 30 * time.Second,
 		IdleConnTimeout:       90 * time.Second,
 	}}
+	// Running something on a preview (a try, the testers' sign-ins) answers only when it's done:
+	// minutes, not seconds.
+	running := &http.Client{Transport: &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: 6 * time.Minute,
+		IdleConnTimeout:       90 * time.Second,
+	}}
 	opts := []connect.ClientOption{connect.WithInterceptors(auth(cfg))}
 
 	return &Clients{
@@ -60,6 +70,7 @@ func New(cfg Config) (*Clients, error) {
 		Scm:      apiv1connect.NewScmServiceClient(httpClient, cfg.BaseURL, opts...),
 		Compute:  apiv1connect.NewComputeServiceClient(httpClient, cfg.BaseURL, opts...),
 		Previews: apiv1connect.NewPreviewServiceClient(streaming, cfg.BaseURL, opts...),
+		Running:  apiv1connect.NewPreviewServiceClient(running, cfg.BaseURL, opts...),
 		Secrets:  apiv1connect.NewSecretServiceClient(httpClient, cfg.BaseURL, opts...),
 		Activity: apiv1connect.NewActivityServiceClient(httpClient, cfg.BaseURL, opts...),
 

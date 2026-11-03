@@ -77,7 +77,7 @@ func previewTesters(ctx context.Context, cmd *cli.Command) error {
 		return output.Table(w, []string{"tester", "who", "sign-in", "how", "note"}, rows)
 	}
 
-	res, err := c.Previews.CheckTesters(ctx, connect.NewRequest(&apiv1.CheckTestersRequest{Id: id, Names: names[1:]}))
+	res, err := c.Running.CheckTesters(ctx, connect.NewRequest(&apiv1.CheckTestersRequest{Id: id, Names: names[1:]}))
 	if err != nil {
 		return err
 	}

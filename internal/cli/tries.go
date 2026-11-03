@@ -44,7 +44,7 @@ func previewTry(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	res, err := c.Previews.RunTry(ctx, connect.NewRequest(&apiv1.RunTryRequest{Id: id, Try: int32(n), Tester: cmd.String("as")}))
+	res, err := c.Running.RunTry(ctx, connect.NewRequest(&apiv1.RunTryRequest{Id: id, Try: int32(n), Tester: cmd.String("as")}))
 	if err != nil {
 		return err
 	}
