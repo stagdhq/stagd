@@ -370,10 +370,20 @@ enum PreviewRiskLevel {
   PREVIEW_RISK_LEVEL_HIGH = 3;
 }
 
-// One reason, and the changed files it's about.
+// One reason, the changed files it's about, and the lines that show it.
 message PreviewRiskReason {
   string text = 1;
   repeated string files = 2;
+  repeated PreviewRiskLine lines = 3;
+}
+
+// A line in a changed file, and where it is in the pull request's changes
+// on the code host.
+message PreviewRiskLine {
+  string file = 1;
+  // In the changed file, as it is after the change.
+  int32 line = 2;
+  string url = 3;
 }
 
 // TestGuide is what to test on a pull request's preview: what changed, the
@@ -396,10 +406,11 @@ message TestGuidePage {
   string path = 1;
   string url = 2;
   string why = 3;
-  // Where it's known from: changed (a changed file is the page), traces
-  // (the preview served it), home. Only on candidates.
+  // Where it's known from: changed (a changed file is the page), quoted
+  // (the changes name its path), traces (the preview served it), home. Only
+  // on candidates.
   string source = 4;
-  // The changed file it's from, for changed.
+  // The changed file it's from, for changed and quoted.
   string file = 5;
 }
 

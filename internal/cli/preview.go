@@ -451,9 +451,24 @@ func printRisk(w io.Writer, r *apiv1.PreviewRisk) {
 	fmt.Fprintf(w, "\nMerge risk: %s. %s\n", label(r.GetLevel().String(), "PREVIEW_RISK_LEVEL_"), r.GetSummary())
 
 	for _, reason := range r.GetReasons() {
+		// A file with a line that shows it as file:line; the rest by name.
+		var where []string
+		lined := map[string]bool{}
+
+		for _, l := range reason.GetLines() {
+			where = append(where, fmt.Sprintf("%s:%d", l.GetFile(), l.GetLine()))
+			lined[l.GetFile()] = true
+		}
+
+		for _, f := range reason.GetFiles() {
+			if !lined[f] {
+				where = append(where, f)
+			}
+		}
+
 		files := ""
-		if len(reason.GetFiles()) > 0 {
-			files = " (" + strings.Join(reason.GetFiles(), ", ") + ")"
+		if len(where) > 0 {
+			files = " (" + strings.Join(where, ", ") + ")"
 		}
 
 		fmt.Fprintf(w, "  - %s%s\n", reason.GetText(), files)
