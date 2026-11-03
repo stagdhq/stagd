@@ -65,3 +65,40 @@ func TestPreviewTesters(t *testing.T) {
 		t.Fatalf("screenshot: %v %v", err, b)
 	}
 }
+
+func (f *fakeTesters) RunTry(_ context.Context, req *connect.Request[apiv1.RunTryRequest]) (*connect.Response[apiv1.RunTryResponse], error) {
+	f.checked = []string{req.Msg.GetTester()}
+
+	verdict := apiv1.TryVerdict_TRY_VERDICT_PASSED
+	if req.Msg.GetTry() == 2 {
+		verdict = apiv1.TryVerdict_TRY_VERDICT_FAILED
+	}
+
+	return connect.NewResponse(&apiv1.RunTryResponse{Run: &apiv1.TryRun{
+		Try: req.Msg.GetTry(), Text: "Open /visits?limit=abc: it says the limit isn't a number.", Tester: req.Msg.GetTester(), Verdict: verdict,
+		Reason: "It says so.", Steps: []*apiv1.TryStep{{Action: "open /visits?limit=abc"}, {Action: "click Nowhere", Error: "no button or link named Nowhere"}},
+		ModelName: "Claude Haiku 5.5",
+	}}), nil
+}
+
+func TestPreviewTry(t *testing.T) {
+	f := &fakeTesters{}
+	mux := http.NewServeMux()
+	path, handler := apiv1connect.NewPreviewServiceHandler(f)
+	mux.Handle(path, handler)
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	out, err := run(t, srv, "--token", "tok-1", "preview", "try", "p-1", "1", "--as", "member")
+	if err != nil || f.checked[0] != "member" || !strings.Contains(out, "✓ Passed: It says so.") || !strings.Contains(out, "2. click Nowhere  ✗ no button or link named Nowhere") {
+		t.Fatalf("passed: %v\n%s", err, out)
+	}
+
+	if _, err := run(t, srv, "--token", "tok-1", "preview", "try", "p-1", "2"); err == nil {
+		t.Fatal("a failed try should exit non-zero")
+	}
+
+	if _, err := run(t, srv, "--token", "tok-1", "preview", "try", "p-1"); err == nil {
+		t.Fatal("without a number it should say how to use it")
+	}
+}

@@ -59,6 +59,10 @@ service PreviewService {
   // CheckTesters signs in to the preview as each tester, as stagd.yaml says,
   // and says how each step went.
   rpc CheckTesters(CheckTestersRequest) returns (CheckTestersResponse);
+  // RunTry has the org's model do one of What to test's things to try in a
+  // browser on the live preview, signed in as a tester, and say whether it
+  // worked as the try says.
+  rpc RunTry(RunTryRequest) returns (RunTryResponse);
   // GetPreviewPolicy returns who may open previews and how their URLs look:
   // the org's default, or a repository's (its own, or the default it inherits).
   rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse);
@@ -1166,4 +1170,59 @@ message TesterStep {
   bool ok = 2;
   string error = 3;
   google.protobuf.Duration duration = 4;
+}
+
+message RunTryRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  // Which of the guide's things to try, from 1.
+  int32 try = 2 [(buf.validate.field).int32.gte = 1];
+  // The tester to sign in as, by name; the first one when empty, and
+  // signed out when the preview names none.
+  string tester = 3;
+}
+
+message RunTryResponse {
+  TryRun run = 1;
+}
+
+enum TryVerdict {
+  TRY_VERDICT_UNSPECIFIED = 0;
+  // It did what the try says should happen.
+  TRY_VERDICT_PASSED = 1;
+  // It didn't.
+  TRY_VERDICT_FAILED = 2;
+  // The model couldn't tell, or ran out of steps or time.
+  TRY_VERDICT_UNSURE = 3;
+}
+
+// One run of a thing to try, by the org's model in a browser.
+message TryRun {
+  // Which of the guide's tries, from 1, and its text.
+  int32 try = 1;
+  string text = 2;
+  // Who it was signed in as; empty when signed out.
+  string tester = 3;
+  TryVerdict verdict = 4;
+  // Why, in a sentence.
+  string reason = 5;
+  repeated TryStep steps = 6;
+  // Where it ended, and the page then, as a JPEG.
+  string url = 7;
+  bytes screenshot = 8;
+  string model_name = 9;
+  string model_provider = 10;
+  int64 input_tokens = 11;
+  int64 output_tokens = 12;
+  google.protobuf.Duration duration = 13;
+  google.protobuf.Timestamp run_time = 14;
+}
+
+// What the model did in the browser, and what came of it.
+message TryStep {
+  // e.g. "click Sign in", "open /dashboard".
+  string action = 1;
+  // What the model meant by it.
+  string why = 2;
+  // Empty when it worked; what went wrong otherwise.
+  string error = 3;
 }
