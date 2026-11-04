@@ -58,6 +58,7 @@ func previewCommand() *cli.Command {
 			previewTestersCommand(),
 			previewTextsCommand(),
 			previewLogsCommand(),
+			previewTracesCommand(),
 			previewUsageCommand(),
 			{
 				Name:  "policy",
