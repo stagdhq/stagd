@@ -60,26 +60,12 @@ const (
 	// PreviewServiceGetPreviewFailureProcedure is the fully-qualified name of the PreviewService's
 	// GetPreviewFailure RPC.
 	PreviewServiceGetPreviewFailureProcedure = "/stagd.api.v1.PreviewService/GetPreviewFailure"
-	// PreviewServiceRatePreviewFailureProcedure is the fully-qualified name of the PreviewService's
-	// RatePreviewFailure RPC.
-	PreviewServiceRatePreviewFailureProcedure = "/stagd.api.v1.PreviewService/RatePreviewFailure"
-	// PreviewServiceRatePreviewRiskProcedure is the fully-qualified name of the PreviewService's
-	// RatePreviewRisk RPC.
-	PreviewServiceRatePreviewRiskProcedure = "/stagd.api.v1.PreviewService/RatePreviewRisk"
-	// PreviewServiceGetTestGuideProcedure is the fully-qualified name of the PreviewService's
-	// GetTestGuide RPC.
-	PreviewServiceGetTestGuideProcedure = "/stagd.api.v1.PreviewService/GetTestGuide"
-	// PreviewServiceRefreshTestGuideProcedure is the fully-qualified name of the PreviewService's
-	// RefreshTestGuide RPC.
-	PreviewServiceRefreshTestGuideProcedure = "/stagd.api.v1.PreviewService/RefreshTestGuide"
 	// PreviewServiceListTestersProcedure is the fully-qualified name of the PreviewService's
 	// ListTesters RPC.
 	PreviewServiceListTestersProcedure = "/stagd.api.v1.PreviewService/ListTesters"
 	// PreviewServiceCheckTestersProcedure is the fully-qualified name of the PreviewService's
 	// CheckTesters RPC.
 	PreviewServiceCheckTestersProcedure = "/stagd.api.v1.PreviewService/CheckTesters"
-	// PreviewServiceRunTryProcedure is the fully-qualified name of the PreviewService's RunTry RPC.
-	PreviewServiceRunTryProcedure = "/stagd.api.v1.PreviewService/RunTry"
 	// PreviewServiceGetPreviewPolicyProcedure is the fully-qualified name of the PreviewService's
 	// GetPreviewPolicy RPC.
 	PreviewServiceGetPreviewPolicyProcedure = "/stagd.api.v1.PreviewService/GetPreviewPolicy"
@@ -145,32 +131,16 @@ type PreviewServiceClient interface {
 	WakePreview(context.Context, *connect.Request[v1.WakePreviewRequest]) (*connect.Response[v1.WakePreviewResponse], error)
 	// DestroyPreview tears a preview down now.
 	DestroyPreview(context.Context, *connect.Request[v1.DestroyPreviewRequest]) (*connect.Response[v1.DestroyPreviewResponse], error)
-	// RatePreviewFailure says whether a failed preview's explanation was
-	// right: kept with it, so wrong rules and answers show up.
 	// GetPreviewFailure answers what was collected about a failed preview's
 	// current failure: its explanation, and the masked error and log lines
 	// it was explained from, for a coding agent to read with its own model.
 	GetPreviewFailure(context.Context, *connect.Request[v1.GetPreviewFailureRequest]) (*connect.Response[v1.GetPreviewFailureResponse], error)
-	RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error)
-	// RatePreviewRisk says whether a preview's risk assessment was right.
-	RatePreviewRisk(context.Context, *connect.Request[v1.RatePreviewRiskRequest]) (*connect.Response[v1.RatePreviewRiskResponse], error)
-	// GetTestGuide answers what to test on a pull request's preview: the
-	// guide the org's model wrote, and, without one or when asked, what it's
-	// written from and the question to paste into a coding agent.
-	GetTestGuide(context.Context, *connect.Request[v1.GetTestGuideRequest]) (*connect.Response[v1.GetTestGuideResponse], error)
-	// RefreshTestGuide writes the guide again now, from what the preview has
-	// served and sent since; at most once a minute.
-	RefreshTestGuide(context.Context, *connect.Request[v1.RefreshTestGuideRequest]) (*connect.Response[v1.RefreshTestGuideResponse], error)
 	// ListTesters lists the users stagd.yaml names for signing in to the
 	// preview (testers), and how each signs in.
 	ListTesters(context.Context, *connect.Request[v1.ListTestersRequest]) (*connect.Response[v1.ListTestersResponse], error)
 	// CheckTesters signs in to the preview as each tester, as stagd.yaml says,
 	// and says how each step went.
 	CheckTesters(context.Context, *connect.Request[v1.CheckTestersRequest]) (*connect.Response[v1.CheckTestersResponse], error)
-	// RunTry has the org's model do one of What to test's things to try in a
-	// browser on the live preview, signed in as a tester, and say whether it
-	// worked as the try says.
-	RunTry(context.Context, *connect.Request[v1.RunTryRequest]) (*connect.Response[v1.RunTryResponse], error)
 	// GetPreviewPolicy returns who may open previews and how their URLs look:
 	// the org's default, or a repository's (its own, or the default it inherits).
 	GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error)
@@ -293,30 +263,6 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(previewServiceMethods.ByName("GetPreviewFailure")),
 			connect.WithClientOptions(opts...),
 		),
-		ratePreviewFailure: connect.NewClient[v1.RatePreviewFailureRequest, v1.RatePreviewFailureResponse](
-			httpClient,
-			baseURL+PreviewServiceRatePreviewFailureProcedure,
-			connect.WithSchema(previewServiceMethods.ByName("RatePreviewFailure")),
-			connect.WithClientOptions(opts...),
-		),
-		ratePreviewRisk: connect.NewClient[v1.RatePreviewRiskRequest, v1.RatePreviewRiskResponse](
-			httpClient,
-			baseURL+PreviewServiceRatePreviewRiskProcedure,
-			connect.WithSchema(previewServiceMethods.ByName("RatePreviewRisk")),
-			connect.WithClientOptions(opts...),
-		),
-		getTestGuide: connect.NewClient[v1.GetTestGuideRequest, v1.GetTestGuideResponse](
-			httpClient,
-			baseURL+PreviewServiceGetTestGuideProcedure,
-			connect.WithSchema(previewServiceMethods.ByName("GetTestGuide")),
-			connect.WithClientOptions(opts...),
-		),
-		refreshTestGuide: connect.NewClient[v1.RefreshTestGuideRequest, v1.RefreshTestGuideResponse](
-			httpClient,
-			baseURL+PreviewServiceRefreshTestGuideProcedure,
-			connect.WithSchema(previewServiceMethods.ByName("RefreshTestGuide")),
-			connect.WithClientOptions(opts...),
-		),
 		listTesters: connect.NewClient[v1.ListTestersRequest, v1.ListTestersResponse](
 			httpClient,
 			baseURL+PreviewServiceListTestersProcedure,
@@ -327,12 +273,6 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+PreviewServiceCheckTestersProcedure,
 			connect.WithSchema(previewServiceMethods.ByName("CheckTesters")),
-			connect.WithClientOptions(opts...),
-		),
-		runTry: connect.NewClient[v1.RunTryRequest, v1.RunTryResponse](
-			httpClient,
-			baseURL+PreviewServiceRunTryProcedure,
-			connect.WithSchema(previewServiceMethods.ByName("RunTry")),
 			connect.WithClientOptions(opts...),
 		),
 		getPreviewPolicy: connect.NewClient[v1.GetPreviewPolicyRequest, v1.GetPreviewPolicyResponse](
@@ -439,13 +379,8 @@ type previewServiceClient struct {
 	wakePreview         *connect.Client[v1.WakePreviewRequest, v1.WakePreviewResponse]
 	destroyPreview      *connect.Client[v1.DestroyPreviewRequest, v1.DestroyPreviewResponse]
 	getPreviewFailure   *connect.Client[v1.GetPreviewFailureRequest, v1.GetPreviewFailureResponse]
-	ratePreviewFailure  *connect.Client[v1.RatePreviewFailureRequest, v1.RatePreviewFailureResponse]
-	ratePreviewRisk     *connect.Client[v1.RatePreviewRiskRequest, v1.RatePreviewRiskResponse]
-	getTestGuide        *connect.Client[v1.GetTestGuideRequest, v1.GetTestGuideResponse]
-	refreshTestGuide    *connect.Client[v1.RefreshTestGuideRequest, v1.RefreshTestGuideResponse]
 	listTesters         *connect.Client[v1.ListTestersRequest, v1.ListTestersResponse]
 	checkTesters        *connect.Client[v1.CheckTestersRequest, v1.CheckTestersResponse]
-	runTry              *connect.Client[v1.RunTryRequest, v1.RunTryResponse]
 	getPreviewPolicy    *connect.Client[v1.GetPreviewPolicyRequest, v1.GetPreviewPolicyResponse]
 	updatePreviewPolicy *connect.Client[v1.UpdatePreviewPolicyRequest, v1.UpdatePreviewPolicyResponse]
 	validateApp         *connect.Client[v1.ValidateAppRequest, v1.ValidateAppResponse]
@@ -508,26 +443,6 @@ func (c *previewServiceClient) GetPreviewFailure(ctx context.Context, req *conne
 	return c.getPreviewFailure.CallUnary(ctx, req)
 }
 
-// RatePreviewFailure calls stagd.api.v1.PreviewService.RatePreviewFailure.
-func (c *previewServiceClient) RatePreviewFailure(ctx context.Context, req *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error) {
-	return c.ratePreviewFailure.CallUnary(ctx, req)
-}
-
-// RatePreviewRisk calls stagd.api.v1.PreviewService.RatePreviewRisk.
-func (c *previewServiceClient) RatePreviewRisk(ctx context.Context, req *connect.Request[v1.RatePreviewRiskRequest]) (*connect.Response[v1.RatePreviewRiskResponse], error) {
-	return c.ratePreviewRisk.CallUnary(ctx, req)
-}
-
-// GetTestGuide calls stagd.api.v1.PreviewService.GetTestGuide.
-func (c *previewServiceClient) GetTestGuide(ctx context.Context, req *connect.Request[v1.GetTestGuideRequest]) (*connect.Response[v1.GetTestGuideResponse], error) {
-	return c.getTestGuide.CallUnary(ctx, req)
-}
-
-// RefreshTestGuide calls stagd.api.v1.PreviewService.RefreshTestGuide.
-func (c *previewServiceClient) RefreshTestGuide(ctx context.Context, req *connect.Request[v1.RefreshTestGuideRequest]) (*connect.Response[v1.RefreshTestGuideResponse], error) {
-	return c.refreshTestGuide.CallUnary(ctx, req)
-}
-
 // ListTesters calls stagd.api.v1.PreviewService.ListTesters.
 func (c *previewServiceClient) ListTesters(ctx context.Context, req *connect.Request[v1.ListTestersRequest]) (*connect.Response[v1.ListTestersResponse], error) {
 	return c.listTesters.CallUnary(ctx, req)
@@ -536,11 +451,6 @@ func (c *previewServiceClient) ListTesters(ctx context.Context, req *connect.Req
 // CheckTesters calls stagd.api.v1.PreviewService.CheckTesters.
 func (c *previewServiceClient) CheckTesters(ctx context.Context, req *connect.Request[v1.CheckTestersRequest]) (*connect.Response[v1.CheckTestersResponse], error) {
 	return c.checkTesters.CallUnary(ctx, req)
-}
-
-// RunTry calls stagd.api.v1.PreviewService.RunTry.
-func (c *previewServiceClient) RunTry(ctx context.Context, req *connect.Request[v1.RunTryRequest]) (*connect.Response[v1.RunTryResponse], error) {
-	return c.runTry.CallUnary(ctx, req)
 }
 
 // GetPreviewPolicy calls stagd.api.v1.PreviewService.GetPreviewPolicy.
@@ -640,32 +550,16 @@ type PreviewServiceHandler interface {
 	WakePreview(context.Context, *connect.Request[v1.WakePreviewRequest]) (*connect.Response[v1.WakePreviewResponse], error)
 	// DestroyPreview tears a preview down now.
 	DestroyPreview(context.Context, *connect.Request[v1.DestroyPreviewRequest]) (*connect.Response[v1.DestroyPreviewResponse], error)
-	// RatePreviewFailure says whether a failed preview's explanation was
-	// right: kept with it, so wrong rules and answers show up.
 	// GetPreviewFailure answers what was collected about a failed preview's
 	// current failure: its explanation, and the masked error and log lines
 	// it was explained from, for a coding agent to read with its own model.
 	GetPreviewFailure(context.Context, *connect.Request[v1.GetPreviewFailureRequest]) (*connect.Response[v1.GetPreviewFailureResponse], error)
-	RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error)
-	// RatePreviewRisk says whether a preview's risk assessment was right.
-	RatePreviewRisk(context.Context, *connect.Request[v1.RatePreviewRiskRequest]) (*connect.Response[v1.RatePreviewRiskResponse], error)
-	// GetTestGuide answers what to test on a pull request's preview: the
-	// guide the org's model wrote, and, without one or when asked, what it's
-	// written from and the question to paste into a coding agent.
-	GetTestGuide(context.Context, *connect.Request[v1.GetTestGuideRequest]) (*connect.Response[v1.GetTestGuideResponse], error)
-	// RefreshTestGuide writes the guide again now, from what the preview has
-	// served and sent since; at most once a minute.
-	RefreshTestGuide(context.Context, *connect.Request[v1.RefreshTestGuideRequest]) (*connect.Response[v1.RefreshTestGuideResponse], error)
 	// ListTesters lists the users stagd.yaml names for signing in to the
 	// preview (testers), and how each signs in.
 	ListTesters(context.Context, *connect.Request[v1.ListTestersRequest]) (*connect.Response[v1.ListTestersResponse], error)
 	// CheckTesters signs in to the preview as each tester, as stagd.yaml says,
 	// and says how each step went.
 	CheckTesters(context.Context, *connect.Request[v1.CheckTestersRequest]) (*connect.Response[v1.CheckTestersResponse], error)
-	// RunTry has the org's model do one of What to test's things to try in a
-	// browser on the live preview, signed in as a tester, and say whether it
-	// worked as the try says.
-	RunTry(context.Context, *connect.Request[v1.RunTryRequest]) (*connect.Response[v1.RunTryResponse], error)
 	// GetPreviewPolicy returns who may open previews and how their URLs look:
 	// the org's default, or a repository's (its own, or the default it inherits).
 	GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error)
@@ -784,30 +678,6 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		connect.WithSchema(previewServiceMethods.ByName("GetPreviewFailure")),
 		connect.WithHandlerOptions(opts...),
 	)
-	previewServiceRatePreviewFailureHandler := connect.NewUnaryHandler(
-		PreviewServiceRatePreviewFailureProcedure,
-		svc.RatePreviewFailure,
-		connect.WithSchema(previewServiceMethods.ByName("RatePreviewFailure")),
-		connect.WithHandlerOptions(opts...),
-	)
-	previewServiceRatePreviewRiskHandler := connect.NewUnaryHandler(
-		PreviewServiceRatePreviewRiskProcedure,
-		svc.RatePreviewRisk,
-		connect.WithSchema(previewServiceMethods.ByName("RatePreviewRisk")),
-		connect.WithHandlerOptions(opts...),
-	)
-	previewServiceGetTestGuideHandler := connect.NewUnaryHandler(
-		PreviewServiceGetTestGuideProcedure,
-		svc.GetTestGuide,
-		connect.WithSchema(previewServiceMethods.ByName("GetTestGuide")),
-		connect.WithHandlerOptions(opts...),
-	)
-	previewServiceRefreshTestGuideHandler := connect.NewUnaryHandler(
-		PreviewServiceRefreshTestGuideProcedure,
-		svc.RefreshTestGuide,
-		connect.WithSchema(previewServiceMethods.ByName("RefreshTestGuide")),
-		connect.WithHandlerOptions(opts...),
-	)
 	previewServiceListTestersHandler := connect.NewUnaryHandler(
 		PreviewServiceListTestersProcedure,
 		svc.ListTesters,
@@ -818,12 +688,6 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		PreviewServiceCheckTestersProcedure,
 		svc.CheckTesters,
 		connect.WithSchema(previewServiceMethods.ByName("CheckTesters")),
-		connect.WithHandlerOptions(opts...),
-	)
-	previewServiceRunTryHandler := connect.NewUnaryHandler(
-		PreviewServiceRunTryProcedure,
-		svc.RunTry,
-		connect.WithSchema(previewServiceMethods.ByName("RunTry")),
 		connect.WithHandlerOptions(opts...),
 	)
 	previewServiceGetPreviewPolicyHandler := connect.NewUnaryHandler(
@@ -936,20 +800,10 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceDestroyPreviewHandler.ServeHTTP(w, r)
 		case PreviewServiceGetPreviewFailureProcedure:
 			previewServiceGetPreviewFailureHandler.ServeHTTP(w, r)
-		case PreviewServiceRatePreviewFailureProcedure:
-			previewServiceRatePreviewFailureHandler.ServeHTTP(w, r)
-		case PreviewServiceRatePreviewRiskProcedure:
-			previewServiceRatePreviewRiskHandler.ServeHTTP(w, r)
-		case PreviewServiceGetTestGuideProcedure:
-			previewServiceGetTestGuideHandler.ServeHTTP(w, r)
-		case PreviewServiceRefreshTestGuideProcedure:
-			previewServiceRefreshTestGuideHandler.ServeHTTP(w, r)
 		case PreviewServiceListTestersProcedure:
 			previewServiceListTestersHandler.ServeHTTP(w, r)
 		case PreviewServiceCheckTestersProcedure:
 			previewServiceCheckTestersHandler.ServeHTTP(w, r)
-		case PreviewServiceRunTryProcedure:
-			previewServiceRunTryHandler.ServeHTTP(w, r)
 		case PreviewServiceGetPreviewPolicyProcedure:
 			previewServiceGetPreviewPolicyHandler.ServeHTTP(w, r)
 		case PreviewServiceUpdatePreviewPolicyProcedure:
@@ -1025,32 +879,12 @@ func (UnimplementedPreviewServiceHandler) GetPreviewFailure(context.Context, *co
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.GetPreviewFailure is not implemented"))
 }
 
-func (UnimplementedPreviewServiceHandler) RatePreviewFailure(context.Context, *connect.Request[v1.RatePreviewFailureRequest]) (*connect.Response[v1.RatePreviewFailureResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.RatePreviewFailure is not implemented"))
-}
-
-func (UnimplementedPreviewServiceHandler) RatePreviewRisk(context.Context, *connect.Request[v1.RatePreviewRiskRequest]) (*connect.Response[v1.RatePreviewRiskResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.RatePreviewRisk is not implemented"))
-}
-
-func (UnimplementedPreviewServiceHandler) GetTestGuide(context.Context, *connect.Request[v1.GetTestGuideRequest]) (*connect.Response[v1.GetTestGuideResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.GetTestGuide is not implemented"))
-}
-
-func (UnimplementedPreviewServiceHandler) RefreshTestGuide(context.Context, *connect.Request[v1.RefreshTestGuideRequest]) (*connect.Response[v1.RefreshTestGuideResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.RefreshTestGuide is not implemented"))
-}
-
 func (UnimplementedPreviewServiceHandler) ListTesters(context.Context, *connect.Request[v1.ListTestersRequest]) (*connect.Response[v1.ListTestersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListTesters is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) CheckTesters(context.Context, *connect.Request[v1.CheckTestersRequest]) (*connect.Response[v1.CheckTestersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.CheckTesters is not implemented"))
-}
-
-func (UnimplementedPreviewServiceHandler) RunTry(context.Context, *connect.Request[v1.RunTryRequest]) (*connect.Response[v1.RunTryResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.RunTry is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) GetPreviewPolicy(context.Context, *connect.Request[v1.GetPreviewPolicyRequest]) (*connect.Response[v1.GetPreviewPolicyResponse], error) {

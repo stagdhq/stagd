@@ -37,32 +37,16 @@ service PreviewService {
   rpc WakePreview(WakePreviewRequest) returns (WakePreviewResponse);
   // DestroyPreview tears a preview down now.
   rpc DestroyPreview(DestroyPreviewRequest) returns (DestroyPreviewResponse);
-  // RatePreviewFailure says whether a failed preview's explanation was
-  // right: kept with it, so wrong rules and answers show up.
   // GetPreviewFailure answers what was collected about a failed preview's
   // current failure: its explanation, and the masked error and log lines
   // it was explained from, for a coding agent to read with its own model.
   rpc GetPreviewFailure(GetPreviewFailureRequest) returns (GetPreviewFailureResponse);
-  rpc RatePreviewFailure(RatePreviewFailureRequest) returns (RatePreviewFailureResponse);
-  // RatePreviewRisk says whether a preview's risk assessment was right.
-  rpc RatePreviewRisk(RatePreviewRiskRequest) returns (RatePreviewRiskResponse);
-  // GetTestGuide answers what to test on a pull request's preview: the
-  // guide the org's model wrote, and, without one or when asked, what it's
-  // written from and the question to paste into a coding agent.
-  rpc GetTestGuide(GetTestGuideRequest) returns (GetTestGuideResponse);
-  // RefreshTestGuide writes the guide again now, from what the preview has
-  // served and sent since; at most once a minute.
-  rpc RefreshTestGuide(RefreshTestGuideRequest) returns (RefreshTestGuideResponse);
   // ListTesters lists the users stagd.yaml names for signing in to the
   // preview (testers), and how each signs in.
   rpc ListTesters(ListTestersRequest) returns (ListTestersResponse);
   // CheckTesters signs in to the preview as each tester, as stagd.yaml says,
   // and says how each step went.
   rpc CheckTesters(CheckTestersRequest) returns (CheckTestersResponse);
-  // RunTry has the org's model do one of What to test's things to try in a
-  // browser on the live preview, signed in as a tester, and say whether it
-  // worked as the try says.
-  rpc RunTry(RunTryRequest) returns (RunTryResponse);
   // GetPreviewPolicy returns who may open previews and how their URLs look:
   // the org's default, or a repository's (its own, or the default it inherits).
   rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse);
@@ -309,12 +293,13 @@ message Preview {
   // Why it failed, as far as Stagd can tell from what it failed on and the
   // logs it left: set when FAILED, unset when nothing was found to say.
   PreviewFailure failure = 23;
-  // The pull request's merge risk, as the org's model read its changes;
-  // unset when the org doesn't assess risk, or it isn't a pull request's.
-  PreviewRisk risk = 24;
   // How many testers its stagd.yaml names (ListTesters), as at its last
   // deploy.
   int32 testers = 25;
+
+  // The merge risk a model assessed, shelved.
+  reserved 24;
+  reserved "risk";
 }
 
 // A failed deploy explained: where it failed, the lines that show why, and
@@ -334,121 +319,19 @@ message PreviewFailure {
   PreviewFailureConfidence confidence = 5;
   // The lines that show it, at most five.
   repeated PreviewFailureEvidence evidence = 6;
-  // What explained it: a rule's id, e.g. rule:seed-download, or a model's,
-  // e.g. model:claude-haiku-5-5.
+  // What explained it: a rule's id, e.g. rule:seed-download.
   string explained_by = 7;
   google.protobuf.Timestamp create_time = 8;
-  // The model that explained it, as people read it, e.g. Claude Haiku 5.5;
-  // empty when Stagd's rules did.
-  string model_name = 9;
-  // The integration kind of the model's provider: anthropic, openai,
-  // azure_openai; empty when Stagd's rules explained it.
-  string model_provider = 10;
-  // Whether someone in the org said the explanation was right.
-  PreviewFailureRating rating = 11;
-  // Who said so, by name or email; empty when nobody has.
-  string rated_by = 12;
   // Stagd's error, keys masked. Only from GetPreviewFailure.
   string error = 13;
   // The failing service's last log lines (its build's, for a build),
   // secrets and keys masked, under "== <source>" headings; at most 64 KB.
   // Only from GetPreviewFailure.
   string log_excerpt = 14;
-}
 
-// PreviewRisk is how risky a pull request is to merge, as the org's model
-// read its title, description and changes, and why.
-message PreviewRisk {
-  PreviewRiskLevel level = 1;
-  // In a sentence.
-  string summary = 2;
-  repeated PreviewRiskReason reasons = 3;
-  // The commit it was assessed at: a later push with the same changes keeps
-  // it.
-  string sha = 4;
-  google.protobuf.Timestamp create_time = 5;
-  // The model, as people read it, e.g. Claude Haiku 5.5.
-  string model_name = 6;
-  // Its provider's integration kind: anthropic, openai, azure_openai.
-  string model_provider = 7;
-  // Whether someone in the org said it was right, and who.
-  PreviewFailureRating rating = 8;
-  string rated_by = 9;
-}
-
-enum PreviewRiskLevel {
-  PREVIEW_RISK_LEVEL_UNSPECIFIED = 0;
-  PREVIEW_RISK_LEVEL_LOW = 1;
-  PREVIEW_RISK_LEVEL_MEDIUM = 2;
-  PREVIEW_RISK_LEVEL_HIGH = 3;
-}
-
-// One reason, the changed files it's about, and the lines that show it.
-message PreviewRiskReason {
-  string text = 1;
-  repeated string files = 2;
-  repeated PreviewRiskLine lines = 3;
-}
-
-// A line in a changed file, and where it is in the pull request's changes
-// on the code host.
-message PreviewRiskLine {
-  string file = 1;
-  // In the changed file, as it is after the change.
-  int32 line = 2;
-  string url = 3;
-}
-
-// TestGuide is what to test on a pull request's preview: what changed, the
-// pages and emails to check, and things to try.
-message TestGuide {
-  string summary = 1;
-  repeated TestGuidePage pages = 2;
-  repeated TestGuideEmail emails = 3;
-  repeated TestGuideTry tries = 4;
-  // The commit it was written at.
-  string sha = 5;
-  google.protobuf.Timestamp create_time = 6;
-  string model_name = 7;
-  string model_provider = 8;
-}
-
-// A page to check: its path, its URL in the preview (empty for a path with
-// parameters, e.g. /invoices/:id), and why.
-message TestGuidePage {
-  string path = 1;
-  string url = 2;
-  string why = 3;
-  // Where it's known from: changed (a changed file is the page), quoted
-  // (the changes name its path), traces (the preview served it), home. Only
-  // on candidates.
-  string source = 4;
-  // The changed file it's from, for changed and quoted.
-  string file = 5;
-}
-
-message TestGuideEmail {
-  string subject = 1;
-  string why = 2;
-}
-
-message TestGuideTry {
-  // One action and what should happen.
-  string text = 1;
-  TestGuideTryCategory category = 2;
-}
-
-enum TestGuideTryCategory {
-  TEST_GUIDE_TRY_CATEGORY_UNSPECIFIED = 0;
-  TEST_GUIDE_TRY_CATEGORY_FUNCTIONAL = 1;
-  // It checks who may see or do something.
-  TEST_GUIDE_TRY_CATEGORY_ACCESS = 2;
-}
-
-enum PreviewFailureRating {
-  PREVIEW_FAILURE_RATING_UNSPECIFIED = 0;
-  PREVIEW_FAILURE_RATING_RIGHT = 1;
-  PREVIEW_FAILURE_RATING_WRONG = 2;
+  // A model's explanation and its rating, shelved.
+  reserved 9, 10, 11, 12;
+  reserved "model_name", "model_provider", "rating", "rated_by";
 }
 
 enum PreviewFailureConfidence {
@@ -554,62 +437,6 @@ message GetPreviewFailureRequest {
 
 message GetPreviewFailureResponse {
   PreviewFailure failure = 1;
-}
-
-message RatePreviewFailureRequest {
-  // The failed preview's id: its current failure is rated.
-  string id = 1 [(buf.validate.field).string.min_len = 1];
-  // RIGHT or WRONG; UNSPECIFIED takes a rating back.
-  PreviewFailureRating rating = 2;
-}
-
-message RatePreviewFailureResponse {
-  PreviewFailure failure = 1;
-}
-
-message GetTestGuideRequest {
-  // The preview's id.
-  string id = 1 [(buf.validate.field).string.min_len = 1];
-  // Also what a guide is written from, and the question, when there is a
-  // guide: they're always answered without one. Members only.
-  bool inputs = 2;
-}
-
-message GetTestGuideResponse {
-  // Unset when the org's model hasn't written one.
-  TestGuide guide = 1;
-  // The pages a guide may point to, unranked: the pull request's changed
-  // route files, the pages the preview served, its home.
-  repeated TestGuidePage candidates = 2;
-  // The subjects of the mail the preview sent.
-  repeated string emails = 3;
-  // The question, to paste into a coding agent.
-  string prompt = 4;
-  // Whether What to test is on in Settings → AI, with a model: a guide is
-  // written when the preview goes live, or when someone asks.
-  bool enabled = 5;
-  // The latest run of each of the guide's things to try (RunTry), without
-  // screenshots; a try never run has none.
-  repeated TryRun runs = 6;
-}
-
-message RefreshTestGuideRequest {
-  string id = 1 [(buf.validate.field).string.min_len = 1];
-}
-
-message RefreshTestGuideResponse {
-  TestGuide guide = 1;
-}
-
-message RatePreviewRiskRequest {
-  // The preview's id: its current risk assessment is rated.
-  string id = 1 [(buf.validate.field).string.min_len = 1];
-  // RIGHT or WRONG; UNSPECIFIED takes a rating back.
-  PreviewFailureRating rating = 2;
-}
-
-message RatePreviewRiskResponse {
-  PreviewRisk risk = 1;
 }
 
 message GetPreviewPolicyRequest {
@@ -1173,64 +1000,4 @@ message TesterStep {
   bool ok = 2;
   string error = 3;
   google.protobuf.Duration duration = 4;
-}
-
-message RunTryRequest {
-  string id = 1 [(buf.validate.field).string.min_len = 1];
-  // Which of the guide's things to try, from 1.
-  int32 try = 2 [(buf.validate.field).int32.gte = 1];
-  // The tester to sign in as, by name; the first one when empty, and
-  // signed out when the preview names none.
-  string tester = 3;
-}
-
-message RunTryResponse {
-  TryRun run = 1;
-}
-
-enum TryVerdict {
-  TRY_VERDICT_UNSPECIFIED = 0;
-  // It did what the try says should happen.
-  TRY_VERDICT_PASSED = 1;
-  // It didn't.
-  TRY_VERDICT_FAILED = 2;
-  // The model couldn't tell, or ran out of steps or time.
-  TRY_VERDICT_UNSURE = 3;
-}
-
-// One run of a thing to try, by the org's model in a browser.
-message TryRun {
-  // Which of the guide's tries, from 1, and its text.
-  int32 try = 1;
-  string text = 2;
-  // Who it was signed in as; empty when signed out.
-  string tester = 3;
-  TryVerdict verdict = 4;
-  // Why, in a sentence.
-  string reason = 5;
-  repeated TryStep steps = 6;
-  // Where it ended, and the page then, as a JPEG.
-  string url = 7;
-  bytes screenshot = 8;
-  string model_name = 9;
-  string model_provider = 10;
-  int64 input_tokens = 11;
-  int64 output_tokens = 12;
-  google.protobuf.Duration duration = 13;
-  google.protobuf.Timestamp run_time = 14;
-  // The page where it ended, on the dashboard's origin, for people in the
-  // org; empty when there's none.
-  string screenshot_url = 15;
-}
-
-// What the model did in the browser, and what came of it.
-message TryStep {
-  // e.g. "click Sign in", "open /dashboard".
-  string action = 1;
-  // What the model meant by it.
-  string why = 2;
-  // Empty when it worked; what went wrong otherwise.
-  string error = 3;
-  // The page after it, as screenshot_url is.
-  string screenshot_url = 4;
 }

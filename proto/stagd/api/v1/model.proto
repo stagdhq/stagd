@@ -93,20 +93,10 @@ message Repository {
   // new-preview picker, the command palette) unless asked for. Only the
   // lists: previews carry on as they are.
   bool hidden = 11;
-  // The org's AI features this repository leaves out. Only off can be set
-  // here: a feature the org has off stays off, and the model is the org's.
-  RepositoryAi ai = 12;
-}
 
-// The org's AI features a repository leaves out (Settings → AI turns them
-// on for the org and picks their models).
-message RepositoryAi {
-  // Its failed deploys aren't explained by the org's model; rules still are.
-  bool failure_explanations_off = 1;
-  // Its pull requests' merge risk isn't assessed.
-  bool risk_assessments_off = 2;
-  // No guide to what to test is written for its previews.
-  bool test_guides_off = 3;
+  // The AI features it left out, shelved.
+  reserved 12;
+  reserved "ai";
 }
 
 // RepositorySetup is what Stagd found on a repository's default branch:

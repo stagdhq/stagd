@@ -26,7 +26,7 @@ type Clients struct {
 	Scm      apiv1connect.ScmServiceClient
 	Compute  apiv1connect.ComputeServiceClient
 	Previews apiv1connect.PreviewServiceClient
-	// The same service, for calls that run something and answer when it's done (RunTry, CheckTesters).
+	// The same service, for calls that run something and answer when it's done (CheckTesters).
 	Running  apiv1connect.PreviewServiceClient
 	Secrets  apiv1connect.SecretServiceClient
 	Activity apiv1connect.ActivityServiceClient

@@ -414,10 +414,7 @@ type Repository struct {
 	// Hidden by an org admin: left out of the lists (repositories, the
 	// new-preview picker, the command palette) unless asked for. Only the
 	// lists: previews carry on as they are.
-	Hidden bool `protobuf:"varint,11,opt,name=hidden,proto3" json:"hidden,omitempty"`
-	// The org's AI features this repository leaves out. Only off can be set
-	// here: a feature the org has off stays off, and the model is the org's.
-	Ai            *RepositoryAi `protobuf:"bytes,12,opt,name=ai,proto3" json:"ai,omitempty"`
+	Hidden        bool `protobuf:"varint,11,opt,name=hidden,proto3" json:"hidden,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -529,78 +526,6 @@ func (x *Repository) GetHidden() bool {
 	return false
 }
 
-func (x *Repository) GetAi() *RepositoryAi {
-	if x != nil {
-		return x.Ai
-	}
-	return nil
-}
-
-// The org's AI features a repository leaves out (Settings → AI turns them
-// on for the org and picks their models).
-type RepositoryAi struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Its failed deploys aren't explained by the org's model; rules still are.
-	FailureExplanationsOff bool `protobuf:"varint,1,opt,name=failure_explanations_off,json=failureExplanationsOff,proto3" json:"failure_explanations_off,omitempty"`
-	// Its pull requests' merge risk isn't assessed.
-	RiskAssessmentsOff bool `protobuf:"varint,2,opt,name=risk_assessments_off,json=riskAssessmentsOff,proto3" json:"risk_assessments_off,omitempty"`
-	// No guide to what to test is written for its previews.
-	TestGuidesOff bool `protobuf:"varint,3,opt,name=test_guides_off,json=testGuidesOff,proto3" json:"test_guides_off,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RepositoryAi) Reset() {
-	*x = RepositoryAi{}
-	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RepositoryAi) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RepositoryAi) ProtoMessage() {}
-
-func (x *RepositoryAi) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RepositoryAi.ProtoReflect.Descriptor instead.
-func (*RepositoryAi) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *RepositoryAi) GetFailureExplanationsOff() bool {
-	if x != nil {
-		return x.FailureExplanationsOff
-	}
-	return false
-}
-
-func (x *RepositoryAi) GetRiskAssessmentsOff() bool {
-	if x != nil {
-		return x.RiskAssessmentsOff
-	}
-	return false
-}
-
-func (x *RepositoryAi) GetTestGuidesOff() bool {
-	if x != nil {
-		return x.TestGuidesOff
-	}
-	return false
-}
-
 // RepositorySetup is what Stagd found on a repository's default branch:
 // whether it has a stagd.yaml, the compose file it reads, and what would
 // stop a preview, the same check as stagd validate.
@@ -626,7 +551,7 @@ type RepositorySetup struct {
 
 func (x *RepositorySetup) Reset() {
 	*x = RepositorySetup{}
-	mi := &file_stagd_api_v1_model_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -638,7 +563,7 @@ func (x *RepositorySetup) String() string {
 func (*RepositorySetup) ProtoMessage() {}
 
 func (x *RepositorySetup) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_model_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -651,7 +576,7 @@ func (x *RepositorySetup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepositorySetup.ProtoReflect.Descriptor instead.
 func (*RepositorySetup) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{6}
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RepositorySetup) GetConfigFile() string {
@@ -715,7 +640,7 @@ type ChangeRequest struct {
 
 func (x *ChangeRequest) Reset() {
 	*x = ChangeRequest{}
-	mi := &file_stagd_api_v1_model_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -727,7 +652,7 @@ func (x *ChangeRequest) String() string {
 func (*ChangeRequest) ProtoMessage() {}
 
 func (x *ChangeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_model_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_model_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -740,7 +665,7 @@ func (x *ChangeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeRequest.ProtoReflect.Descriptor instead.
 func (*ChangeRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{7}
+	return file_stagd_api_v1_model_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ChangeRequest) GetNumber() int64 {
@@ -815,7 +740,7 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\n" +
 	"Membership\x12#\n" +
 	"\x03org\x18\x01 \x01(\v2\x11.stagd.api.v1.OrgR\x03org\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\"\xad\x03\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\"\x8b\x03\n" +
 	"\n" +
 	"Repository\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
@@ -830,12 +755,7 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\x10previews_enabled\x18\t \x01(\bR\x0fpreviewsEnabled\x123\n" +
 	"\x05setup\x18\n" +
 	" \x01(\v2\x1d.stagd.api.v1.RepositorySetupR\x05setup\x12\x16\n" +
-	"\x06hidden\x18\v \x01(\bR\x06hidden\x12*\n" +
-	"\x02ai\x18\f \x01(\v2\x1a.stagd.api.v1.RepositoryAiR\x02ai\"\xa2\x01\n" +
-	"\fRepositoryAi\x128\n" +
-	"\x18failure_explanations_off\x18\x01 \x01(\bR\x16failureExplanationsOff\x120\n" +
-	"\x14risk_assessments_off\x18\x02 \x01(\bR\x12riskAssessmentsOff\x12&\n" +
-	"\x0ftest_guides_off\x18\x03 \x01(\bR\rtestGuidesOff\"\xe4\x01\n" +
+	"\x06hidden\x18\v \x01(\bR\x06hiddenJ\x04\b\f\x10\rR\x02ai\"\xe4\x01\n" +
 	"\x0fRepositorySetup\x12\x1f\n" +
 	"\vconfig_file\x18\x01 \x01(\tR\n" +
 	"configFile\x12!\n" +
@@ -880,7 +800,7 @@ func file_stagd_api_v1_model_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_model_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_stagd_api_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_stagd_api_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_stagd_api_v1_model_proto_goTypes = []any{
 	(Theme)(0),                    // 0: stagd.api.v1.Theme
 	(ScmProvider)(0),              // 1: stagd.api.v1.ScmProvider
@@ -889,24 +809,22 @@ var file_stagd_api_v1_model_proto_goTypes = []any{
 	(*Org)(nil),                   // 4: stagd.api.v1.Org
 	(*Membership)(nil),            // 5: stagd.api.v1.Membership
 	(*Repository)(nil),            // 6: stagd.api.v1.Repository
-	(*RepositoryAi)(nil),          // 7: stagd.api.v1.RepositoryAi
-	(*RepositorySetup)(nil),       // 8: stagd.api.v1.RepositorySetup
-	(*ChangeRequest)(nil),         // 9: stagd.api.v1.ChangeRequest
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(*RepositorySetup)(nil),       // 7: stagd.api.v1.RepositorySetup
+	(*ChangeRequest)(nil),         // 8: stagd.api.v1.ChangeRequest
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_model_proto_depIdxs = []int32{
-	0,  // 0: stagd.api.v1.Preferences.theme:type_name -> stagd.api.v1.Theme
-	10, // 1: stagd.api.v1.Org.create_time:type_name -> google.protobuf.Timestamp
-	4,  // 2: stagd.api.v1.Membership.org:type_name -> stagd.api.v1.Org
-	1,  // 3: stagd.api.v1.Repository.provider:type_name -> stagd.api.v1.ScmProvider
-	8,  // 4: stagd.api.v1.Repository.setup:type_name -> stagd.api.v1.RepositorySetup
-	7,  // 5: stagd.api.v1.Repository.ai:type_name -> stagd.api.v1.RepositoryAi
-	10, // 6: stagd.api.v1.RepositorySetup.check_time:type_name -> google.protobuf.Timestamp
-	7,  // [7:7] is the sub-list for method output_type
-	7,  // [7:7] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	0, // 0: stagd.api.v1.Preferences.theme:type_name -> stagd.api.v1.Theme
+	9, // 1: stagd.api.v1.Org.create_time:type_name -> google.protobuf.Timestamp
+	4, // 2: stagd.api.v1.Membership.org:type_name -> stagd.api.v1.Org
+	1, // 3: stagd.api.v1.Repository.provider:type_name -> stagd.api.v1.ScmProvider
+	7, // 4: stagd.api.v1.Repository.setup:type_name -> stagd.api.v1.RepositorySetup
+	9, // 5: stagd.api.v1.RepositorySetup.check_time:type_name -> google.protobuf.Timestamp
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_model_proto_init() }
@@ -920,7 +838,7 @@ func file_stagd_api_v1_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_model_proto_rawDesc), len(file_stagd_api_v1_model_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

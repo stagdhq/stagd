@@ -55,7 +55,6 @@ func previewCommand() *cli.Command {
 			{Name: "destroy", Usage: "tear a preview down now", ArgsUsage: idArg, Action: previewDestroy},
 			previewMailCommand(),
 			previewTestersCommand(),
-			previewTryCommand(),
 			previewTextsCommand(),
 			previewLogsCommand(),
 			previewUsageCommand(),
@@ -419,7 +418,6 @@ func previewGet(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	fmt.Fprintf(w, "expires: %s\n", p.GetExpireTime().AsTime().Local().Format("2006-01-02 15:04"))
-	printRisk(w, p.GetRisk())
 
 	if len(p.GetIngresses()) == 0 {
 		fmt.Fprintf(w, "url:     %s\n", p.GetUrl())
@@ -442,43 +440,6 @@ func previewGet(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-// printRisk says how risky the pull request is to merge, as the org's model
-// read its changes, and why: each reason with its files. Nothing when the
-// org doesn't assess risk.
-func printRisk(w io.Writer, r *apiv1.PreviewRisk) {
-	if r == nil {
-		return
-	}
-
-	fmt.Fprintf(w, "\nMerge risk: %s. %s\n", label(r.GetLevel().String(), "PREVIEW_RISK_LEVEL_"), r.GetSummary())
-
-	for _, reason := range r.GetReasons() {
-		// A file with a line that shows it as file:line; the rest by name.
-		var where []string
-		lined := map[string]bool{}
-
-		for _, l := range reason.GetLines() {
-			where = append(where, fmt.Sprintf("%s:%d", l.GetFile(), l.GetLine()))
-			lined[l.GetFile()] = true
-		}
-
-		for _, f := range reason.GetFiles() {
-			if !lined[f] {
-				where = append(where, f)
-			}
-		}
-
-		files := ""
-		if len(where) > 0 {
-			files = " (" + strings.Join(where, ", ") + ")"
-		}
-
-		fmt.Fprintf(w, "  - %s%s\n", reason.GetText(), files)
-	}
-
-	fmt.Fprintf(w, "Assessed by %s at %.7s\n", r.GetModelName(), r.GetSha())
-}
-
 // printFailure says why a preview failed, as far as Stagd could tell: the
 // cause, the fix and the lines that show it. Nothing when it couldn't.
 func printFailure(w io.Writer, f *apiv1.PreviewFailure) {
@@ -493,10 +454,6 @@ func printFailure(w io.Writer, f *apiv1.PreviewFailure) {
 
 	fmt.Fprintf(w, "\n%s: %s\n", cause, f.GetCause())
 	fmt.Fprintf(w, "Fix: %s\n", f.GetFix())
-
-	if name := f.GetModelName(); name != "" {
-		fmt.Fprintf(w, "Explained by %s\n", name)
-	}
 
 	for _, e := range f.GetEvidence() {
 		if e.GetSource() == "error" {
