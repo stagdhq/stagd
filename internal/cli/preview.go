@@ -46,6 +46,7 @@ func previewCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "repo", Usage: "only this repository"},
 					&cli.BoolFlag{Name: "all", Usage: "include torn-down previews"},
+					&cli.IntFlag{Name: "limit", Usage: "the newest this many at most (up to 200)", Value: 50},
 				},
 				Action: previewList,
 			},
@@ -359,7 +360,13 @@ func previewList(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	req := &apiv1.ListPreviewsRequest{Repository: cmd.String("repo")}
+	limit := cmd.Int("limit")
+
+	if limit < 1 || limit > maxPreviewPage {
+		return cli.Exit(fmt.Sprintf("--limit is 1 to %d", maxPreviewPage), 2)
+	}
+
+	req := &apiv1.ListPreviewsRequest{Repository: cmd.String("repo"), PageSize: int32(limit)}
 	if cmd.Bool("all") {
 		for s := apiv1.PreviewStatus_PREVIEW_STATUS_QUEUED; s <= apiv1.PreviewStatus_PREVIEW_STATUS_DESTROYED; s++ {
 			req.Statuses = append(req.Statuses, s)
@@ -383,8 +390,20 @@ func previewList(ctx context.Context, cmd *cli.Command) error {
 		rows = append(rows, []string{p.GetRepository().GetFullName(), what(p), statusLabel(p.GetStatus()), p.GetUrl(), p.GetId()})
 	}
 
-	return output.Table(w, []string{"repository", "of", "status", "url", "id"}, rows)
+	if err := output.Table(w, []string{"repository", "of", "status", "url", "id"}, rows); err != nil {
+		return err
+	}
+
+	// A full page may not be all of them.
+	if len(rows) == limit && limit < maxPreviewPage {
+		fmt.Fprintf(cmd.Root().ErrWriter, "\nThe newest %d; there may be more (--limit up to %d).\n", limit, maxPreviewPage)
+	}
+
+	return nil
 }
+
+// The most previews Stagd lists at once.
+const maxPreviewPage = 200
 
 func previewGet(ctx context.Context, cmd *cli.Command) error {
 	id := cmd.Args().First()

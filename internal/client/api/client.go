@@ -22,6 +22,7 @@ type Config struct {
 // Clients holds one client per API service.
 type Clients struct {
 	Auth     apiv1connect.AuthServiceClient
+	Account  apiv1connect.AccountServiceClient
 	Orgs     apiv1connect.OrgServiceClient
 	Scm      apiv1connect.ScmServiceClient
 	Compute  apiv1connect.ComputeServiceClient
@@ -66,6 +67,7 @@ func New(cfg Config) (*Clients, error) {
 
 	return &Clients{
 		Auth:     apiv1connect.NewAuthServiceClient(httpClient, cfg.BaseURL, opts...),
+		Account:  apiv1connect.NewAccountServiceClient(httpClient, cfg.BaseURL, opts...),
 		Orgs:     apiv1connect.NewOrgServiceClient(httpClient, cfg.BaseURL, opts...),
 		Scm:      apiv1connect.NewScmServiceClient(httpClient, cfg.BaseURL, opts...),
 		Compute:  apiv1connect.NewComputeServiceClient(httpClient, cfg.BaseURL, opts...),

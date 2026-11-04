@@ -9,9 +9,11 @@ import (
 	"runtime"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 
 	"github.com/stagdhq/stagd/internal/client/auth"
+	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
 )
 
 // store is where tokens live; replaced in tests.
@@ -101,7 +103,10 @@ func loginCommand() *cli.Command {
 func logoutCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "logout",
-		Usage: "sign out and forget the stored token",
+		Usage: "sign out and forget the stored token; with --all, everywhere else too",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "all", Usage: "sign out of every browser and CLI, not just this one"},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiURL := cmd.String("api-url")
 
@@ -114,6 +119,21 @@ func logoutCommand() *cli.Command {
 
 			if err != nil {
 				return err
+			}
+
+			// The others first: once this session has ended, it can't ask.
+			if cmd.Bool("all") {
+				c, err := clients(cmd)
+				if err != nil {
+					return err
+				}
+
+				res, err := c.Account.RevokeOtherSessions(ctx, connect.NewRequest(&apiv1.RevokeOtherSessionsRequest{}))
+				if err != nil {
+					return fmt.Errorf("couldn't sign out the other sessions, so this one stays signed in: %w", err)
+				}
+
+				fmt.Fprintf(cmd.Root().Writer, "Signed out of %s.\n", plural(int(res.Msg.GetRevoked()), "other session", "other sessions"))
 			}
 
 			// End the session on the server too, so the token can't be reused.

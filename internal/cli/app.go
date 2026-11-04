@@ -42,6 +42,7 @@ func New(version string) *cli.Command {
 			loginCommand(),
 			logoutCommand(),
 			whoamiCommand(),
+			authCommand(),
 			orgsCommand(),
 			githubCommand(),
 			connectionsCommand(),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -202,6 +203,7 @@ func reposCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "connection", Usage: "only this connection's repositories"},
 					&cli.BoolFlag{Name: "all", Usage: "hidden repositories too"},
+					&cli.IntFlag{Name: "limit", Usage: "this many at most, by name (0 for all)"},
 				},
 				Action: reposList,
 			},
@@ -323,6 +325,11 @@ func reposList(ctx context.Context, cmd *cli.Command) error {
 
 	w := cmd.Root().Writer
 
+	if limit := cmd.Int("limit"); cmd.Bool("json") && limit > 0 && len(res.Msg.Repositories) > limit {
+		slices.SortFunc(res.Msg.Repositories, func(a, b *apiv1.Repository) int { return strings.Compare(a.GetFullName(), b.GetFullName()) })
+		res.Msg.Repositories = res.Msg.Repositories[:limit]
+	}
+
 	if cmd.Bool("json") {
 		return output.JSON(w, res.Msg)
 	}
@@ -355,8 +362,21 @@ func reposList(ctx context.Context, cmd *cli.Command) error {
 		rows = append(rows, []string{r.GetFullName(), previews, providerLabel(r.GetProvider()), r.GetDefaultBranch(), visibility})
 	}
 
+	// Stagd answers every repository at once; --limit keeps the first by name.
+	limitedOut := 0
+
+	if limit := cmd.Int("limit"); limit > 0 && len(rows) > limit {
+		slices.SortFunc(rows, func(a, b []string) int { return strings.Compare(a[0], b[0]) })
+		limitedOut = len(rows) - limit
+		rows = rows[:limit]
+	}
+
 	if err := output.Table(w, []string{"repository", "previews", "host", "default branch", "visibility"}, rows); err != nil {
 		return err
+	}
+
+	if limitedOut > 0 {
+		_, err = fmt.Fprintf(w, "\n%d more; --limit for more, or 0 for all.\n", limitedOut)
 	}
 
 	if hiddenLeftOut > 0 {
