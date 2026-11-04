@@ -66,6 +66,25 @@ message Connection {
   // Where to change it on the code host: which repositories it shares, new
   // permissions to accept. For GitHub, the installation's settings page.
   string manage_url = 8;
+  // What Stagd's App asks for now that this installation hasn't approved yet.
+  // A code host keeps an installation on what it approved until its owner
+  // approves more, at manage_url; until then, what needs these doesn't work
+  // for its repositories. Empty when it has everything, or when Stagd
+  // couldn't ask.
+  repeated UnapprovedGrant unapproved = 9;
+}
+
+// UnapprovedGrant is one permission or event a code host installation hasn't
+// approved.
+message UnapprovedGrant {
+  // As the code host names it: a permission ("checks") or an event
+  // ("check_run").
+  string name = 1;
+  // In words, with the access asked for: "Checks (read and write)",
+  // "Check run events".
+  string title = 2;
+  // What Stagd needs it for: "Preview checks on pull requests".
+  string why = 3;
 }
 
 message StartConnectRequest {

@@ -149,7 +149,13 @@ type Connection struct {
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// Where to change it on the code host: which repositories it shares, new
 	// permissions to accept. For GitHub, the installation's settings page.
-	ManageUrl     string `protobuf:"bytes,8,opt,name=manage_url,json=manageUrl,proto3" json:"manage_url,omitempty"`
+	ManageUrl string `protobuf:"bytes,8,opt,name=manage_url,json=manageUrl,proto3" json:"manage_url,omitempty"`
+	// What Stagd's App asks for now that this installation hasn't approved yet.
+	// A code host keeps an installation on what it approved until its owner
+	// approves more, at manage_url; until then, what needs these doesn't work
+	// for its repositories. Empty when it has everything, or when Stagd
+	// couldn't ask.
+	Unapproved    []*UnapprovedGrant `protobuf:"bytes,9,rep,name=unapproved,proto3" json:"unapproved,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -240,6 +246,80 @@ func (x *Connection) GetManageUrl() string {
 	return ""
 }
 
+func (x *Connection) GetUnapproved() []*UnapprovedGrant {
+	if x != nil {
+		return x.Unapproved
+	}
+	return nil
+}
+
+// UnapprovedGrant is one permission or event a code host installation hasn't
+// approved.
+type UnapprovedGrant struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// As the code host names it: a permission ("checks") or an event
+	// ("check_run").
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// In words, with the access asked for: "Checks (read and write)",
+	// "Check run events".
+	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	// What Stagd needs it for: "Preview checks on pull requests".
+	Why           string `protobuf:"bytes,3,opt,name=why,proto3" json:"why,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnapprovedGrant) Reset() {
+	*x = UnapprovedGrant{}
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnapprovedGrant) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnapprovedGrant) ProtoMessage() {}
+
+func (x *UnapprovedGrant) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnapprovedGrant.ProtoReflect.Descriptor instead.
+func (*UnapprovedGrant) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *UnapprovedGrant) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UnapprovedGrant) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *UnapprovedGrant) GetWhy() string {
+	if x != nil {
+		return x.Why
+	}
+	return ""
+}
+
 type StartConnectRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Provider      ScmProvider            `protobuf:"varint,1,opt,name=provider,proto3,enum=stagd.api.v1.ScmProvider" json:"provider,omitempty"`
@@ -249,7 +329,7 @@ type StartConnectRequest struct {
 
 func (x *StartConnectRequest) Reset() {
 	*x = StartConnectRequest{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[1]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -261,7 +341,7 @@ func (x *StartConnectRequest) String() string {
 func (*StartConnectRequest) ProtoMessage() {}
 
 func (x *StartConnectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[1]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -274,7 +354,7 @@ func (x *StartConnectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartConnectRequest.ProtoReflect.Descriptor instead.
 func (*StartConnectRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{1}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *StartConnectRequest) GetProvider() ScmProvider {
@@ -297,7 +377,7 @@ type StartConnectResponse struct {
 
 func (x *StartConnectResponse) Reset() {
 	*x = StartConnectResponse{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[2]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -309,7 +389,7 @@ func (x *StartConnectResponse) String() string {
 func (*StartConnectResponse) ProtoMessage() {}
 
 func (x *StartConnectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[2]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -322,7 +402,7 @@ func (x *StartConnectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartConnectResponse.ProtoReflect.Descriptor instead.
 func (*StartConnectResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{2}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *StartConnectResponse) GetUrl() string {
@@ -355,7 +435,7 @@ type GetConnectStatusRequest struct {
 
 func (x *GetConnectStatusRequest) Reset() {
 	*x = GetConnectStatusRequest{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[3]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -367,7 +447,7 @@ func (x *GetConnectStatusRequest) String() string {
 func (*GetConnectStatusRequest) ProtoMessage() {}
 
 func (x *GetConnectStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[3]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -380,7 +460,7 @@ func (x *GetConnectStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConnectStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetConnectStatusRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{3}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetConnectStatusRequest) GetState() string {
@@ -403,7 +483,7 @@ type GetConnectStatusResponse struct {
 
 func (x *GetConnectStatusResponse) Reset() {
 	*x = GetConnectStatusResponse{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[4]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -415,7 +495,7 @@ func (x *GetConnectStatusResponse) String() string {
 func (*GetConnectStatusResponse) ProtoMessage() {}
 
 func (x *GetConnectStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[4]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -428,7 +508,7 @@ func (x *GetConnectStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConnectStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetConnectStatusResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{4}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetConnectStatusResponse) GetStatus() ConnectStatus {
@@ -460,7 +540,7 @@ type ListConnectionsRequest struct {
 
 func (x *ListConnectionsRequest) Reset() {
 	*x = ListConnectionsRequest{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -472,7 +552,7 @@ func (x *ListConnectionsRequest) String() string {
 func (*ListConnectionsRequest) ProtoMessage() {}
 
 func (x *ListConnectionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -485,7 +565,7 @@ func (x *ListConnectionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConnectionsRequest.ProtoReflect.Descriptor instead.
 func (*ListConnectionsRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{5}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{6}
 }
 
 type ListConnectionsResponse struct {
@@ -497,7 +577,7 @@ type ListConnectionsResponse struct {
 
 func (x *ListConnectionsResponse) Reset() {
 	*x = ListConnectionsResponse{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -509,7 +589,7 @@ func (x *ListConnectionsResponse) String() string {
 func (*ListConnectionsResponse) ProtoMessage() {}
 
 func (x *ListConnectionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -522,7 +602,7 @@ func (x *ListConnectionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConnectionsResponse.ProtoReflect.Descriptor instead.
 func (*ListConnectionsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{6}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListConnectionsResponse) GetConnections() []*Connection {
@@ -541,7 +621,7 @@ type DeleteConnectionRequest struct {
 
 func (x *DeleteConnectionRequest) Reset() {
 	*x = DeleteConnectionRequest{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -553,7 +633,7 @@ func (x *DeleteConnectionRequest) String() string {
 func (*DeleteConnectionRequest) ProtoMessage() {}
 
 func (x *DeleteConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -566,7 +646,7 @@ func (x *DeleteConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteConnectionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{7}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DeleteConnectionRequest) GetId() string {
@@ -584,7 +664,7 @@ type DeleteConnectionResponse struct {
 
 func (x *DeleteConnectionResponse) Reset() {
 	*x = DeleteConnectionResponse{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -596,7 +676,7 @@ func (x *DeleteConnectionResponse) String() string {
 func (*DeleteConnectionResponse) ProtoMessage() {}
 
 func (x *DeleteConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -609,7 +689,7 @@ func (x *DeleteConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteConnectionResponse.ProtoReflect.Descriptor instead.
 func (*DeleteConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{8}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{9}
 }
 
 type ListRepositoriesRequest struct {
@@ -622,7 +702,7 @@ type ListRepositoriesRequest struct {
 
 func (x *ListRepositoriesRequest) Reset() {
 	*x = ListRepositoriesRequest{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[9]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -634,7 +714,7 @@ func (x *ListRepositoriesRequest) String() string {
 func (*ListRepositoriesRequest) ProtoMessage() {}
 
 func (x *ListRepositoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[9]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -647,7 +727,7 @@ func (x *ListRepositoriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRepositoriesRequest.ProtoReflect.Descriptor instead.
 func (*ListRepositoriesRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{9}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListRepositoriesRequest) GetConnectionId() string {
@@ -666,7 +746,7 @@ type ListRepositoriesResponse struct {
 
 func (x *ListRepositoriesResponse) Reset() {
 	*x = ListRepositoriesResponse{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[10]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -678,7 +758,7 @@ func (x *ListRepositoriesResponse) String() string {
 func (*ListRepositoriesResponse) ProtoMessage() {}
 
 func (x *ListRepositoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[10]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +771,7 @@ func (x *ListRepositoriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRepositoriesResponse.ProtoReflect.Descriptor instead.
 func (*ListRepositoriesResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{10}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListRepositoriesResponse) GetRepositories() []*Repository {
@@ -713,7 +793,7 @@ type CheckRepositoryRequest struct {
 
 func (x *CheckRepositoryRequest) Reset() {
 	*x = CheckRepositoryRequest{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[11]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -725,7 +805,7 @@ func (x *CheckRepositoryRequest) String() string {
 func (*CheckRepositoryRequest) ProtoMessage() {}
 
 func (x *CheckRepositoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[11]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -738,7 +818,7 @@ func (x *CheckRepositoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckRepositoryRequest.ProtoReflect.Descriptor instead.
 func (*CheckRepositoryRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{11}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CheckRepositoryRequest) GetRepository() string {
@@ -764,7 +844,7 @@ type CheckRepositoryResponse struct {
 
 func (x *CheckRepositoryResponse) Reset() {
 	*x = CheckRepositoryResponse{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[12]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -776,7 +856,7 @@ func (x *CheckRepositoryResponse) String() string {
 func (*CheckRepositoryResponse) ProtoMessage() {}
 
 func (x *CheckRepositoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[12]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -789,7 +869,7 @@ func (x *CheckRepositoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckRepositoryResponse.ProtoReflect.Descriptor instead.
 func (*CheckRepositoryResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{12}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CheckRepositoryResponse) GetRepository() *Repository {
@@ -810,7 +890,7 @@ type SetPreviewsEnabledRequest struct {
 
 func (x *SetPreviewsEnabledRequest) Reset() {
 	*x = SetPreviewsEnabledRequest{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[13]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -822,7 +902,7 @@ func (x *SetPreviewsEnabledRequest) String() string {
 func (*SetPreviewsEnabledRequest) ProtoMessage() {}
 
 func (x *SetPreviewsEnabledRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[13]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +915,7 @@ func (x *SetPreviewsEnabledRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPreviewsEnabledRequest.ProtoReflect.Descriptor instead.
 func (*SetPreviewsEnabledRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{13}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SetPreviewsEnabledRequest) GetRepository() string {
@@ -863,7 +943,7 @@ type SetPreviewsEnabledResponse struct {
 
 func (x *SetPreviewsEnabledResponse) Reset() {
 	*x = SetPreviewsEnabledResponse{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[14]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -875,7 +955,7 @@ func (x *SetPreviewsEnabledResponse) String() string {
 func (*SetPreviewsEnabledResponse) ProtoMessage() {}
 
 func (x *SetPreviewsEnabledResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[14]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -888,7 +968,7 @@ func (x *SetPreviewsEnabledResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPreviewsEnabledResponse.ProtoReflect.Descriptor instead.
 func (*SetPreviewsEnabledResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{14}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SetPreviewsEnabledResponse) GetRepository() *Repository {
@@ -916,7 +996,7 @@ type SetRepositoryHiddenRequest struct {
 
 func (x *SetRepositoryHiddenRequest) Reset() {
 	*x = SetRepositoryHiddenRequest{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[15]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -928,7 +1008,7 @@ func (x *SetRepositoryHiddenRequest) String() string {
 func (*SetRepositoryHiddenRequest) ProtoMessage() {}
 
 func (x *SetRepositoryHiddenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[15]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -941,7 +1021,7 @@ func (x *SetRepositoryHiddenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetRepositoryHiddenRequest.ProtoReflect.Descriptor instead.
 func (*SetRepositoryHiddenRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{15}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SetRepositoryHiddenRequest) GetRepository() string {
@@ -967,7 +1047,7 @@ type SetRepositoryHiddenResponse struct {
 
 func (x *SetRepositoryHiddenResponse) Reset() {
 	*x = SetRepositoryHiddenResponse{}
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[16]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -979,7 +1059,7 @@ func (x *SetRepositoryHiddenResponse) String() string {
 func (*SetRepositoryHiddenResponse) ProtoMessage() {}
 
 func (x *SetRepositoryHiddenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_scm_proto_msgTypes[16]
+	mi := &file_stagd_api_v1_scm_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -992,7 +1072,7 @@ func (x *SetRepositoryHiddenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetRepositoryHiddenResponse.ProtoReflect.Descriptor instead.
 func (*SetRepositoryHiddenResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{16}
+	return file_stagd_api_v1_scm_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SetRepositoryHiddenResponse) GetRepository() *Repository {
@@ -1006,7 +1086,7 @@ var File_stagd_api_v1_scm_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_scm_proto_rawDesc = "" +
 	"\n" +
-	"\x16stagd/api/v1/scm.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\xd5\x02\n" +
+	"\x16stagd/api/v1/scm.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\x94\x03\n" +
 	"\n" +
 	"Connection\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x125\n" +
@@ -1020,7 +1100,14 @@ const file_stagd_api_v1_scm_proto_rawDesc = "" +
 	"\vcreate_time\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12\x1d\n" +
 	"\n" +
-	"manage_url\x18\b \x01(\tR\tmanageUrl\"V\n" +
+	"manage_url\x18\b \x01(\tR\tmanageUrl\x12=\n" +
+	"\n" +
+	"unapproved\x18\t \x03(\v2\x1d.stagd.api.v1.UnapprovedGrantR\n" +
+	"unapproved\"M\n" +
+	"\x0fUnapprovedGrant\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x10\n" +
+	"\x03why\x18\x03 \x01(\tR\x03why\"V\n" +
 	"\x13StartConnectRequest\x12?\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x19.stagd.api.v1.ScmProviderB\b\xbaH\x05\x82\x01\x02\x18\x01R\bprovider\"{\n" +
 	"\x14StartConnectResponse\x12\x10\n" +
@@ -1110,67 +1197,69 @@ func file_stagd_api_v1_scm_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_scm_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_stagd_api_v1_scm_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_stagd_api_v1_scm_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_stagd_api_v1_scm_proto_goTypes = []any{
 	(ConnectionStatus)(0),               // 0: stagd.api.v1.ConnectionStatus
 	(ConnectStatus)(0),                  // 1: stagd.api.v1.ConnectStatus
 	(*Connection)(nil),                  // 2: stagd.api.v1.Connection
-	(*StartConnectRequest)(nil),         // 3: stagd.api.v1.StartConnectRequest
-	(*StartConnectResponse)(nil),        // 4: stagd.api.v1.StartConnectResponse
-	(*GetConnectStatusRequest)(nil),     // 5: stagd.api.v1.GetConnectStatusRequest
-	(*GetConnectStatusResponse)(nil),    // 6: stagd.api.v1.GetConnectStatusResponse
-	(*ListConnectionsRequest)(nil),      // 7: stagd.api.v1.ListConnectionsRequest
-	(*ListConnectionsResponse)(nil),     // 8: stagd.api.v1.ListConnectionsResponse
-	(*DeleteConnectionRequest)(nil),     // 9: stagd.api.v1.DeleteConnectionRequest
-	(*DeleteConnectionResponse)(nil),    // 10: stagd.api.v1.DeleteConnectionResponse
-	(*ListRepositoriesRequest)(nil),     // 11: stagd.api.v1.ListRepositoriesRequest
-	(*ListRepositoriesResponse)(nil),    // 12: stagd.api.v1.ListRepositoriesResponse
-	(*CheckRepositoryRequest)(nil),      // 13: stagd.api.v1.CheckRepositoryRequest
-	(*CheckRepositoryResponse)(nil),     // 14: stagd.api.v1.CheckRepositoryResponse
-	(*SetPreviewsEnabledRequest)(nil),   // 15: stagd.api.v1.SetPreviewsEnabledRequest
-	(*SetPreviewsEnabledResponse)(nil),  // 16: stagd.api.v1.SetPreviewsEnabledResponse
-	(*SetRepositoryHiddenRequest)(nil),  // 17: stagd.api.v1.SetRepositoryHiddenRequest
-	(*SetRepositoryHiddenResponse)(nil), // 18: stagd.api.v1.SetRepositoryHiddenResponse
-	(ScmProvider)(0),                    // 19: stagd.api.v1.ScmProvider
-	(*User)(nil),                        // 20: stagd.api.v1.User
-	(*timestamppb.Timestamp)(nil),       // 21: google.protobuf.Timestamp
-	(*Repository)(nil),                  // 22: stagd.api.v1.Repository
+	(*UnapprovedGrant)(nil),             // 3: stagd.api.v1.UnapprovedGrant
+	(*StartConnectRequest)(nil),         // 4: stagd.api.v1.StartConnectRequest
+	(*StartConnectResponse)(nil),        // 5: stagd.api.v1.StartConnectResponse
+	(*GetConnectStatusRequest)(nil),     // 6: stagd.api.v1.GetConnectStatusRequest
+	(*GetConnectStatusResponse)(nil),    // 7: stagd.api.v1.GetConnectStatusResponse
+	(*ListConnectionsRequest)(nil),      // 8: stagd.api.v1.ListConnectionsRequest
+	(*ListConnectionsResponse)(nil),     // 9: stagd.api.v1.ListConnectionsResponse
+	(*DeleteConnectionRequest)(nil),     // 10: stagd.api.v1.DeleteConnectionRequest
+	(*DeleteConnectionResponse)(nil),    // 11: stagd.api.v1.DeleteConnectionResponse
+	(*ListRepositoriesRequest)(nil),     // 12: stagd.api.v1.ListRepositoriesRequest
+	(*ListRepositoriesResponse)(nil),    // 13: stagd.api.v1.ListRepositoriesResponse
+	(*CheckRepositoryRequest)(nil),      // 14: stagd.api.v1.CheckRepositoryRequest
+	(*CheckRepositoryResponse)(nil),     // 15: stagd.api.v1.CheckRepositoryResponse
+	(*SetPreviewsEnabledRequest)(nil),   // 16: stagd.api.v1.SetPreviewsEnabledRequest
+	(*SetPreviewsEnabledResponse)(nil),  // 17: stagd.api.v1.SetPreviewsEnabledResponse
+	(*SetRepositoryHiddenRequest)(nil),  // 18: stagd.api.v1.SetRepositoryHiddenRequest
+	(*SetRepositoryHiddenResponse)(nil), // 19: stagd.api.v1.SetRepositoryHiddenResponse
+	(ScmProvider)(0),                    // 20: stagd.api.v1.ScmProvider
+	(*User)(nil),                        // 21: stagd.api.v1.User
+	(*timestamppb.Timestamp)(nil),       // 22: google.protobuf.Timestamp
+	(*Repository)(nil),                  // 23: stagd.api.v1.Repository
 }
 var file_stagd_api_v1_scm_proto_depIdxs = []int32{
-	19, // 0: stagd.api.v1.Connection.provider:type_name -> stagd.api.v1.ScmProvider
+	20, // 0: stagd.api.v1.Connection.provider:type_name -> stagd.api.v1.ScmProvider
 	0,  // 1: stagd.api.v1.Connection.status:type_name -> stagd.api.v1.ConnectionStatus
-	20, // 2: stagd.api.v1.Connection.created_by:type_name -> stagd.api.v1.User
-	21, // 3: stagd.api.v1.Connection.create_time:type_name -> google.protobuf.Timestamp
-	19, // 4: stagd.api.v1.StartConnectRequest.provider:type_name -> stagd.api.v1.ScmProvider
-	21, // 5: stagd.api.v1.StartConnectResponse.expire_time:type_name -> google.protobuf.Timestamp
-	1,  // 6: stagd.api.v1.GetConnectStatusResponse.status:type_name -> stagd.api.v1.ConnectStatus
-	2,  // 7: stagd.api.v1.GetConnectStatusResponse.connection:type_name -> stagd.api.v1.Connection
-	2,  // 8: stagd.api.v1.ListConnectionsResponse.connections:type_name -> stagd.api.v1.Connection
-	22, // 9: stagd.api.v1.ListRepositoriesResponse.repositories:type_name -> stagd.api.v1.Repository
-	22, // 10: stagd.api.v1.CheckRepositoryResponse.repository:type_name -> stagd.api.v1.Repository
-	22, // 11: stagd.api.v1.SetPreviewsEnabledResponse.repository:type_name -> stagd.api.v1.Repository
-	22, // 12: stagd.api.v1.SetRepositoryHiddenResponse.repository:type_name -> stagd.api.v1.Repository
-	3,  // 13: stagd.api.v1.ScmService.StartConnect:input_type -> stagd.api.v1.StartConnectRequest
-	5,  // 14: stagd.api.v1.ScmService.GetConnectStatus:input_type -> stagd.api.v1.GetConnectStatusRequest
-	7,  // 15: stagd.api.v1.ScmService.ListConnections:input_type -> stagd.api.v1.ListConnectionsRequest
-	9,  // 16: stagd.api.v1.ScmService.DeleteConnection:input_type -> stagd.api.v1.DeleteConnectionRequest
-	11, // 17: stagd.api.v1.ScmService.ListRepositories:input_type -> stagd.api.v1.ListRepositoriesRequest
-	15, // 18: stagd.api.v1.ScmService.SetPreviewsEnabled:input_type -> stagd.api.v1.SetPreviewsEnabledRequest
-	13, // 19: stagd.api.v1.ScmService.CheckRepository:input_type -> stagd.api.v1.CheckRepositoryRequest
-	17, // 20: stagd.api.v1.ScmService.SetRepositoryHidden:input_type -> stagd.api.v1.SetRepositoryHiddenRequest
-	4,  // 21: stagd.api.v1.ScmService.StartConnect:output_type -> stagd.api.v1.StartConnectResponse
-	6,  // 22: stagd.api.v1.ScmService.GetConnectStatus:output_type -> stagd.api.v1.GetConnectStatusResponse
-	8,  // 23: stagd.api.v1.ScmService.ListConnections:output_type -> stagd.api.v1.ListConnectionsResponse
-	10, // 24: stagd.api.v1.ScmService.DeleteConnection:output_type -> stagd.api.v1.DeleteConnectionResponse
-	12, // 25: stagd.api.v1.ScmService.ListRepositories:output_type -> stagd.api.v1.ListRepositoriesResponse
-	16, // 26: stagd.api.v1.ScmService.SetPreviewsEnabled:output_type -> stagd.api.v1.SetPreviewsEnabledResponse
-	14, // 27: stagd.api.v1.ScmService.CheckRepository:output_type -> stagd.api.v1.CheckRepositoryResponse
-	18, // 28: stagd.api.v1.ScmService.SetRepositoryHidden:output_type -> stagd.api.v1.SetRepositoryHiddenResponse
-	21, // [21:29] is the sub-list for method output_type
-	13, // [13:21] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	21, // 2: stagd.api.v1.Connection.created_by:type_name -> stagd.api.v1.User
+	22, // 3: stagd.api.v1.Connection.create_time:type_name -> google.protobuf.Timestamp
+	3,  // 4: stagd.api.v1.Connection.unapproved:type_name -> stagd.api.v1.UnapprovedGrant
+	20, // 5: stagd.api.v1.StartConnectRequest.provider:type_name -> stagd.api.v1.ScmProvider
+	22, // 6: stagd.api.v1.StartConnectResponse.expire_time:type_name -> google.protobuf.Timestamp
+	1,  // 7: stagd.api.v1.GetConnectStatusResponse.status:type_name -> stagd.api.v1.ConnectStatus
+	2,  // 8: stagd.api.v1.GetConnectStatusResponse.connection:type_name -> stagd.api.v1.Connection
+	2,  // 9: stagd.api.v1.ListConnectionsResponse.connections:type_name -> stagd.api.v1.Connection
+	23, // 10: stagd.api.v1.ListRepositoriesResponse.repositories:type_name -> stagd.api.v1.Repository
+	23, // 11: stagd.api.v1.CheckRepositoryResponse.repository:type_name -> stagd.api.v1.Repository
+	23, // 12: stagd.api.v1.SetPreviewsEnabledResponse.repository:type_name -> stagd.api.v1.Repository
+	23, // 13: stagd.api.v1.SetRepositoryHiddenResponse.repository:type_name -> stagd.api.v1.Repository
+	4,  // 14: stagd.api.v1.ScmService.StartConnect:input_type -> stagd.api.v1.StartConnectRequest
+	6,  // 15: stagd.api.v1.ScmService.GetConnectStatus:input_type -> stagd.api.v1.GetConnectStatusRequest
+	8,  // 16: stagd.api.v1.ScmService.ListConnections:input_type -> stagd.api.v1.ListConnectionsRequest
+	10, // 17: stagd.api.v1.ScmService.DeleteConnection:input_type -> stagd.api.v1.DeleteConnectionRequest
+	12, // 18: stagd.api.v1.ScmService.ListRepositories:input_type -> stagd.api.v1.ListRepositoriesRequest
+	16, // 19: stagd.api.v1.ScmService.SetPreviewsEnabled:input_type -> stagd.api.v1.SetPreviewsEnabledRequest
+	14, // 20: stagd.api.v1.ScmService.CheckRepository:input_type -> stagd.api.v1.CheckRepositoryRequest
+	18, // 21: stagd.api.v1.ScmService.SetRepositoryHidden:input_type -> stagd.api.v1.SetRepositoryHiddenRequest
+	5,  // 22: stagd.api.v1.ScmService.StartConnect:output_type -> stagd.api.v1.StartConnectResponse
+	7,  // 23: stagd.api.v1.ScmService.GetConnectStatus:output_type -> stagd.api.v1.GetConnectStatusResponse
+	9,  // 24: stagd.api.v1.ScmService.ListConnections:output_type -> stagd.api.v1.ListConnectionsResponse
+	11, // 25: stagd.api.v1.ScmService.DeleteConnection:output_type -> stagd.api.v1.DeleteConnectionResponse
+	13, // 26: stagd.api.v1.ScmService.ListRepositories:output_type -> stagd.api.v1.ListRepositoriesResponse
+	17, // 27: stagd.api.v1.ScmService.SetPreviewsEnabled:output_type -> stagd.api.v1.SetPreviewsEnabledResponse
+	15, // 28: stagd.api.v1.ScmService.CheckRepository:output_type -> stagd.api.v1.CheckRepositoryResponse
+	19, // 29: stagd.api.v1.ScmService.SetRepositoryHidden:output_type -> stagd.api.v1.SetRepositoryHiddenResponse
+	22, // [22:30] is the sub-list for method output_type
+	14, // [14:22] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_scm_proto_init() }
@@ -1185,7 +1274,7 @@ func file_stagd_api_v1_scm_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_scm_proto_rawDesc), len(file_stagd_api_v1_scm_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   17,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

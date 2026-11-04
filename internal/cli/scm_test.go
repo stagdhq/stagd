@@ -25,6 +25,8 @@ type fakeScm struct {
 	deleted      string
 	enabled      map[string]bool
 	hidden       map[string]bool
+	// What ListConnections answers; acmeConnection when nil.
+	connections []*apiv1.Connection
 }
 
 var acmeConnection = &apiv1.Connection{
@@ -62,6 +64,10 @@ func (f *fakeScm) GetConnectStatus(_ context.Context, req *connect.Request[apiv1
 }
 
 func (f *fakeScm) ListConnections(context.Context, *connect.Request[apiv1.ListConnectionsRequest]) (*connect.Response[apiv1.ListConnectionsResponse], error) {
+	if f.connections != nil {
+		return connect.NewResponse(&apiv1.ListConnectionsResponse{Connections: f.connections}), nil
+	}
+
 	return connect.NewResponse(&apiv1.ListConnectionsResponse{Connections: []*apiv1.Connection{acmeConnection}}), nil
 }
 
@@ -173,6 +179,42 @@ func TestConnectionsAndRepos(t *testing.T) {
 
 	if _, err := run(t, srv, "--token", "tok-1", "connections", "delete", "--yes", "c-1"); err != nil || scm.deleted != "c-1" {
 		t.Fatalf("delete: %v, deleted %q", err, scm.deleted)
+	}
+}
+
+func TestConnectionsSayWhatsUnapproved(t *testing.T) {
+	waiting := &fakeScm{connections: []*apiv1.Connection{{
+		Id:        "c-2",
+		Provider:  apiv1.ScmProvider_SCM_PROVIDER_GITHUB,
+		Account:   "globex",
+		Status:    apiv1.ConnectionStatus_CONNECTION_STATUS_ACTIVE,
+		ManageUrl: "https://github.com/organizations/globex/settings/installations/42",
+		Unapproved: []*apiv1.UnapprovedGrant{
+			{Name: "checks", Title: "Checks (read and write)", Why: "Reading a commit's checks, for previews that wait for them"},
+			{Name: "check_run", Title: "Check run events"},
+		},
+	}}}
+
+	out, err := run(t, scmServer(t, waiting), "--token", "tok-1", "connections", "list")
+	if err != nil {
+		t.Fatalf("connections list: %v\n%s", err, out)
+	}
+
+	for _, want := range []string{
+		"active, new permissions to approve",
+		"globex hasn't approved Stagd's new permissions on GitHub",
+		"  Checks (read and write): Reading a commit's checks",
+		"  Check run events\n",
+		"Approve them at https://github.com/organizations/globex/settings/installations/42",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("connections list should say %q:\n%s", want, out)
+		}
+	}
+
+	out, err = run(t, scmServer(t, &fakeScm{}), "--token", "tok-1", "connections", "list")
+	if err != nil || strings.Contains(out, "approve") {
+		t.Fatalf("nothing to approve, nothing said: %v\n%s", err, out)
 	}
 }
 

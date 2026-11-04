@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"slices"
 	"strings"
 	"time"
@@ -150,16 +151,56 @@ func connectionsList(ctx context.Context, cmd *cli.Command) error {
 	rows := make([][]string, 0, len(res.Msg.GetConnections()))
 
 	for _, conn := range res.Msg.GetConnections() {
+		status := label(conn.GetStatus().String(), "CONNECTION_STATUS_")
+
+		if needsApproval(conn) {
+			status += ", new permissions to approve"
+		}
+
 		rows = append(rows, []string{
 			conn.GetAccount(),
 			providerLabel(conn.GetProvider()),
-			label(conn.GetStatus().String(), "CONNECTION_STATUS_"),
+			status,
 			conn.GetCreatedBy().GetEmail(),
 			conn.GetId(),
 		})
 	}
 
-	return output.Table(w, []string{"account", "host", "status", "connected by", "id"}, rows)
+	if err := output.Table(w, []string{"account", "host", "status", "connected by", "id"}, rows); err != nil {
+		return err
+	}
+
+	for _, conn := range res.Msg.GetConnections() {
+		if needsApproval(conn) {
+			printUnapproved(w, conn)
+		}
+	}
+
+	return nil
+}
+
+// needsApproval says whether Stagd's App asks for more than an active
+// connection's installation approved.
+func needsApproval(conn *apiv1.Connection) bool {
+	return conn.GetStatus() == apiv1.ConnectionStatus_CONNECTION_STATUS_ACTIVE && len(conn.GetUnapproved()) > 0
+}
+
+// printUnapproved says what the installation hasn't approved, why Stagd
+// needs it, and where an owner approves it.
+func printUnapproved(w io.Writer, conn *apiv1.Connection) {
+	fmt.Fprintf(w, "\n%s hasn't approved Stagd's new permissions on GitHub. Until an owner of it does, what needs these doesn't work there:\n", conn.GetAccount())
+
+	for _, u := range conn.GetUnapproved() {
+		if u.GetWhy() != "" {
+			fmt.Fprintf(w, "  %s: %s\n", u.GetTitle(), u.GetWhy())
+		} else {
+			fmt.Fprintf(w, "  %s\n", u.GetTitle())
+		}
+	}
+
+	if conn.GetManageUrl() != "" {
+		fmt.Fprintf(w, "Approve them at %s\n", conn.GetManageUrl())
+	}
 }
 
 func connectionsDelete(ctx context.Context, cmd *cli.Command) error {
