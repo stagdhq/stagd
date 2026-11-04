@@ -27,6 +27,16 @@ func isTerminal(w io.Writer) bool {
 	return ok && term.IsTerminal(int(f.Fd()))
 }
 
+// Color reports whether to color what's written to w: a terminal, unless
+// NO_COLOR is set (https://no-color.org) or the terminal is a dumb one.
+func Color(w io.Writer) bool {
+	if os.Getenv("NO_COLOR") != "" || os.Getenv("TERM") == "dumb" {
+		return false
+	}
+
+	return isTerminal(w)
+}
+
 // TerminalWidth is w's width in columns, or 0 when w isn't a terminal.
 func TerminalWidth(w io.Writer) int {
 	f, ok := w.(*os.File)

@@ -3,11 +3,13 @@ package cli
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"slices"
 	"strings"
 	"time"
 
+	"charm.land/lipgloss/v2"
 	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -100,7 +102,7 @@ func previewLogs(ctx context.Context, cmd *cli.Command) error {
 		return nil
 	}
 
-	if err := printLines(w, lines, cmd.Bool("json")); err != nil {
+	if err := printLines(w, lines, cmd.Bool("json"), output.Color(w)); err != nil {
 		return err
 	}
 
@@ -164,7 +166,7 @@ func followLogs(ctx context.Context, cmd *cli.Command, c *api.Clients, id string
 			}
 		}
 
-		if err := printLines(w, pickLines(fresh, cmd.Bool("errors")), cmd.Bool("json")); err != nil {
+		if err := printLines(w, pickLines(fresh, cmd.Bool("errors")), cmd.Bool("json"), output.Color(w)); err != nil {
 			return err
 		}
 	}
@@ -247,7 +249,7 @@ func pickLines(lines []*apiv1.LogLine, errorsOnly bool) []*apiv1.LogLine {
 }
 
 // printLines prints each line as text, or with --json as a JSON object on a line of its own.
-func printLines(w io.Writer, lines []*apiv1.LogLine, asJSON bool) error {
+func printLines(w io.Writer, lines []*apiv1.LogLine, asJSON, color bool) error {
 	for _, l := range lines {
 		var err error
 
@@ -258,7 +260,13 @@ func printLines(w io.Writer, lines []*apiv1.LogLine, asJSON bool) error {
 				_, err = fmt.Fprintln(w, string(b))
 			}
 		} else {
-			_, err = fmt.Fprintln(w, lineText(l))
+			text := lineText(l)
+
+			if color {
+				text = coloredLine(l)
+			}
+
+			_, err = fmt.Fprintln(w, text)
 		}
 
 		if err != nil {
@@ -278,6 +286,57 @@ func lineText(l *apiv1.LogLine) string {
 	}
 
 	return strings.Join(append(parts, l.GetText()), " ")
+}
+
+// In a terminal: the time dimmed, each service in a color of its own (the
+// same one every run), the level by how bad it is, and an error's text red.
+// The same words as lineText, so what's copied from the terminal is too.
+var (
+	dimStyle      = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
+	errorStyle    = lipgloss.NewStyle().Foreground(lipgloss.Red)
+	serviceColors = []lipgloss.Style{
+		lipgloss.NewStyle().Foreground(lipgloss.Cyan),
+		lipgloss.NewStyle().Foreground(lipgloss.Magenta),
+		lipgloss.NewStyle().Foreground(lipgloss.Blue),
+		lipgloss.NewStyle().Foreground(lipgloss.Green),
+		lipgloss.NewStyle().Foreground(lipgloss.BrightCyan),
+		lipgloss.NewStyle().Foreground(lipgloss.BrightMagenta),
+		lipgloss.NewStyle().Foreground(lipgloss.BrightBlue),
+		lipgloss.NewStyle().Foreground(lipgloss.BrightGreen),
+	}
+	levelStyles = map[apiv1.LogLevel]lipgloss.Style{
+		apiv1.LogLevel_LOG_LEVEL_DEBUG: dimStyle,
+		apiv1.LogLevel_LOG_LEVEL_INFO:  lipgloss.NewStyle().Foreground(lipgloss.Green),
+		apiv1.LogLevel_LOG_LEVEL_WARN:  lipgloss.NewStyle().Foreground(lipgloss.Yellow),
+		apiv1.LogLevel_LOG_LEVEL_ERROR: errorStyle.Bold(true),
+	}
+)
+
+func coloredLine(l *apiv1.LogLine) string {
+	parts := []string{
+		dimStyle.Render(l.GetTime().AsTime().UTC().Format("2006-01-02T15:04:05.000Z")),
+		serviceStyle(l.GetService()).Render(l.GetService()),
+	}
+
+	if level := logLevel(l.GetLevel()); level != "" {
+		parts = append(parts, levelStyles[l.GetLevel()].Render(level))
+	}
+
+	text := l.GetText()
+
+	if l.GetLevel() == apiv1.LogLevel_LOG_LEVEL_ERROR {
+		text = errorStyle.Render(text)
+	}
+
+	return strings.Join(append(parts, text), " ")
+}
+
+// serviceStyle picks a service's color from its name, so it stays the same between runs.
+func serviceStyle(service string) lipgloss.Style {
+	h := fnv.New32a()
+	h.Write([]byte(service))
+
+	return serviceColors[h.Sum32()%uint32(len(serviceColors))]
 }
 
 func logLevel(l apiv1.LogLevel) string {

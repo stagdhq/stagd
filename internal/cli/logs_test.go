@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/charmbracelet/x/ansi"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
@@ -249,5 +250,36 @@ func TestPreviewLogsBuild(t *testing.T) {
 
 	if out != "==> webapp\n(the start left out)\n#5 RUN npm ci\nERROR: exit code 1\n" {
 		t.Errorf("output:\n%s", out)
+	}
+}
+
+func TestColoredLogLines(t *testing.T) {
+	for _, l := range seedLines {
+		colored := coloredLine(l)
+
+		if colored == lineText(l) {
+			t.Errorf("%q has no color", colored)
+		}
+
+		// The same words, so what's copied from the terminal reads as when piped.
+		if got := ansi.Strip(colored); got != lineText(l) {
+			t.Errorf("colored line reads %q, want %q", got, lineText(l))
+		}
+	}
+
+	// A service keeps its color.
+	if serviceStyle("webapp").Render("x") != serviceStyle("webapp").Render("x") {
+		t.Error("webapp's color changed")
+	}
+
+	// Piped, or with NO_COLOR: plain.
+	var b strings.Builder
+
+	if err := printLines(&b, seedLines, false, false); err != nil {
+		t.Fatal(err)
+	}
+
+	if strings.Contains(b.String(), "\x1b[") {
+		t.Errorf("plain output has escape codes: %q", b.String())
 	}
 }
