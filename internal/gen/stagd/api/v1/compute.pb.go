@@ -1737,8 +1737,11 @@ func (x *CreateRelayInstallResponse) GetTunnelToken() string {
 }
 
 type CreateInstallManifestRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// A new relay token even while the relay is connected: the relay running
+	// now is cut off until the manifest is applied.
+	NewToken      bool `protobuf:"varint,2,opt,name=new_token,json=newToken,proto3" json:"new_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1780,11 +1783,21 @@ func (x *CreateInstallManifestRequest) GetId() string {
 	return ""
 }
 
+func (x *CreateInstallManifestRequest) GetNewToken() bool {
+	if x != nil {
+		return x.NewToken
+	}
+	return false
+}
+
 type CreateInstallManifestResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Multi-document YAML, for `kubectl apply -f -`. It holds the new relay
-	// token (and the tunnel's): print it, pipe it, don't keep it around.
-	Manifest      string `protobuf:"bytes,1,opt,name=manifest,proto3" json:"manifest,omitempty"`
+	// Multi-document YAML, for `kubectl apply -f -`. It can hold the new relay
+	// token and the tunnel's: print it, pipe it, don't keep it around.
+	Manifest string `protobuf:"bytes,1,opt,name=manifest,proto3" json:"manifest,omitempty"`
+	// Whether the relay got a new token, in the manifest; when not, the relay
+	// keeps the one in the cluster's stagd-relay secret.
+	NewToken      bool `protobuf:"varint,2,opt,name=new_token,json=newToken,proto3" json:"new_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1824,6 +1837,13 @@ func (x *CreateInstallManifestResponse) GetManifest() string {
 		return x.Manifest
 	}
 	return ""
+}
+
+func (x *CreateInstallManifestResponse) GetNewToken() bool {
+	if x != nil {
+		return x.NewToken
+	}
+	return false
 }
 
 type GetComputeConnectionDetailsRequest struct {
@@ -2081,11 +2101,13 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"relayToken\x12.\n" +
 	"\x11relay_install_url\x18\x02 \x01(\tB\x02\x18\x01R\x0frelayInstallUrl\x12Y\n" +
 	"\x19relay_install_expire_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x02\x18\x01R\x16relayInstallExpireTime\x12!\n" +
-	"\ftunnel_token\x18\x04 \x01(\tR\vtunnelToken\"7\n" +
+	"\ftunnel_token\x18\x04 \x01(\tR\vtunnelToken\"T\n" +
 	"\x1cCreateInstallManifestRequest\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\";\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12\x1b\n" +
+	"\tnew_token\x18\x02 \x01(\bR\bnewToken\"X\n" +
 	"\x1dCreateInstallManifestResponse\x12\x1a\n" +
-	"\bmanifest\x18\x01 \x01(\tR\bmanifest\"=\n" +
+	"\bmanifest\x18\x01 \x01(\tR\bmanifest\x12\x1b\n" +
+	"\tnew_token\x18\x02 \x01(\bR\bnewToken\"=\n" +
 	"\"GetComputeConnectionDetailsRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\"\xf0\x01\n" +
 	"#GetComputeConnectionDetailsResponse\x12?\n" +

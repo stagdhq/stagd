@@ -180,11 +180,14 @@ func TestComputeUpdateSendsOnlyWhatChanged(t *testing.T) {
 }
 
 // fakeRelayed is a Kubernetes connection through the relay, whose install
-// manifest has a new token, and whose relay then connects.
+// manifest has a new token, and whose relay then connects. Once connected,
+// its install keeps the token unless asked for a new one.
 type fakeRelayed struct {
 	fakeCompute
 	installed string
+	newToken  bool
 	looks     int
+	connected bool
 }
 
 var relayConn = &apiv1.ComputeConnection{
@@ -209,16 +212,23 @@ const fakeManifest = "apiVersion: v1\nkind: Secret\nmetadata:\n  name: stagd-rel
 
 func (f *fakeRelayed) CreateInstallManifest(_ context.Context, req *connect.Request[apiv1.CreateInstallManifestRequest]) (*connect.Response[apiv1.CreateInstallManifestResponse], error) {
 	f.installed = req.Msg.GetId()
+	f.newToken = req.Msg.GetNewToken()
 
-	return connect.NewResponse(&apiv1.CreateInstallManifestResponse{Manifest: fakeManifest}), nil
+	if f.connected && !f.newToken {
+		return connect.NewResponse(&apiv1.CreateInstallManifestResponse{Manifest: fakeKeptManifest}), nil
+	}
+
+	return connect.NewResponse(&apiv1.CreateInstallManifestResponse{Manifest: fakeManifest, NewToken: true}), nil
 }
 
-// The relay connects on the third look.
+const fakeKeptManifest = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: stagd-relay\n"
+
+// The relay connects on the third look, or is connected from the start.
 func (f *fakeRelayed) ListComputeConnections(context.Context, *connect.Request[apiv1.ListComputeConnectionsRequest]) (*connect.Response[apiv1.ListComputeConnectionsResponse], error) {
 	f.looks++
 
 	conn := relayConn
-	if f.looks >= 3 {
+	if f.connected || f.looks >= 3 {
 		conn = &apiv1.ComputeConnection{Id: relayConn.Id, Provider: relayConn.Provider, Name: relayConn.Name, Account: "v1.31.2 · 3 nodes", Status: apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE}
 	}
 
@@ -269,6 +279,27 @@ func TestComputeInstallPrintsTheManifest(t *testing.T) {
 
 	if out, err := run(t, srv, "--token", "tok-1", "compute", "install", "cluster", "--wait"); err != nil || out != fakeManifest || f.looks < 3 {
 		t.Fatalf("install --wait: %v, looked %d times:\n%s", err, f.looks, out)
+	}
+}
+
+// A connected cluster's install updates it and keeps its token, with no
+// --yes; --new-token asks for one, and needs --yes when it can't ask.
+func TestComputeInstallKeepsAConnectedRelaysToken(t *testing.T) {
+	f := &fakeRelayed{connected: true}
+	srv := relayedServer(t, f)
+
+	out, err := run(t, srv, "--token", "tok-1", "compute", "install", "cluster", "--wait")
+	if err != nil || f.newToken || out != fakeKeptManifest {
+		t.Fatalf("install: %v, new token %v:\n%s", err, f.newToken, out)
+	}
+
+	if _, err := run(t, srv, "--token", "tok-1", "compute", "install", "cluster", "--new-token"); err == nil {
+		t.Error("--new-token on a connected relay without --yes: no error")
+	}
+
+	out, err = run(t, srv, "--token", "tok-1", "compute", "install", "cluster", "--new-token", "--yes")
+	if err != nil || !f.newToken || out != fakeManifest {
+		t.Fatalf("install --new-token: %v, new token %v:\n%s", err, f.newToken, out)
 	}
 }
 

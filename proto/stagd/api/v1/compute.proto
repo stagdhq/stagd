@@ -40,8 +40,11 @@ service ComputeService {
   rpc CreateRelayInstall(CreateRelayInstallRequest) returns (CreateRelayInstallResponse);
   // CreateInstallManifest is everything a Kubernetes connection's cluster
   // needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
-  // relay with a new token (the old one stops working), and what the
-  // connection chooses (the builder, the Cloudflare Tunnel with its token).
+  // relay, and what the connection chooses (the builder, the Cloudflare
+  // Tunnel with its token). While its relay is connected, an install updates
+  // it and keeps its token: the manifest leaves out the relay's secret, so
+  // the one in the cluster stays. Otherwise, or with new_token, the relay
+  // gets a new token (the old one stops working) and the manifest has it.
   // The tokens are in the manifest and nowhere else.
   rpc CreateInstallManifest(CreateInstallManifestRequest) returns (CreateInstallManifestResponse);
   // GetComputeConnectionDetails is everything Stagd can tell about one
@@ -303,12 +306,18 @@ message CreateRelayInstallResponse {
 
 message CreateInstallManifestRequest {
   string id = 1 [(buf.validate.field).string.min_len = 1];
+  // A new relay token even while the relay is connected: the relay running
+  // now is cut off until the manifest is applied.
+  bool new_token = 2;
 }
 
 message CreateInstallManifestResponse {
-  // Multi-document YAML, for `kubectl apply -f -`. It holds the new relay
-  // token (and the tunnel's): print it, pipe it, don't keep it around.
+  // Multi-document YAML, for `kubectl apply -f -`. It can hold the new relay
+  // token and the tunnel's: print it, pipe it, don't keep it around.
   string manifest = 1;
+  // Whether the relay got a new token, in the manifest; when not, the relay
+  // keeps the one in the cluster's stagd-relay secret.
+  bool new_token = 2;
 }
 
 message GetComputeConnectionDetailsRequest {

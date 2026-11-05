@@ -90,8 +90,11 @@ type ComputeServiceClient interface {
 	CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error)
 	// CreateInstallManifest is everything a Kubernetes connection's cluster
 	// needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
-	// relay with a new token (the old one stops working), and what the
-	// connection chooses (the builder, the Cloudflare Tunnel with its token).
+	// relay, and what the connection chooses (the builder, the Cloudflare
+	// Tunnel with its token). While its relay is connected, an install updates
+	// it and keeps its token: the manifest leaves out the relay's secret, so
+	// the one in the cluster stays. Otherwise, or with new_token, the relay
+	// gets a new token (the old one stops working) and the manifest has it.
 	// The tokens are in the manifest and nowhere else.
 	CreateInstallManifest(context.Context, *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error)
 	// GetComputeConnectionDetails is everything Stagd can tell about one
@@ -264,8 +267,11 @@ type ComputeServiceHandler interface {
 	CreateRelayInstall(context.Context, *connect.Request[v1.CreateRelayInstallRequest]) (*connect.Response[v1.CreateRelayInstallResponse], error)
 	// CreateInstallManifest is everything a Kubernetes connection's cluster
 	// needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
-	// relay with a new token (the old one stops working), and what the
-	// connection chooses (the builder, the Cloudflare Tunnel with its token).
+	// relay, and what the connection chooses (the builder, the Cloudflare
+	// Tunnel with its token). While its relay is connected, an install updates
+	// it and keeps its token: the manifest leaves out the relay's secret, so
+	// the one in the cluster stays. Otherwise, or with new_token, the relay
+	// gets a new token (the old one stops working) and the manifest has it.
 	// The tokens are in the manifest and nowhere else.
 	CreateInstallManifest(context.Context, *connect.Request[v1.CreateInstallManifestRequest]) (*connect.Response[v1.CreateInstallManifestResponse], error)
 	// GetComputeConnectionDetails is everything Stagd can tell about one

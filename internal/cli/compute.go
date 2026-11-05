@@ -77,19 +77,21 @@ func computeCommand() *cli.Command {
 			},
 			{
 				Name:      "install",
-				Usage:     "install a connection's relay: a new token, and what to run",
+				Usage:     "install a connection's relay, or update it: what to run",
 				ArgsUsage: nameArg,
 				Description: "For Kubernetes, prints everything the cluster needs, for kubectl:\n\n" +
 					"  stagd compute install <name> | kubectl apply -f -\n\n" +
-					"Stagd's access (its own stagd-* namespaces only), the relay with a new token, and what the\n" +
-					"connection chooses (the builder, the Cloudflare Tunnel). Run it again after changing those.\n" +
-					"For a Docker host, on the host itself, --run runs the relay (--print prints docker's commands\n" +
-					"for it instead):\n\n" +
-					"  stagd compute install <name> --run\n\n" +
-					"Either way the old token stops working: a relay still running with it is cut off (with its\n" +
-					"relay connected, pass --yes).",
+					"Stagd's access (its own stagd-* namespaces only), the relay, and what the connection chooses\n" +
+					"(the builder, the Cloudflare Tunnel). Run it again to update them, after changing those or for\n" +
+					"a newer relay: while its relay is connected, it keeps its token (the stagd-relay secret in the\n" +
+					"cluster stays). Otherwise, or with --new-token, the relay gets a new token and the old one stops\n" +
+					"working: a relay still running with it is cut off (with its relay connected, pass --yes).\n\n" +
+					"For a Docker host, on the host itself, --run runs the relay with a new token (--print prints\n" +
+					"docker's commands for it instead):\n\n" +
+					"  stagd compute install <name> --run",
 				Flags: []cli.Flag{
-					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "don't ask for confirmation when its relay is connected"},
+					&cli.BoolFlag{Name: "new-token", Usage: "kubernetes: a new relay token even while its relay is connected"},
+					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "don't ask for confirmation when a new token cuts off its connected relay"},
 					&cli.BoolFlag{Name: "wait", Usage: "wait until the relay connects"},
 					&cli.BoolFlag{Name: "run", Usage: "docker: run the relay on this Docker host, in place of the one there, and wait until it connects"},
 					&cli.BoolFlag{Name: "print", Usage: "docker: print the docker commands that run the relay, with its token, instead"},
@@ -733,18 +735,28 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 
 	run, print := cmd.Bool("run"), cmd.Bool("print")
 	docker := conn.GetProvider() == apiv1.ComputeProvider_COMPUTE_PROVIDER_DOCKER
+	kube := conn.GetProvider() == apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES
 
 	if (run || print) && !docker {
 		return cli.Exit("--run and --print are for a Docker host: "+runElsewhere(conn.GetProvider()), 2)
 	}
+
+	if cmd.Bool("new-token") && !kube {
+		return cli.Exit("--new-token is for a Kubernetes cluster: everywhere else an install always gives the relay a new token", 2)
+	}
+
+	connected := conn.GetStatus() == apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE
+
+	// A connected cluster's install updates it and keeps its token, unless asked for a new one.
+	renews := !kube || cmd.Bool("new-token") || !connected
 
 	// A Docker host's relay is run here, or its commands printed: which, before a new token.
 	if docker && !run && !print && !cmd.Bool("json") {
 		return cli.Exit("on the Docker host, --run runs the relay; --print prints docker's commands for it instead", 2)
 	}
 
-	// A relay running now is cut off: ask first. One run here is replaced at once.
-	if conn.GetStatus() == apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE && !cmd.Bool("yes") {
+	// A relay running now is cut off by a new token: ask first. One run here is replaced at once.
+	if renews && connected && !cmd.Bool("yes") {
 		if !interactive() {
 			return cli.Exit("its relay is connected: pass --yes to give it a new token anyway", 2)
 		}
@@ -763,14 +775,23 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 	w := cmd.Root().Writer
 
 	// A cluster: its manifest on stdout, for kubectl; anything else on stderr.
-	if conn.GetProvider() == apiv1.ComputeProvider_COMPUTE_PROVIDER_KUBERNETES {
-		res, err := c.Compute.CreateInstallManifest(ctx, connect.NewRequest(&apiv1.CreateInstallManifestRequest{Id: conn.GetId()}))
+	if kube {
+		res, err := c.Compute.CreateInstallManifest(ctx, connect.NewRequest(&apiv1.CreateInstallManifestRequest{Id: conn.GetId(), NewToken: cmd.Bool("new-token")}))
 		if err != nil {
 			return err
 		}
 
 		if _, err := io.WriteString(w, res.Msg.GetManifest()); err != nil {
 			return err
+		}
+
+		// Its relay keeps its token: it's connected now, and kubectl rolls it out when it changed.
+		if !res.Msg.GetNewToken() {
+			if cmd.Bool("wait") {
+				fmt.Fprintln(cmd.Root().ErrWriter, "\nThe relay keeps its token and stays connected; kubectl rolls it out if it changed.")
+			}
+
+			return nil
 		}
 
 		if !cmd.Bool("wait") {

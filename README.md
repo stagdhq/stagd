@@ -70,7 +70,7 @@ stagd compute connect kubernetes --name my-cluster
 stagd compute install my-cluster | kubectl apply -f -
 ```
 
-`stagd compute install` asks Stagd for the cluster's install and prints it for kubectl, with a new relay token: there's no link, and the token is only ever in the pipe. Running it again gives a new token and cuts off a relay still using the old one. `--wait` waits until the relay connects.
+`stagd compute install` asks Stagd for the cluster's install and prints it for kubectl, with a new relay token: there's no link, and the token is only ever in the pipe. Run it again to update the cluster (a newer relay, or after changing the connection's settings): while the relay is connected, it keeps its token, and the manifest leaves the cluster's `stagd-relay` secret as it is. `--new-token` gives the relay a new one and cuts off the old. `--wait` waits until the relay connects.
 
 What it installs, from [`deploy/kubernetes`](deploy/kubernetes):
 
