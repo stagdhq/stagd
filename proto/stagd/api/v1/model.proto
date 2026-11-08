@@ -117,6 +117,11 @@ message RepositorySetup {
   // repository has none.
   string starter = 5;
   google.protobuf.Timestamp check_time = 6;
+  // The secrets the app needs: names the compose file and stagd.yaml refer
+  // to as ${NAME} without a default, that stagd.yaml's env doesn't set and
+  // Stagd doesn't provide (its own are STAGD_*). Sorted. Whether each has a
+  // value is for ListSecrets to say: a repository's own or the workspace's.
+  repeated string secrets = 7;
 }
 
 // ChangeRequest is a GitHub pull request or a GitLab merge request.
