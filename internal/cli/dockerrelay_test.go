@@ -373,3 +373,20 @@ func TestComputeInstallRunsCloudflared(t *testing.T) {
 		t.Errorf("uninstall: %v, cloudflared %v, relay %q", err, d.tunnel, d.owner)
 	}
 }
+
+// The relay's help shows the docker commands --print gives, for the CLI's own release.
+func TestRelayHelpShowsDockerCommand(t *testing.T) {
+	help := relayCommand("v1.2.3").Description
+
+	want := dockerRunCommand(DefaultAPIURL, "<the relay token>", "ghcr.io/stagdhq/stagd:1.2.3", "")
+
+	if !strings.Contains(help, want) {
+		t.Fatalf("the help's docker commands aren't --print's:\n%s\nwant:\n%s", help, want)
+	}
+
+	for _, s := range []string{"--network stagd-relay --user root", "stagd-tunnel", "STAGD_RELAY_HTTP=:8081", "host.docker.internal:host-gateway"} {
+		if !strings.Contains(help, s) {
+			t.Errorf("the help doesn't mention %s", s)
+		}
+	}
+}

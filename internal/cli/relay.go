@@ -24,21 +24,25 @@ func relayCommand(version string) *cli.Command {
 			"(see deploy/kubernetes/stagd-relay.yaml), and only connects Stagd to\n" +
 			"services in stagd-* namespaces.\n\n" +
 			"In a container with the Docker socket, it fronts that Docker host. On the host,\n" +
-			"`stagd compute install <name> --run` starts it (with --print, it prints what\n" +
-			"follows instead, with the token):\n\n" +
-			"  docker network create stagd-relay\n" +
-			"  docker run -d --name stagd-relay --restart unless-stopped \\\n" +
-			"    --network stagd-relay --user root \\\n" +
-			"    -v /var/run/docker.sock:/var/run/docker.sock \\\n" +
-			"    -e STAGD_URL=https://stagd.example.com -e STAGD_RELAY_TOKEN=stagd_relay.... \\\n" +
-			"    ghcr.io/stagdhq/stagd:latest relay\n\n" +
+			"`stagd compute install <name> --run` starts it. `--print` prints the commands\n" +
+			"for your connection instead, with its token, to run on the host yourself.\n" +
+			"For a connection without a tunnel, they are:\n\n" +
+			dockerRunCommand(DefaultAPIURL, "<the relay token>", relayImage(version), "") + "\n" +
 			"On a network of its own, it resolves the previews' services once it joins their\n" +
 			"networks; root reaches the socket. Whoever reaches the Docker API controls the\n" +
-			"host: use a host meant for previews.",
+			"host: use a host meant for previews.\n\n" +
+			"--print adds what your connection needs on top:\n\n" +
+			"  - With a Cloudflare Tunnel: cloudflared (" + tunnelContainer + ") on the same\n" +
+			"    network, and STAGD_RELAY_HTTP=" + relayTunnelPort + " on the relay for the preview\n" +
+			"    traffic it sends.\n" +
+			"  - With Stagd on this machine (a localhost URL): --add-host " + dockerHostName + ":host-gateway,\n" +
+			"    and STAGD_URL pointing at " + dockerHostName + ".\n\n" +
+			"The image is this CLI's release (ghcr.io/stagdhq/stagd:latest for a build\n" +
+			"that isn't one): keep the relay on the release you run.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "url",
-				Usage:    "Stagd's address, e.g. https://stagd.example.com",
+				Usage:    "Stagd's address, e.g. https://app.stagd.dev",
 				Sources:  cli.EnvVars("STAGD_URL"),
 				Required: true,
 			},
