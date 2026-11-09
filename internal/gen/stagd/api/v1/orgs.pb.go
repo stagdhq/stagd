@@ -1884,6 +1884,382 @@ func (x *ListMembersResponse) GetMembers() []*Member {
 	return nil
 }
 
+// OnboardingStep is one step on the way to the first live preview.
+type OnboardingStep struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "github", "repositories", "compute", "secrets", "first_preview",
+	// "describe" or "invite"; clients may show steps they don't know by title.
+	Id    string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Done  bool   `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`
+	// Doesn't hold the way open, e.g. inviting the team; listed after the
+	// required steps.
+	Optional bool `protobuf:"varint,4,opt,name=optional,proto3" json:"optional,omitempty"`
+	// Only an admin can do it; others wait for one (Onboarding.admins).
+	AdminOnly bool `protobuf:"varint,5,opt,name=admin_only,json=adminOnly,proto3" json:"admin_only,omitempty"`
+	// Done: what was set up, e.g. "acme-inc on GitHub". Not done: what's
+	// missing or how, in a sentence.
+	Detail string `protobuf:"bytes,6,opt,name=detail,proto3" json:"detail,omitempty"`
+	// Where it's done or seen, in the dashboard.
+	Url string `protobuf:"bytes,7,opt,name=url,proto3" json:"url,omitempty"`
+	// Done because there's nothing to do, e.g. no secrets the app needs.
+	Skipped       bool `protobuf:"varint,8,opt,name=skipped,proto3" json:"skipped,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OnboardingStep) Reset() {
+	*x = OnboardingStep{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OnboardingStep) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OnboardingStep) ProtoMessage() {}
+
+func (x *OnboardingStep) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OnboardingStep.ProtoReflect.Descriptor instead.
+func (*OnboardingStep) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *OnboardingStep) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *OnboardingStep) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *OnboardingStep) GetDone() bool {
+	if x != nil {
+		return x.Done
+	}
+	return false
+}
+
+func (x *OnboardingStep) GetOptional() bool {
+	if x != nil {
+		return x.Optional
+	}
+	return false
+}
+
+func (x *OnboardingStep) GetAdminOnly() bool {
+	if x != nil {
+		return x.AdminOnly
+	}
+	return false
+}
+
+func (x *OnboardingStep) GetDetail() string {
+	if x != nil {
+		return x.Detail
+	}
+	return ""
+}
+
+func (x *OnboardingStep) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *OnboardingStep) GetSkipped() bool {
+	if x != nil {
+		return x.Skipped
+	}
+	return false
+}
+
+type Onboarding struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The steps in order: the required ones, then the optional ones.
+	Steps []*OnboardingStep `protobuf:"bytes,1,rep,name=steps,proto3" json:"steps,omitempty"`
+	// How many required steps are done, of how many.
+	Done     int32 `protobuf:"varint,2,opt,name=done,proto3" json:"done,omitempty"`
+	Required int32 `protobuf:"varint,3,opt,name=required,proto3" json:"required,omitempty"`
+	// The id of the first required step not done; empty when all are.
+	Next string `protobuf:"bytes,4,opt,name=next,proto3" json:"next,omitempty"`
+	// When the org's first preview went live; unset until then.
+	CompleteTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=complete_time,json=completeTime,proto3" json:"complete_time,omitempty"`
+	// When an admin dismissed it, and who; unset until then.
+	DismissTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=dismiss_time,json=dismissTime,proto3" json:"dismiss_time,omitempty"`
+	DismissedBy string                 `protobuf:"bytes,7,opt,name=dismissed_by,json=dismissedBy,proto3" json:"dismissed_by,omitempty"`
+	// Its admins, for others waiting on an admin step.
+	Admins        []*User `protobuf:"bytes,8,rep,name=admins,proto3" json:"admins,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Onboarding) Reset() {
+	*x = Onboarding{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Onboarding) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Onboarding) ProtoMessage() {}
+
+func (x *Onboarding) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Onboarding.ProtoReflect.Descriptor instead.
+func (*Onboarding) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *Onboarding) GetSteps() []*OnboardingStep {
+	if x != nil {
+		return x.Steps
+	}
+	return nil
+}
+
+func (x *Onboarding) GetDone() int32 {
+	if x != nil {
+		return x.Done
+	}
+	return 0
+}
+
+func (x *Onboarding) GetRequired() int32 {
+	if x != nil {
+		return x.Required
+	}
+	return 0
+}
+
+func (x *Onboarding) GetNext() string {
+	if x != nil {
+		return x.Next
+	}
+	return ""
+}
+
+func (x *Onboarding) GetCompleteTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CompleteTime
+	}
+	return nil
+}
+
+func (x *Onboarding) GetDismissTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DismissTime
+	}
+	return nil
+}
+
+func (x *Onboarding) GetDismissedBy() string {
+	if x != nil {
+		return x.DismissedBy
+	}
+	return ""
+}
+
+func (x *Onboarding) GetAdmins() []*User {
+	if x != nil {
+		return x.Admins
+	}
+	return nil
+}
+
+type GetOnboardingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOnboardingRequest) Reset() {
+	*x = GetOnboardingRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOnboardingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOnboardingRequest) ProtoMessage() {}
+
+func (x *GetOnboardingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOnboardingRequest.ProtoReflect.Descriptor instead.
+func (*GetOnboardingRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{38}
+}
+
+type GetOnboardingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Onboarding    *Onboarding            `protobuf:"bytes,1,opt,name=onboarding,proto3" json:"onboarding,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOnboardingResponse) Reset() {
+	*x = GetOnboardingResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOnboardingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOnboardingResponse) ProtoMessage() {}
+
+func (x *GetOnboardingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOnboardingResponse.ProtoReflect.Descriptor instead.
+func (*GetOnboardingResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *GetOnboardingResponse) GetOnboarding() *Onboarding {
+	if x != nil {
+		return x.Onboarding
+	}
+	return nil
+}
+
+type DismissOnboardingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DismissOnboardingRequest) Reset() {
+	*x = DismissOnboardingRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DismissOnboardingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DismissOnboardingRequest) ProtoMessage() {}
+
+func (x *DismissOnboardingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DismissOnboardingRequest.ProtoReflect.Descriptor instead.
+func (*DismissOnboardingRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{40}
+}
+
+type DismissOnboardingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Onboarding    *Onboarding            `protobuf:"bytes,1,opt,name=onboarding,proto3" json:"onboarding,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DismissOnboardingResponse) Reset() {
+	*x = DismissOnboardingResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DismissOnboardingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DismissOnboardingResponse) ProtoMessage() {}
+
+func (x *DismissOnboardingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DismissOnboardingResponse.ProtoReflect.Descriptor instead.
+func (*DismissOnboardingResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *DismissOnboardingResponse) GetOnboarding() *Onboarding {
+	if x != nil {
+		return x.Onboarding
+	}
+	return nil
+}
+
 var File_stagd_api_v1_orgs_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_orgs_proto_rawDesc = "" +
@@ -1990,7 +2366,37 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\x18DisableInviteLinkRequest\"\x1b\n" +
 	"\x19DisableInviteLinkResponse\"E\n" +
 	"\x13ListMembersResponse\x12.\n" +
-	"\amembers\x18\x01 \x03(\v2\x14.stagd.api.v1.MemberR\amembers*N\n" +
+	"\amembers\x18\x01 \x03(\v2\x14.stagd.api.v1.MemberR\amembers\"\xc9\x01\n" +
+	"\x0eOnboardingStep\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\x12\x1a\n" +
+	"\boptional\x18\x04 \x01(\bR\boptional\x12\x1d\n" +
+	"\n" +
+	"admin_only\x18\x05 \x01(\bR\tadminOnly\x12\x16\n" +
+	"\x06detail\x18\x06 \x01(\tR\x06detail\x12\x10\n" +
+	"\x03url\x18\a \x01(\tR\x03url\x12\x18\n" +
+	"\askipped\x18\b \x01(\bR\askipped\"\xd3\x02\n" +
+	"\n" +
+	"Onboarding\x122\n" +
+	"\x05steps\x18\x01 \x03(\v2\x1c.stagd.api.v1.OnboardingStepR\x05steps\x12\x12\n" +
+	"\x04done\x18\x02 \x01(\x05R\x04done\x12\x1a\n" +
+	"\brequired\x18\x03 \x01(\x05R\brequired\x12\x12\n" +
+	"\x04next\x18\x04 \x01(\tR\x04next\x12?\n" +
+	"\rcomplete_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fcompleteTime\x12=\n" +
+	"\fdismiss_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vdismissTime\x12!\n" +
+	"\fdismissed_by\x18\a \x01(\tR\vdismissedBy\x12*\n" +
+	"\x06admins\x18\b \x03(\v2\x12.stagd.api.v1.UserR\x06admins\"\x16\n" +
+	"\x14GetOnboardingRequest\"Q\n" +
+	"\x15GetOnboardingResponse\x128\n" +
+	"\n" +
+	"onboarding\x18\x01 \x01(\v2\x18.stagd.api.v1.OnboardingR\n" +
+	"onboarding\"\x1a\n" +
+	"\x18DismissOnboardingRequest\"U\n" +
+	"\x19DismissOnboardingResponse\x128\n" +
+	"\n" +
+	"onboarding\x18\x01 \x01(\v2\x18.stagd.api.v1.OnboardingR\n" +
+	"onboarding*N\n" +
 	"\x04Role\x12\x14\n" +
 	"\x10ROLE_UNSPECIFIED\x10\x00\x12\x0e\n" +
 	"\n" +
@@ -2004,7 +2410,7 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\x1bLEAVE_REASON_HARD_TO_SET_UP\x10\x03\x12\x1b\n" +
 	"\x17LEAVE_REASON_OTHER_TOOL\x10\x04\x12\x1c\n" +
 	"\x18LEAVE_REASON_JUST_TRYING\x10\x05\x12\x16\n" +
-	"\x12LEAVE_REASON_OTHER\x10\x062\x83\x06\n" +
+	"\x12LEAVE_REASON_OTHER\x10\x062\xc3\a\n" +
 	"\n" +
 	"OrgService\x12L\n" +
 	"\tCreateOrg\x12\x1e.stagd.api.v1.CreateOrgRequest\x1a\x1f.stagd.api.v1.CreateOrgResponse\x12I\n" +
@@ -2015,7 +2421,9 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\fRemoveMember\x12!.stagd.api.v1.RemoveMemberRequest\x1a\".stagd.api.v1.RemoveMemberResponse\x12d\n" +
 	"\x11TransferOwnership\x12&.stagd.api.v1.TransferOwnershipRequest\x1a'.stagd.api.v1.TransferOwnershipResponse\x12L\n" +
 	"\tDeleteOrg\x12\x1e.stagd.api.v1.DeleteOrgRequest\x1a\x1f.stagd.api.v1.DeleteOrgResponse\x12L\n" +
-	"\tUpdateOrg\x12\x1e.stagd.api.v1.UpdateOrgRequest\x1a\x1f.stagd.api.v1.UpdateOrgResponse2\x8b\x05\n" +
+	"\tUpdateOrg\x12\x1e.stagd.api.v1.UpdateOrgRequest\x1a\x1f.stagd.api.v1.UpdateOrgResponse\x12X\n" +
+	"\rGetOnboarding\x12\".stagd.api.v1.GetOnboardingRequest\x1a#.stagd.api.v1.GetOnboardingResponse\x12d\n" +
+	"\x11DismissOnboarding\x12&.stagd.api.v1.DismissOnboardingRequest\x1a'.stagd.api.v1.DismissOnboardingResponse2\x8b\x05\n" +
 	"\rInviteService\x12X\n" +
 	"\rCreateInvites\x12\".stagd.api.v1.CreateInvitesRequest\x1a#.stagd.api.v1.CreateInvitesResponse\x12R\n" +
 	"\vListInvites\x12 .stagd.api.v1.ListInvitesRequest\x1a!.stagd.api.v1.ListInvitesResponse\x12U\n" +
@@ -2039,7 +2447,7 @@ func file_stagd_api_v1_orgs_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_orgs_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_stagd_api_v1_orgs_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_stagd_api_v1_orgs_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_stagd_api_v1_orgs_proto_goTypes = []any{
 	(Role)(0),                         // 0: stagd.api.v1.Role
 	(LeaveReason)(0),                  // 1: stagd.api.v1.LeaveReason
@@ -2079,74 +2487,90 @@ var file_stagd_api_v1_orgs_proto_goTypes = []any{
 	(*DisableInviteLinkRequest)(nil),  // 35: stagd.api.v1.DisableInviteLinkRequest
 	(*DisableInviteLinkResponse)(nil), // 36: stagd.api.v1.DisableInviteLinkResponse
 	(*ListMembersResponse)(nil),       // 37: stagd.api.v1.ListMembersResponse
-	(*Membership)(nil),                // 38: stagd.api.v1.Membership
-	(*User)(nil),                      // 39: stagd.api.v1.User
-	(*timestamppb.Timestamp)(nil),     // 40: google.protobuf.Timestamp
+	(*OnboardingStep)(nil),            // 38: stagd.api.v1.OnboardingStep
+	(*Onboarding)(nil),                // 39: stagd.api.v1.Onboarding
+	(*GetOnboardingRequest)(nil),      // 40: stagd.api.v1.GetOnboardingRequest
+	(*GetOnboardingResponse)(nil),     // 41: stagd.api.v1.GetOnboardingResponse
+	(*DismissOnboardingRequest)(nil),  // 42: stagd.api.v1.DismissOnboardingRequest
+	(*DismissOnboardingResponse)(nil), // 43: stagd.api.v1.DismissOnboardingResponse
+	(*Membership)(nil),                // 44: stagd.api.v1.Membership
+	(*User)(nil),                      // 45: stagd.api.v1.User
+	(*timestamppb.Timestamp)(nil),     // 46: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_orgs_proto_depIdxs = []int32{
-	38, // 0: stagd.api.v1.CreateOrgResponse.membership:type_name -> stagd.api.v1.Membership
-	38, // 1: stagd.api.v1.ListOrgsResponse.memberships:type_name -> stagd.api.v1.Membership
-	38, // 2: stagd.api.v1.SwitchOrgResponse.active:type_name -> stagd.api.v1.Membership
-	39, // 3: stagd.api.v1.Member.user:type_name -> stagd.api.v1.User
+	44, // 0: stagd.api.v1.CreateOrgResponse.membership:type_name -> stagd.api.v1.Membership
+	44, // 1: stagd.api.v1.ListOrgsResponse.memberships:type_name -> stagd.api.v1.Membership
+	44, // 2: stagd.api.v1.SwitchOrgResponse.active:type_name -> stagd.api.v1.Membership
+	45, // 3: stagd.api.v1.Member.user:type_name -> stagd.api.v1.User
 	0,  // 4: stagd.api.v1.Member.role_kind:type_name -> stagd.api.v1.Role
-	40, // 5: stagd.api.v1.Member.joined_at:type_name -> google.protobuf.Timestamp
-	40, // 6: stagd.api.v1.Member.last_active_at:type_name -> google.protobuf.Timestamp
+	46, // 5: stagd.api.v1.Member.joined_at:type_name -> google.protobuf.Timestamp
+	46, // 6: stagd.api.v1.Member.last_active_at:type_name -> google.protobuf.Timestamp
 	0,  // 7: stagd.api.v1.UpdateMemberRoleRequest.role:type_name -> stagd.api.v1.Role
 	9,  // 8: stagd.api.v1.UpdateMemberRoleResponse.member:type_name -> stagd.api.v1.Member
 	1,  // 9: stagd.api.v1.DeleteOrgRequest.reason:type_name -> stagd.api.v1.LeaveReason
-	38, // 10: stagd.api.v1.UpdateOrgResponse.membership:type_name -> stagd.api.v1.Membership
+	44, // 10: stagd.api.v1.UpdateOrgResponse.membership:type_name -> stagd.api.v1.Membership
 	0,  // 11: stagd.api.v1.CreateInvitesRequest.role:type_name -> stagd.api.v1.Role
 	23, // 12: stagd.api.v1.CreateInvitesResponse.invites:type_name -> stagd.api.v1.Invite
 	22, // 13: stagd.api.v1.CreateInvitesResponse.problems:type_name -> stagd.api.v1.InviteProblem
 	0,  // 14: stagd.api.v1.Invite.role:type_name -> stagd.api.v1.Role
-	39, // 15: stagd.api.v1.Invite.invited_by:type_name -> stagd.api.v1.User
-	40, // 16: stagd.api.v1.Invite.created_at:type_name -> google.protobuf.Timestamp
-	40, // 17: stagd.api.v1.Invite.expires_at:type_name -> google.protobuf.Timestamp
+	45, // 15: stagd.api.v1.Invite.invited_by:type_name -> stagd.api.v1.User
+	46, // 16: stagd.api.v1.Invite.created_at:type_name -> google.protobuf.Timestamp
+	46, // 17: stagd.api.v1.Invite.expires_at:type_name -> google.protobuf.Timestamp
 	23, // 18: stagd.api.v1.ListInvitesResponse.invites:type_name -> stagd.api.v1.Invite
 	23, // 19: stagd.api.v1.ResendInviteResponse.invite:type_name -> stagd.api.v1.Invite
 	0,  // 20: stagd.api.v1.InviteLink.role:type_name -> stagd.api.v1.Role
-	40, // 21: stagd.api.v1.InviteLink.expires_at:type_name -> google.protobuf.Timestamp
+	46, // 21: stagd.api.v1.InviteLink.expires_at:type_name -> google.protobuf.Timestamp
 	30, // 22: stagd.api.v1.GetInviteLinkResponse.link:type_name -> stagd.api.v1.InviteLink
 	0,  // 23: stagd.api.v1.ResetInviteLinkRequest.role:type_name -> stagd.api.v1.Role
 	30, // 24: stagd.api.v1.ResetInviteLinkResponse.link:type_name -> stagd.api.v1.InviteLink
 	9,  // 25: stagd.api.v1.ListMembersResponse.members:type_name -> stagd.api.v1.Member
-	2,  // 26: stagd.api.v1.OrgService.CreateOrg:input_type -> stagd.api.v1.CreateOrgRequest
-	4,  // 27: stagd.api.v1.OrgService.ListOrgs:input_type -> stagd.api.v1.ListOrgsRequest
-	6,  // 28: stagd.api.v1.OrgService.SwitchOrg:input_type -> stagd.api.v1.SwitchOrgRequest
-	8,  // 29: stagd.api.v1.OrgService.ListMembers:input_type -> stagd.api.v1.ListMembersRequest
-	10, // 30: stagd.api.v1.OrgService.UpdateMemberRole:input_type -> stagd.api.v1.UpdateMemberRoleRequest
-	14, // 31: stagd.api.v1.OrgService.RemoveMember:input_type -> stagd.api.v1.RemoveMemberRequest
-	12, // 32: stagd.api.v1.OrgService.TransferOwnership:input_type -> stagd.api.v1.TransferOwnershipRequest
-	16, // 33: stagd.api.v1.OrgService.DeleteOrg:input_type -> stagd.api.v1.DeleteOrgRequest
-	18, // 34: stagd.api.v1.OrgService.UpdateOrg:input_type -> stagd.api.v1.UpdateOrgRequest
-	20, // 35: stagd.api.v1.InviteService.CreateInvites:input_type -> stagd.api.v1.CreateInvitesRequest
-	24, // 36: stagd.api.v1.InviteService.ListInvites:input_type -> stagd.api.v1.ListInvitesRequest
-	26, // 37: stagd.api.v1.InviteService.ResendInvite:input_type -> stagd.api.v1.ResendInviteRequest
-	28, // 38: stagd.api.v1.InviteService.RevokeInvite:input_type -> stagd.api.v1.RevokeInviteRequest
-	31, // 39: stagd.api.v1.InviteService.GetInviteLink:input_type -> stagd.api.v1.GetInviteLinkRequest
-	33, // 40: stagd.api.v1.InviteService.ResetInviteLink:input_type -> stagd.api.v1.ResetInviteLinkRequest
-	35, // 41: stagd.api.v1.InviteService.DisableInviteLink:input_type -> stagd.api.v1.DisableInviteLinkRequest
-	3,  // 42: stagd.api.v1.OrgService.CreateOrg:output_type -> stagd.api.v1.CreateOrgResponse
-	5,  // 43: stagd.api.v1.OrgService.ListOrgs:output_type -> stagd.api.v1.ListOrgsResponse
-	7,  // 44: stagd.api.v1.OrgService.SwitchOrg:output_type -> stagd.api.v1.SwitchOrgResponse
-	37, // 45: stagd.api.v1.OrgService.ListMembers:output_type -> stagd.api.v1.ListMembersResponse
-	11, // 46: stagd.api.v1.OrgService.UpdateMemberRole:output_type -> stagd.api.v1.UpdateMemberRoleResponse
-	15, // 47: stagd.api.v1.OrgService.RemoveMember:output_type -> stagd.api.v1.RemoveMemberResponse
-	13, // 48: stagd.api.v1.OrgService.TransferOwnership:output_type -> stagd.api.v1.TransferOwnershipResponse
-	17, // 49: stagd.api.v1.OrgService.DeleteOrg:output_type -> stagd.api.v1.DeleteOrgResponse
-	19, // 50: stagd.api.v1.OrgService.UpdateOrg:output_type -> stagd.api.v1.UpdateOrgResponse
-	21, // 51: stagd.api.v1.InviteService.CreateInvites:output_type -> stagd.api.v1.CreateInvitesResponse
-	25, // 52: stagd.api.v1.InviteService.ListInvites:output_type -> stagd.api.v1.ListInvitesResponse
-	27, // 53: stagd.api.v1.InviteService.ResendInvite:output_type -> stagd.api.v1.ResendInviteResponse
-	29, // 54: stagd.api.v1.InviteService.RevokeInvite:output_type -> stagd.api.v1.RevokeInviteResponse
-	32, // 55: stagd.api.v1.InviteService.GetInviteLink:output_type -> stagd.api.v1.GetInviteLinkResponse
-	34, // 56: stagd.api.v1.InviteService.ResetInviteLink:output_type -> stagd.api.v1.ResetInviteLinkResponse
-	36, // 57: stagd.api.v1.InviteService.DisableInviteLink:output_type -> stagd.api.v1.DisableInviteLinkResponse
-	42, // [42:58] is the sub-list for method output_type
-	26, // [26:42] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	38, // 26: stagd.api.v1.Onboarding.steps:type_name -> stagd.api.v1.OnboardingStep
+	46, // 27: stagd.api.v1.Onboarding.complete_time:type_name -> google.protobuf.Timestamp
+	46, // 28: stagd.api.v1.Onboarding.dismiss_time:type_name -> google.protobuf.Timestamp
+	45, // 29: stagd.api.v1.Onboarding.admins:type_name -> stagd.api.v1.User
+	39, // 30: stagd.api.v1.GetOnboardingResponse.onboarding:type_name -> stagd.api.v1.Onboarding
+	39, // 31: stagd.api.v1.DismissOnboardingResponse.onboarding:type_name -> stagd.api.v1.Onboarding
+	2,  // 32: stagd.api.v1.OrgService.CreateOrg:input_type -> stagd.api.v1.CreateOrgRequest
+	4,  // 33: stagd.api.v1.OrgService.ListOrgs:input_type -> stagd.api.v1.ListOrgsRequest
+	6,  // 34: stagd.api.v1.OrgService.SwitchOrg:input_type -> stagd.api.v1.SwitchOrgRequest
+	8,  // 35: stagd.api.v1.OrgService.ListMembers:input_type -> stagd.api.v1.ListMembersRequest
+	10, // 36: stagd.api.v1.OrgService.UpdateMemberRole:input_type -> stagd.api.v1.UpdateMemberRoleRequest
+	14, // 37: stagd.api.v1.OrgService.RemoveMember:input_type -> stagd.api.v1.RemoveMemberRequest
+	12, // 38: stagd.api.v1.OrgService.TransferOwnership:input_type -> stagd.api.v1.TransferOwnershipRequest
+	16, // 39: stagd.api.v1.OrgService.DeleteOrg:input_type -> stagd.api.v1.DeleteOrgRequest
+	18, // 40: stagd.api.v1.OrgService.UpdateOrg:input_type -> stagd.api.v1.UpdateOrgRequest
+	40, // 41: stagd.api.v1.OrgService.GetOnboarding:input_type -> stagd.api.v1.GetOnboardingRequest
+	42, // 42: stagd.api.v1.OrgService.DismissOnboarding:input_type -> stagd.api.v1.DismissOnboardingRequest
+	20, // 43: stagd.api.v1.InviteService.CreateInvites:input_type -> stagd.api.v1.CreateInvitesRequest
+	24, // 44: stagd.api.v1.InviteService.ListInvites:input_type -> stagd.api.v1.ListInvitesRequest
+	26, // 45: stagd.api.v1.InviteService.ResendInvite:input_type -> stagd.api.v1.ResendInviteRequest
+	28, // 46: stagd.api.v1.InviteService.RevokeInvite:input_type -> stagd.api.v1.RevokeInviteRequest
+	31, // 47: stagd.api.v1.InviteService.GetInviteLink:input_type -> stagd.api.v1.GetInviteLinkRequest
+	33, // 48: stagd.api.v1.InviteService.ResetInviteLink:input_type -> stagd.api.v1.ResetInviteLinkRequest
+	35, // 49: stagd.api.v1.InviteService.DisableInviteLink:input_type -> stagd.api.v1.DisableInviteLinkRequest
+	3,  // 50: stagd.api.v1.OrgService.CreateOrg:output_type -> stagd.api.v1.CreateOrgResponse
+	5,  // 51: stagd.api.v1.OrgService.ListOrgs:output_type -> stagd.api.v1.ListOrgsResponse
+	7,  // 52: stagd.api.v1.OrgService.SwitchOrg:output_type -> stagd.api.v1.SwitchOrgResponse
+	37, // 53: stagd.api.v1.OrgService.ListMembers:output_type -> stagd.api.v1.ListMembersResponse
+	11, // 54: stagd.api.v1.OrgService.UpdateMemberRole:output_type -> stagd.api.v1.UpdateMemberRoleResponse
+	15, // 55: stagd.api.v1.OrgService.RemoveMember:output_type -> stagd.api.v1.RemoveMemberResponse
+	13, // 56: stagd.api.v1.OrgService.TransferOwnership:output_type -> stagd.api.v1.TransferOwnershipResponse
+	17, // 57: stagd.api.v1.OrgService.DeleteOrg:output_type -> stagd.api.v1.DeleteOrgResponse
+	19, // 58: stagd.api.v1.OrgService.UpdateOrg:output_type -> stagd.api.v1.UpdateOrgResponse
+	41, // 59: stagd.api.v1.OrgService.GetOnboarding:output_type -> stagd.api.v1.GetOnboardingResponse
+	43, // 60: stagd.api.v1.OrgService.DismissOnboarding:output_type -> stagd.api.v1.DismissOnboardingResponse
+	21, // 61: stagd.api.v1.InviteService.CreateInvites:output_type -> stagd.api.v1.CreateInvitesResponse
+	25, // 62: stagd.api.v1.InviteService.ListInvites:output_type -> stagd.api.v1.ListInvitesResponse
+	27, // 63: stagd.api.v1.InviteService.ResendInvite:output_type -> stagd.api.v1.ResendInviteResponse
+	29, // 64: stagd.api.v1.InviteService.RevokeInvite:output_type -> stagd.api.v1.RevokeInviteResponse
+	32, // 65: stagd.api.v1.InviteService.GetInviteLink:output_type -> stagd.api.v1.GetInviteLinkResponse
+	34, // 66: stagd.api.v1.InviteService.ResetInviteLink:output_type -> stagd.api.v1.ResetInviteLinkResponse
+	36, // 67: stagd.api.v1.InviteService.DisableInviteLink:output_type -> stagd.api.v1.DisableInviteLinkResponse
+	50, // [50:68] is the sub-list for method output_type
+	32, // [32:50] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_orgs_proto_init() }
@@ -2161,7 +2585,7 @@ func file_stagd_api_v1_orgs_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_orgs_proto_rawDesc), len(file_stagd_api_v1_orgs_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   36,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

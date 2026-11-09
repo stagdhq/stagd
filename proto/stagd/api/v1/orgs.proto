@@ -42,6 +42,12 @@ service OrgService {
   // UpdateOrg changes the active org's name, admins only. Its slug stays:
   // it's in links and the CLI's commands.
   rpc UpdateOrg(UpdateOrgRequest) returns (UpdateOrgResponse);
+  // GetOnboarding is the active org's way to its first live preview, worked
+  // out from what Stagd knows: the dashboard's Home, stagd setup and the MCP
+  // server's onboarding_status all read it, so they can't disagree.
+  rpc GetOnboarding(GetOnboardingRequest) returns (GetOnboardingResponse);
+  // DismissOnboarding hides the steps for everyone in the org. Admins only.
+  rpc DismissOnboarding(DismissOnboardingRequest) returns (DismissOnboardingResponse);
 }
 
 // InviteService brings people into the active org: invites by email or by
@@ -289,4 +295,54 @@ message DisableInviteLinkResponse {}
 
 message ListMembersResponse {
   repeated Member members = 1;
+}
+
+// OnboardingStep is one step on the way to the first live preview.
+message OnboardingStep {
+  // "github", "repositories", "compute", "secrets", "first_preview",
+  // "describe" or "invite"; clients may show steps they don't know by title.
+  string id = 1;
+  string title = 2;
+  bool done = 3;
+  // Doesn't hold the way open, e.g. inviting the team; listed after the
+  // required steps.
+  bool optional = 4;
+  // Only an admin can do it; others wait for one (Onboarding.admins).
+  bool admin_only = 5;
+  // Done: what was set up, e.g. "acme-inc on GitHub". Not done: what's
+  // missing or how, in a sentence.
+  string detail = 6;
+  // Where it's done or seen, in the dashboard.
+  string url = 7;
+  // Done because there's nothing to do, e.g. no secrets the app needs.
+  bool skipped = 8;
+}
+
+message Onboarding {
+  // The steps in order: the required ones, then the optional ones.
+  repeated OnboardingStep steps = 1;
+  // How many required steps are done, of how many.
+  int32 done = 2;
+  int32 required = 3;
+  // The id of the first required step not done; empty when all are.
+  string next = 4;
+  // When the org's first preview went live; unset until then.
+  google.protobuf.Timestamp complete_time = 5;
+  // When an admin dismissed it, and who; unset until then.
+  google.protobuf.Timestamp dismiss_time = 6;
+  string dismissed_by = 7;
+  // Its admins, for others waiting on an admin step.
+  repeated User admins = 8;
+}
+
+message GetOnboardingRequest {}
+
+message GetOnboardingResponse {
+  Onboarding onboarding = 1;
+}
+
+message DismissOnboardingRequest {}
+
+message DismissOnboardingResponse {
+  Onboarding onboarding = 1;
 }

@@ -93,7 +93,13 @@ func loginCommand() *cli.Command {
 
 			if me.GetActive() == nil {
 				fmt.Fprintln(w, "Next: create an org with `stagd orgs create`")
+
+				return nil
 			}
+
+			// The way on: the steps to a first preview, and Stagd's tools in a coding agent, which can take it from there.
+			fmt.Fprintln(w, "\nNext: `stagd setup` shows the steps to your first preview.")
+			fmt.Fprintln(w, "With a coding agent: `stagd mcp install` adds Stagd's tools to Claude Code and Cursor.")
 
 			return nil
 		},

@@ -29,7 +29,9 @@ func mcpCommand() *cli.Command {
 			"signed in as you (stagd login). The tools: make a preview of a pull request or branch, wait for it,\n" +
 			"look at it (its screenshot, logs and mail), and check stagd.yaml before pushing.\n\n" +
 			"   claude mcp add stagd -- stagd mcp\n\n" +
-			"or in an mcp.json: { \"mcpServers\": { \"stagd\": { \"command\": \"stagd\", \"args\": [\"mcp\"] } } }",
+			"or in an mcp.json: { \"mcpServers\": { \"stagd\": { \"command\": \"stagd\", \"args\": [\"mcp\"] } } }\n\n" +
+			"`stagd mcp install` does that for Claude Code and Cursor.",
+		Commands: []*cli.Command{mcpInstallCommand()},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			t := token(cmd)
 

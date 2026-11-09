@@ -55,6 +55,12 @@ const (
 	OrgServiceDeleteOrgProcedure = "/stagd.api.v1.OrgService/DeleteOrg"
 	// OrgServiceUpdateOrgProcedure is the fully-qualified name of the OrgService's UpdateOrg RPC.
 	OrgServiceUpdateOrgProcedure = "/stagd.api.v1.OrgService/UpdateOrg"
+	// OrgServiceGetOnboardingProcedure is the fully-qualified name of the OrgService's GetOnboarding
+	// RPC.
+	OrgServiceGetOnboardingProcedure = "/stagd.api.v1.OrgService/GetOnboarding"
+	// OrgServiceDismissOnboardingProcedure is the fully-qualified name of the OrgService's
+	// DismissOnboarding RPC.
+	OrgServiceDismissOnboardingProcedure = "/stagd.api.v1.OrgService/DismissOnboarding"
 	// InviteServiceCreateInvitesProcedure is the fully-qualified name of the InviteService's
 	// CreateInvites RPC.
 	InviteServiceCreateInvitesProcedure = "/stagd.api.v1.InviteService/CreateInvites"
@@ -113,6 +119,12 @@ type OrgServiceClient interface {
 	// UpdateOrg changes the active org's name, admins only. Its slug stays:
 	// it's in links and the CLI's commands.
 	UpdateOrg(context.Context, *connect.Request[v1.UpdateOrgRequest]) (*connect.Response[v1.UpdateOrgResponse], error)
+	// GetOnboarding is the active org's way to its first live preview, worked
+	// out from what Stagd knows: the dashboard's Home, stagd setup and the MCP
+	// server's onboarding_status all read it, so they can't disagree.
+	GetOnboarding(context.Context, *connect.Request[v1.GetOnboardingRequest]) (*connect.Response[v1.GetOnboardingResponse], error)
+	// DismissOnboarding hides the steps for everyone in the org. Admins only.
+	DismissOnboarding(context.Context, *connect.Request[v1.DismissOnboardingRequest]) (*connect.Response[v1.DismissOnboardingResponse], error)
 }
 
 // NewOrgServiceClient constructs a client for the stagd.api.v1.OrgService service. By default, it
@@ -180,6 +192,18 @@ func NewOrgServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(orgServiceMethods.ByName("UpdateOrg")),
 			connect.WithClientOptions(opts...),
 		),
+		getOnboarding: connect.NewClient[v1.GetOnboardingRequest, v1.GetOnboardingResponse](
+			httpClient,
+			baseURL+OrgServiceGetOnboardingProcedure,
+			connect.WithSchema(orgServiceMethods.ByName("GetOnboarding")),
+			connect.WithClientOptions(opts...),
+		),
+		dismissOnboarding: connect.NewClient[v1.DismissOnboardingRequest, v1.DismissOnboardingResponse](
+			httpClient,
+			baseURL+OrgServiceDismissOnboardingProcedure,
+			connect.WithSchema(orgServiceMethods.ByName("DismissOnboarding")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -194,6 +218,8 @@ type orgServiceClient struct {
 	transferOwnership *connect.Client[v1.TransferOwnershipRequest, v1.TransferOwnershipResponse]
 	deleteOrg         *connect.Client[v1.DeleteOrgRequest, v1.DeleteOrgResponse]
 	updateOrg         *connect.Client[v1.UpdateOrgRequest, v1.UpdateOrgResponse]
+	getOnboarding     *connect.Client[v1.GetOnboardingRequest, v1.GetOnboardingResponse]
+	dismissOnboarding *connect.Client[v1.DismissOnboardingRequest, v1.DismissOnboardingResponse]
 }
 
 // CreateOrg calls stagd.api.v1.OrgService.CreateOrg.
@@ -241,6 +267,16 @@ func (c *orgServiceClient) UpdateOrg(ctx context.Context, req *connect.Request[v
 	return c.updateOrg.CallUnary(ctx, req)
 }
 
+// GetOnboarding calls stagd.api.v1.OrgService.GetOnboarding.
+func (c *orgServiceClient) GetOnboarding(ctx context.Context, req *connect.Request[v1.GetOnboardingRequest]) (*connect.Response[v1.GetOnboardingResponse], error) {
+	return c.getOnboarding.CallUnary(ctx, req)
+}
+
+// DismissOnboarding calls stagd.api.v1.OrgService.DismissOnboarding.
+func (c *orgServiceClient) DismissOnboarding(ctx context.Context, req *connect.Request[v1.DismissOnboardingRequest]) (*connect.Response[v1.DismissOnboardingResponse], error) {
+	return c.dismissOnboarding.CallUnary(ctx, req)
+}
+
 // OrgServiceHandler is an implementation of the stagd.api.v1.OrgService service.
 type OrgServiceHandler interface {
 	// CreateOrg creates an org with the caller as its owner, an admin, and makes it the
@@ -276,6 +312,12 @@ type OrgServiceHandler interface {
 	// UpdateOrg changes the active org's name, admins only. Its slug stays:
 	// it's in links and the CLI's commands.
 	UpdateOrg(context.Context, *connect.Request[v1.UpdateOrgRequest]) (*connect.Response[v1.UpdateOrgResponse], error)
+	// GetOnboarding is the active org's way to its first live preview, worked
+	// out from what Stagd knows: the dashboard's Home, stagd setup and the MCP
+	// server's onboarding_status all read it, so they can't disagree.
+	GetOnboarding(context.Context, *connect.Request[v1.GetOnboardingRequest]) (*connect.Response[v1.GetOnboardingResponse], error)
+	// DismissOnboarding hides the steps for everyone in the org. Admins only.
+	DismissOnboarding(context.Context, *connect.Request[v1.DismissOnboardingRequest]) (*connect.Response[v1.DismissOnboardingResponse], error)
 }
 
 // NewOrgServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -339,6 +381,18 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(orgServiceMethods.ByName("UpdateOrg")),
 		connect.WithHandlerOptions(opts...),
 	)
+	orgServiceGetOnboardingHandler := connect.NewUnaryHandler(
+		OrgServiceGetOnboardingProcedure,
+		svc.GetOnboarding,
+		connect.WithSchema(orgServiceMethods.ByName("GetOnboarding")),
+		connect.WithHandlerOptions(opts...),
+	)
+	orgServiceDismissOnboardingHandler := connect.NewUnaryHandler(
+		OrgServiceDismissOnboardingProcedure,
+		svc.DismissOnboarding,
+		connect.WithSchema(orgServiceMethods.ByName("DismissOnboarding")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.OrgService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case OrgServiceCreateOrgProcedure:
@@ -359,6 +413,10 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 			orgServiceDeleteOrgHandler.ServeHTTP(w, r)
 		case OrgServiceUpdateOrgProcedure:
 			orgServiceUpdateOrgHandler.ServeHTTP(w, r)
+		case OrgServiceGetOnboardingProcedure:
+			orgServiceGetOnboardingHandler.ServeHTTP(w, r)
+		case OrgServiceDismissOnboardingProcedure:
+			orgServiceDismissOnboardingHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -402,6 +460,14 @@ func (UnimplementedOrgServiceHandler) DeleteOrg(context.Context, *connect.Reques
 
 func (UnimplementedOrgServiceHandler) UpdateOrg(context.Context, *connect.Request[v1.UpdateOrgRequest]) (*connect.Response[v1.UpdateOrgResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.UpdateOrg is not implemented"))
+}
+
+func (UnimplementedOrgServiceHandler) GetOnboarding(context.Context, *connect.Request[v1.GetOnboardingRequest]) (*connect.Response[v1.GetOnboardingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.GetOnboarding is not implemented"))
+}
+
+func (UnimplementedOrgServiceHandler) DismissOnboarding(context.Context, *connect.Request[v1.DismissOnboardingRequest]) (*connect.Response[v1.DismissOnboardingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.DismissOnboarding is not implemented"))
 }
 
 // InviteServiceClient is a client for the stagd.api.v1.InviteService service.
