@@ -54,6 +54,8 @@ message Membership {
   Org org = 1;
   // admin | member | viewer ("owner" from servers before roles; read it as admin)
   string role = 2;
+  // Whether they own the org: an admin who also may delete it or hand it on.
+  bool owner = 3;
 }
 
 // ScmProvider is the code host a repository lives on.

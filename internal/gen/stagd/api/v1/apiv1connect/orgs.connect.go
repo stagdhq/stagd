@@ -48,6 +48,9 @@ const (
 	OrgServiceUpdateMemberRoleProcedure = "/stagd.api.v1.OrgService/UpdateMemberRole"
 	// OrgServiceRemoveMemberProcedure is the fully-qualified name of the OrgService's RemoveMember RPC.
 	OrgServiceRemoveMemberProcedure = "/stagd.api.v1.OrgService/RemoveMember"
+	// OrgServiceTransferOwnershipProcedure is the fully-qualified name of the OrgService's
+	// TransferOwnership RPC.
+	OrgServiceTransferOwnershipProcedure = "/stagd.api.v1.OrgService/TransferOwnership"
 	// OrgServiceDeleteOrgProcedure is the fully-qualified name of the OrgService's DeleteOrg RPC.
 	OrgServiceDeleteOrgProcedure = "/stagd.api.v1.OrgService/DeleteOrg"
 	// InviteServiceCreateInvitesProcedure is the fully-qualified name of the InviteService's
@@ -75,7 +78,7 @@ const (
 
 // OrgServiceClient is a client for the stagd.api.v1.OrgService service.
 type OrgServiceClient interface {
-	// CreateOrg creates an org with the caller as its owner and makes it the
+	// CreateOrg creates an org with the caller as its owner, an admin, and makes it the
 	// session's active org. Refused with FAILED_PRECONDITION when the server
 	// runs one org that exists already, or lets each person create only one
 	// and the caller has.
@@ -88,13 +91,17 @@ type OrgServiceClient interface {
 	// ListMembers lists the people in the active org.
 	ListMembers(context.Context, *connect.Request[v1.ListMembersRequest]) (*connect.Response[v1.ListMembersResponse], error)
 	// UpdateMemberRole changes someone's role. The last admin can't be
-	// demoted: make someone else an admin first.
+	// demoted: make someone else an admin first. Nor can the owner: they hand
+	// the org on first (TransferOwnership).
 	UpdateMemberRole(context.Context, *connect.Request[v1.UpdateMemberRoleRequest]) (*connect.Response[v1.UpdateMemberRoleResponse], error)
 	// RemoveMember takes someone out of the active org and ends their sessions
-	// in it. The last admin can't be removed.
+	// in it. The last admin can't be removed, nor the owner.
 	RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error)
+	// TransferOwnership hands the org to another of its admins, who becomes
+	// its owner; the caller, its owner until then, stays an admin. Owner only.
+	TransferOwnership(context.Context, *connect.Request[v1.TransferOwnershipRequest]) (*connect.Response[v1.TransferOwnershipResponse], error)
 	// DeleteOrg deletes the active org and everything Stagd keeps for it.
-	// Admins only, with the org's slug typed as confirmation. The org is gone
+	// The owner only, with the org's slug typed as confirmation. The org is gone
 	// for its members at once, its previews are stopped and its members told
 	// by email. 30 days later its connections, repositories, secrets, seeds
 	// and activity are deleted, and Stagd's GitHub App is uninstalled from its
@@ -150,6 +157,12 @@ func NewOrgServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(orgServiceMethods.ByName("RemoveMember")),
 			connect.WithClientOptions(opts...),
 		),
+		transferOwnership: connect.NewClient[v1.TransferOwnershipRequest, v1.TransferOwnershipResponse](
+			httpClient,
+			baseURL+OrgServiceTransferOwnershipProcedure,
+			connect.WithSchema(orgServiceMethods.ByName("TransferOwnership")),
+			connect.WithClientOptions(opts...),
+		),
 		deleteOrg: connect.NewClient[v1.DeleteOrgRequest, v1.DeleteOrgResponse](
 			httpClient,
 			baseURL+OrgServiceDeleteOrgProcedure,
@@ -161,13 +174,14 @@ func NewOrgServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 
 // orgServiceClient implements OrgServiceClient.
 type orgServiceClient struct {
-	createOrg        *connect.Client[v1.CreateOrgRequest, v1.CreateOrgResponse]
-	listOrgs         *connect.Client[v1.ListOrgsRequest, v1.ListOrgsResponse]
-	switchOrg        *connect.Client[v1.SwitchOrgRequest, v1.SwitchOrgResponse]
-	listMembers      *connect.Client[v1.ListMembersRequest, v1.ListMembersResponse]
-	updateMemberRole *connect.Client[v1.UpdateMemberRoleRequest, v1.UpdateMemberRoleResponse]
-	removeMember     *connect.Client[v1.RemoveMemberRequest, v1.RemoveMemberResponse]
-	deleteOrg        *connect.Client[v1.DeleteOrgRequest, v1.DeleteOrgResponse]
+	createOrg         *connect.Client[v1.CreateOrgRequest, v1.CreateOrgResponse]
+	listOrgs          *connect.Client[v1.ListOrgsRequest, v1.ListOrgsResponse]
+	switchOrg         *connect.Client[v1.SwitchOrgRequest, v1.SwitchOrgResponse]
+	listMembers       *connect.Client[v1.ListMembersRequest, v1.ListMembersResponse]
+	updateMemberRole  *connect.Client[v1.UpdateMemberRoleRequest, v1.UpdateMemberRoleResponse]
+	removeMember      *connect.Client[v1.RemoveMemberRequest, v1.RemoveMemberResponse]
+	transferOwnership *connect.Client[v1.TransferOwnershipRequest, v1.TransferOwnershipResponse]
+	deleteOrg         *connect.Client[v1.DeleteOrgRequest, v1.DeleteOrgResponse]
 }
 
 // CreateOrg calls stagd.api.v1.OrgService.CreateOrg.
@@ -200,6 +214,11 @@ func (c *orgServiceClient) RemoveMember(ctx context.Context, req *connect.Reques
 	return c.removeMember.CallUnary(ctx, req)
 }
 
+// TransferOwnership calls stagd.api.v1.OrgService.TransferOwnership.
+func (c *orgServiceClient) TransferOwnership(ctx context.Context, req *connect.Request[v1.TransferOwnershipRequest]) (*connect.Response[v1.TransferOwnershipResponse], error) {
+	return c.transferOwnership.CallUnary(ctx, req)
+}
+
 // DeleteOrg calls stagd.api.v1.OrgService.DeleteOrg.
 func (c *orgServiceClient) DeleteOrg(ctx context.Context, req *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error) {
 	return c.deleteOrg.CallUnary(ctx, req)
@@ -207,7 +226,7 @@ func (c *orgServiceClient) DeleteOrg(ctx context.Context, req *connect.Request[v
 
 // OrgServiceHandler is an implementation of the stagd.api.v1.OrgService service.
 type OrgServiceHandler interface {
-	// CreateOrg creates an org with the caller as its owner and makes it the
+	// CreateOrg creates an org with the caller as its owner, an admin, and makes it the
 	// session's active org. Refused with FAILED_PRECONDITION when the server
 	// runs one org that exists already, or lets each person create only one
 	// and the caller has.
@@ -220,13 +239,17 @@ type OrgServiceHandler interface {
 	// ListMembers lists the people in the active org.
 	ListMembers(context.Context, *connect.Request[v1.ListMembersRequest]) (*connect.Response[v1.ListMembersResponse], error)
 	// UpdateMemberRole changes someone's role. The last admin can't be
-	// demoted: make someone else an admin first.
+	// demoted: make someone else an admin first. Nor can the owner: they hand
+	// the org on first (TransferOwnership).
 	UpdateMemberRole(context.Context, *connect.Request[v1.UpdateMemberRoleRequest]) (*connect.Response[v1.UpdateMemberRoleResponse], error)
 	// RemoveMember takes someone out of the active org and ends their sessions
-	// in it. The last admin can't be removed.
+	// in it. The last admin can't be removed, nor the owner.
 	RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error)
+	// TransferOwnership hands the org to another of its admins, who becomes
+	// its owner; the caller, its owner until then, stays an admin. Owner only.
+	TransferOwnership(context.Context, *connect.Request[v1.TransferOwnershipRequest]) (*connect.Response[v1.TransferOwnershipResponse], error)
 	// DeleteOrg deletes the active org and everything Stagd keeps for it.
-	// Admins only, with the org's slug typed as confirmation. The org is gone
+	// The owner only, with the org's slug typed as confirmation. The org is gone
 	// for its members at once, its previews are stopped and its members told
 	// by email. 30 days later its connections, repositories, secrets, seeds
 	// and activity are deleted, and Stagd's GitHub App is uninstalled from its
@@ -278,6 +301,12 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(orgServiceMethods.ByName("RemoveMember")),
 		connect.WithHandlerOptions(opts...),
 	)
+	orgServiceTransferOwnershipHandler := connect.NewUnaryHandler(
+		OrgServiceTransferOwnershipProcedure,
+		svc.TransferOwnership,
+		connect.WithSchema(orgServiceMethods.ByName("TransferOwnership")),
+		connect.WithHandlerOptions(opts...),
+	)
 	orgServiceDeleteOrgHandler := connect.NewUnaryHandler(
 		OrgServiceDeleteOrgProcedure,
 		svc.DeleteOrg,
@@ -298,6 +327,8 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 			orgServiceUpdateMemberRoleHandler.ServeHTTP(w, r)
 		case OrgServiceRemoveMemberProcedure:
 			orgServiceRemoveMemberHandler.ServeHTTP(w, r)
+		case OrgServiceTransferOwnershipProcedure:
+			orgServiceTransferOwnershipHandler.ServeHTTP(w, r)
 		case OrgServiceDeleteOrgProcedure:
 			orgServiceDeleteOrgHandler.ServeHTTP(w, r)
 		default:
@@ -331,6 +362,10 @@ func (UnimplementedOrgServiceHandler) UpdateMemberRole(context.Context, *connect
 
 func (UnimplementedOrgServiceHandler) RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.RemoveMember is not implemented"))
+}
+
+func (UnimplementedOrgServiceHandler) TransferOwnership(context.Context, *connect.Request[v1.TransferOwnershipRequest]) (*connect.Response[v1.TransferOwnershipResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.TransferOwnership is not implemented"))
 }
 
 func (UnimplementedOrgServiceHandler) DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error) {

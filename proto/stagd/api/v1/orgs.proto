@@ -9,7 +9,7 @@ import "stagd/api/v1/model.proto";
 // OrgService creates orgs and moves between them. Every other service acts in
 // the session's active org.
 service OrgService {
-  // CreateOrg creates an org with the caller as its owner and makes it the
+  // CreateOrg creates an org with the caller as its owner, an admin, and makes it the
   // session's active org. Refused with FAILED_PRECONDITION when the server
   // runs one org that exists already, or lets each person create only one
   // and the caller has.
@@ -22,13 +22,17 @@ service OrgService {
   // ListMembers lists the people in the active org.
   rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
   // UpdateMemberRole changes someone's role. The last admin can't be
-  // demoted: make someone else an admin first.
+  // demoted: make someone else an admin first. Nor can the owner: they hand
+  // the org on first (TransferOwnership).
   rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse);
   // RemoveMember takes someone out of the active org and ends their sessions
-  // in it. The last admin can't be removed.
+  // in it. The last admin can't be removed, nor the owner.
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
+  // TransferOwnership hands the org to another of its admins, who becomes
+  // its owner; the caller, its owner until then, stays an admin. Owner only.
+  rpc TransferOwnership(TransferOwnershipRequest) returns (TransferOwnershipResponse);
   // DeleteOrg deletes the active org and everything Stagd keeps for it.
-  // Admins only, with the org's slug typed as confirmation. The org is gone
+  // The owner only, with the org's slug typed as confirmation. The org is gone
   // for its members at once, its previews are stopped and its members told
   // by email. 30 days later its connections, repositories, secrets, seeds
   // and activity are deleted, and Stagd's GitHub App is uninstalled from its
@@ -61,7 +65,8 @@ service InviteService {
   rpc DisableInviteLink(DisableInviteLinkRequest) returns (DisableInviteLinkResponse);
 }
 
-// What someone may do in an org.
+// What someone may do in an org. One of its admins is also its owner
+// (Member.owner, Membership.owner): the one who may delete it or hand it on.
 enum Role {
   ROLE_UNSPECIFIED = 0;
   // Everything, members and settings included.
@@ -124,6 +129,9 @@ message Member {
   google.protobuf.Timestamp last_active_at = 6;
   // Their code-host login, e.g. GitHub's, when they have one.
   string login = 7;
+  // The org's owner: an admin who also may delete the org or hand it on.
+  // Exactly one member is.
+  bool owner = 8;
 }
 
 message UpdateMemberRoleRequest {
@@ -137,6 +145,13 @@ message UpdateMemberRoleRequest {
 message UpdateMemberRoleResponse {
   Member member = 1;
 }
+
+message TransferOwnershipRequest {
+  // An admin of the org, who becomes its owner.
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message TransferOwnershipResponse {}
 
 message RemoveMemberRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];

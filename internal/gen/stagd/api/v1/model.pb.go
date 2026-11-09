@@ -341,7 +341,9 @@ type Membership struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Org   *Org                   `protobuf:"bytes,1,opt,name=org,proto3" json:"org,omitempty"`
 	// admin | member | viewer ("owner" from servers before roles; read it as admin)
-	Role          string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	Role string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	// Whether they own the org: an admin who also may delete it or hand it on.
+	Owner         bool `protobuf:"varint,3,opt,name=owner,proto3" json:"owner,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -388,6 +390,13 @@ func (x *Membership) GetRole() string {
 		return x.Role
 	}
 	return ""
+}
+
+func (x *Membership) GetOwner() bool {
+	if x != nil {
+		return x.Owner
+	}
+	return false
 }
 
 // Repository is a repository Stagd can build previews for.
@@ -748,11 +757,12 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\x04slug\x18\x02 \x01(\tR\x04slug\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12;\n" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\"E\n" +
+	"createTime\"[\n" +
 	"\n" +
 	"Membership\x12#\n" +
 	"\x03org\x18\x01 \x01(\v2\x11.stagd.api.v1.OrgR\x03org\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\"\x8b\x03\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\x12\x14\n" +
+	"\x05owner\x18\x03 \x01(\bR\x05owner\"\x8b\x03\n" +
 	"\n" +
 	"Repository\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +

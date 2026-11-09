@@ -106,12 +106,23 @@ func orgsCommand() *cli.Command {
 			},
 			{
 				Name:   "members",
-				Usage:  "list the people in the current org",
+				Usage:  "list the people in the current org; its owner is marked",
 				Action: orgsMembers,
+				Commands: []*cli.Command{
+					{
+						Name:      "transfer",
+						Usage:     "hand the current org to another of its admins (the owner only); you stay an admin",
+						ArgsUsage: "<email|login>",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "don't ask for confirmation"},
+						},
+						Action: orgsTransfer,
+					},
+				},
 			},
 			{
 				Name:      "delete",
-				Usage:     "delete the current org and everything Stagd keeps for it (admins)",
+				Usage:     "delete the current org and everything Stagd keeps for it (its owner)",
 				ArgsUsage: "<slug>",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{Name: "yes", Usage: "don't ask: the slug given is the confirmation"},
@@ -296,10 +307,67 @@ func orgsMembers(ctx context.Context, cmd *cli.Command) error {
 	rows := make([][]string, 0, len(res.Msg.GetMembers()))
 
 	for _, m := range res.Msg.GetMembers() {
-		rows = append(rows, []string{m.GetUser().GetName(), m.GetUser().GetEmail(), m.GetRole()})
+		role := m.GetRole()
+		if m.GetOwner() {
+			role += " (owner)"
+		}
+
+		rows = append(rows, []string{m.GetUser().GetName(), m.GetUser().GetEmail(), role})
 	}
 
 	return output.Table(w, []string{"name", "email", "role"}, rows)
+}
+
+// orgsTransfer hands the current org to another admin, found by email or login, confirmed at the keyboard unless --yes.
+func orgsTransfer(ctx context.Context, cmd *cli.Command) error {
+	who := strings.TrimSpace(cmd.Args().First())
+	if who == "" || cmd.Args().Len() > 1 {
+		return cli.Exit("usage: stagd orgs members transfer [--yes] <email|login>", 2)
+	}
+
+	c, err := clients(cmd)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Orgs.ListMembers(ctx, connect.NewRequest(&apiv1.ListMembersRequest{}))
+	if err != nil {
+		return err
+	}
+
+	var to *apiv1.Member
+
+	for _, m := range res.Msg.GetMembers() {
+		if strings.EqualFold(m.GetUser().GetEmail(), who) || strings.EqualFold(m.GetLogin(), who) || m.GetUser().GetId() == who {
+			to = m
+		}
+	}
+
+	if to == nil {
+		return cli.Exit(fmt.Sprintf("nobody called %s in this org (see stagd orgs members)", who), 1)
+	}
+
+	if to.GetRoleKind() != apiv1.Role_ROLE_ADMIN {
+		return cli.Exit(fmt.Sprintf("%s is a %s: only an admin can own the org, so make them one first", who, to.GetRole()), 1)
+	}
+
+	if !cmd.Bool("yes") {
+		if !interactive() {
+			return cli.Exit("pass --yes to hand the org on without a prompt", 2)
+		}
+
+		if ok, err := confirm(cmd, fmt.Sprintf("Make %s the owner?", who), "They'll be the one who can delete the org or hand it on; you stay an admin."); err != nil || !ok {
+			return err
+		}
+	}
+
+	if _, err := c.Orgs.TransferOwnership(ctx, connect.NewRequest(&apiv1.TransferOwnershipRequest{UserId: to.GetUser().GetId()})); err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(cmd.Root().Writer, "%s owns the org now; you're an admin.\n", who)
+
+	return err
 }
 
 // leaveReasons are DeleteOrg's reasons, as --reason takes them.
