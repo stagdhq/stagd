@@ -345,7 +345,7 @@ func orgsDelete(ctx context.Context, cmd *cli.Command) error {
 		form := huh.NewForm(huh.NewGroup(
 			huh.NewInput().
 				Title("Delete "+slug+"?").
-				Description("Its previews stop, and its connections, repositories, secrets, seeds and activity\nare deleted. Stagd's GitHub App is uninstalled from its GitHub accounts.\nEveryone in it loses access. This can't be undone. Type the slug again to confirm.").
+				Description("Its previews stop now, and everyone in it loses access. Its connections, repositories,\nsecrets, seeds and activity are deleted in 30 days, and Stagd's GitHub App uninstalled;\nuntil then Stagd's support can restore it. Type the slug again to confirm.").
 				Value(&typed).
 				Validate(func(s string) error {
 					if strings.TrimSpace(s) != slug {
@@ -381,7 +381,7 @@ func orgsDelete(ctx context.Context, cmd *cli.Command) error {
 		return output.JSON(w, res.Msg)
 	}
 
-	fmt.Fprintf(w, "Deleted %s. Its previews are being torn down, and its members get an email.\n", slug)
+	fmt.Fprintf(w, "Deleted %s. Its previews are being torn down, and its members get an email.\nEverything else goes in 30 days; until then Stagd's support can restore it.\n", slug)
 
 	if compute := res.Msg.GetCompute(); len(compute) > 0 {
 		fmt.Fprintf(w, "Stagd's access is still installed on your side for: %s.\nRemove it with stagd compute uninstall, or delete the manifests you applied.\n", strings.Join(compute, ", "))

@@ -93,13 +93,13 @@ type OrgServiceClient interface {
 	// RemoveMember takes someone out of the active org and ends their sessions
 	// in it. The last admin can't be removed.
 	RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error)
-	// DeleteOrg deletes the active org and everything Stagd keeps for it: its
-	// previews are stopped, its connections, repositories, secrets, seeds and
-	// activity are deleted, and Stagd's GitHub App is uninstalled from its
-	// GitHub accounts. Admins only, with the org's slug typed as confirmation.
-	// The org is gone for its members at once; the rest runs in the
-	// background. Its members are told by email. Backups keep it until they
-	// age out (90 days).
+	// DeleteOrg deletes the active org and everything Stagd keeps for it.
+	// Admins only, with the org's slug typed as confirmation. The org is gone
+	// for its members at once, its previews are stopped and its members told
+	// by email. 30 days later its connections, repositories, secrets, seeds
+	// and activity are deleted, and Stagd's GitHub App is uninstalled from its
+	// GitHub accounts; until then Stagd's support can restore it. Backups keep
+	// it until they age out (90 days).
 	DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error)
 }
 
@@ -225,13 +225,13 @@ type OrgServiceHandler interface {
 	// RemoveMember takes someone out of the active org and ends their sessions
 	// in it. The last admin can't be removed.
 	RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error)
-	// DeleteOrg deletes the active org and everything Stagd keeps for it: its
-	// previews are stopped, its connections, repositories, secrets, seeds and
-	// activity are deleted, and Stagd's GitHub App is uninstalled from its
-	// GitHub accounts. Admins only, with the org's slug typed as confirmation.
-	// The org is gone for its members at once; the rest runs in the
-	// background. Its members are told by email. Backups keep it until they
-	// age out (90 days).
+	// DeleteOrg deletes the active org and everything Stagd keeps for it.
+	// Admins only, with the org's slug typed as confirmation. The org is gone
+	// for its members at once, its previews are stopped and its members told
+	// by email. 30 days later its connections, repositories, secrets, seeds
+	// and activity are deleted, and Stagd's GitHub App is uninstalled from its
+	// GitHub accounts; until then Stagd's support can restore it. Backups keep
+	// it until they age out (90 days).
 	DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error)
 }
 
