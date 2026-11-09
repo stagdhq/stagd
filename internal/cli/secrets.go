@@ -26,7 +26,11 @@ func secretsCommand() *cli.Command {
 		Usage: "the secrets previews get as variables",
 		Description: "Previews get the org's secrets and their repository's own, which win by name.\n" +
 			"A compose file uses them like any variable: ${SESSION_SECRET}, or a bare\n" +
-			"`- SESSION_SECRET` under environment. Values are encrypted and never shown again.",
+			"`- SESSION_SECRET` under environment. Values are encrypted; whether they can be\n" +
+			"read back is each secret's visibility:\n\n" +
+			"  visible     shown in the list: a feature flag, a public URL\n" +
+			"  hidden      read back by an admin with stagd secrets get, which the activity log records\n" +
+			"  write-only  never read back: it can only be replaced",
 		Commands: []*cli.Command{
 			{
 				Name:      "set",
@@ -35,8 +39,11 @@ func secretsCommand() *cli.Command {
 				Description: "NAME=@- reads the value from stdin; a NAME alone asks for it without echoing.\n" +
 					"Values on the command line end up in your shell's history: prefer the other two.\n\n" +
 					"A random value, never shown (a session key, a signing secret, a token):\n" +
-					"  openssl rand -base64 32 | stagd secrets set SESSION_SECRET=@-",
-				Flags:  []cli.Flag{repoFlag},
+					"  openssl rand -base64 32 | stagd secrets set --visibility write-only SESSION_SECRET=@-",
+				Flags: []cli.Flag{
+					repoFlag,
+					&cli.StringFlag{Name: "visibility", Usage: "visible, hidden or write-only; a new secret is hidden, a replaced one keeps its own"},
+				},
 				Action: secretsSet,
 			},
 			{
@@ -54,6 +61,23 @@ func secretsCommand() *cli.Command {
 					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "don't ask for confirmation"},
 				},
 				Action: secretsDelete,
+			},
+			{
+				Name:        "get",
+				Usage:       "print a visible or hidden secret's value",
+				ArgsUsage:   "NAME",
+				Description: "Prints the value alone, for a pipe. Admins only for a hidden one, which the\nactivity log records; a write-only one can't be read back.",
+				Flags:       []cli.Flag{repoFlag},
+				Action:      secretsGet,
+			},
+			{
+				Name:      "visibility",
+				Usage:     "make a secret less readable, keeping its value",
+				ArgsUsage: "NAME hidden|write-only",
+				Description: "Visible to hidden to write-only. Making one more readable takes a new value:\n" +
+					"stagd secrets set --visibility visible NAME.",
+				Flags:  []cli.Flag{repoFlag},
+				Action: secretsVisibility,
 			},
 		},
 	}
@@ -107,6 +131,17 @@ func secretsSet(ctx context.Context, cmd *cli.Command) error {
 		return cli.Exit("usage: stagd secrets set [--repo owner/name] NAME=value | NAME=@- | NAME …", 2)
 	}
 
+	visibility := apiv1.SecretVisibility_SECRET_VISIBILITY_UNSPECIFIED
+
+	if cmd.IsSet("visibility") {
+		v, err := parseVisibility(cmd.String("visibility"))
+		if err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+
+		visibility = v
+	}
+
 	values, err := secretValues(ctx, cmd.Args().Slice())
 	if err != nil {
 		return cli.Exit(err.Error(), 2)
@@ -117,7 +152,7 @@ func secretsSet(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	res, err := c.Secrets.SetSecrets(ctx, connect.NewRequest(&apiv1.SetSecretsRequest{Repository: cmd.String("repo"), Values: values}))
+	res, err := c.Secrets.SetSecrets(ctx, connect.NewRequest(&apiv1.SetSecretsRequest{Repository: cmd.String("repo"), Values: values, Visibility: visibility}))
 	if err != nil {
 		return err
 	}
@@ -179,10 +214,10 @@ func secretsList(ctx context.Context, cmd *cli.Command) error {
 	rows := make([][]string, 0, len(res.Msg.GetSecrets()))
 
 	for _, s := range res.Msg.GetSecrets() {
-		rows = append(rows, []string{s.GetName(), s.GetUpdateTime().AsTime().Local().Format(time.DateTime), s.GetUpdatedBy()})
+		rows = append(rows, []string{s.GetName(), visibilityWords(s.GetVisibility()), shownValue(s), s.GetUpdateTime().AsTime().Local().Format(time.DateTime), s.GetUpdatedBy()})
 	}
 
-	return output.Table(w, []string{"name", "updated", "by"}, rows)
+	return output.Table(w, []string{"name", "visibility", "value", "updated", "by"}, rows)
 }
 
 func secretsDelete(ctx context.Context, cmd *cli.Command) error {
@@ -211,6 +246,108 @@ func secretsDelete(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	_, err = fmt.Fprintf(cmd.Root().Writer, "Deleted %s from %s.\n", name, scopeWords(cmd.String("repo")))
+
+	return err
+}
+
+// visibilities are the visibilities by the words the CLI takes and shows.
+var visibilities = map[string]apiv1.SecretVisibility{
+	"visible":    apiv1.SecretVisibility_SECRET_VISIBILITY_VISIBLE,
+	"hidden":     apiv1.SecretVisibility_SECRET_VISIBILITY_HIDDEN,
+	"write-only": apiv1.SecretVisibility_SECRET_VISIBILITY_WRITE_ONLY,
+}
+
+func parseVisibility(word string) (apiv1.SecretVisibility, error) {
+	v, ok := visibilities[strings.ToLower(word)]
+	if !ok {
+		return 0, fmt.Errorf("visibility %q: use visible, hidden or write-only", word)
+	}
+
+	return v, nil
+}
+
+func visibilityWords(v apiv1.SecretVisibility) string {
+	for word, each := range visibilities {
+		if each == v {
+			return word
+		}
+	}
+
+	return ""
+}
+
+// shownValue is a visible secret's value as the list shows it: one line, cut
+// short; "••••••••" for the others.
+func shownValue(s *apiv1.Secret) string {
+	if s.GetVisibility() != apiv1.SecretVisibility_SECRET_VISIBILITY_VISIBLE {
+		return "••••••••"
+	}
+
+	value := strings.ReplaceAll(s.GetValue(), "\n", "↵")
+
+	if runes := []rune(value); len(runes) > 40 {
+		return string(runes[:39]) + "…"
+	}
+
+	return value
+}
+
+func secretsGet(ctx context.Context, cmd *cli.Command) error {
+	name := cmd.Args().First()
+	if name == "" || cmd.Args().Len() > 1 {
+		return cli.Exit("usage: stagd secrets get [--repo owner/name] NAME", 2)
+	}
+
+	c, err := clients(cmd)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Secrets.RevealSecret(ctx, connect.NewRequest(&apiv1.RevealSecretRequest{Repository: cmd.String("repo"), Name: name}))
+	if err != nil {
+		return err
+	}
+
+	w := cmd.Root().Writer
+
+	if cmd.Bool("json") {
+		return output.JSON(w, res.Msg)
+	}
+
+	_, err = fmt.Fprintln(w, res.Msg.GetValue())
+
+	return err
+}
+
+func secretsVisibility(ctx context.Context, cmd *cli.Command) error {
+	if cmd.Args().Len() != 2 {
+		return cli.Exit("usage: stagd secrets visibility [--repo owner/name] NAME hidden|write-only", 2)
+	}
+
+	name := cmd.Args().Get(0)
+
+	visibility, err := parseVisibility(cmd.Args().Get(1))
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+
+	c, err := clients(cmd)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Secrets.UpdateSecretVisibility(ctx, connect.NewRequest(&apiv1.UpdateSecretVisibilityRequest{Repository: cmd.String("repo"), Name: name, Visibility: visibility}))
+	if err != nil {
+		return err
+	}
+
+	w := cmd.Root().Writer
+
+	if cmd.Bool("json") {
+		return output.JSON(w, res.Msg)
+	}
+
+	_, err = fmt.Fprintf(w, "%s in %s is %s.\n", name, scopeWords(cmd.String("repo")), visibilityWords(res.Msg.GetSecret().GetVisibility()))
 
 	return err
 }

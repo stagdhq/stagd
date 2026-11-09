@@ -23,7 +23,64 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Secret is a secret's name and when it last changed; never its value.
+// SecretVisibility is whether a secret's value can be read back.
+type SecretVisibility int32
+
+const (
+	SecretVisibility_SECRET_VISIBILITY_UNSPECIFIED SecretVisibility = 0
+	// Shown wherever the secret is: a feature flag, a public URL.
+	SecretVisibility_SECRET_VISIBILITY_VISIBLE SecretVisibility = 1
+	// Masked, and revealed on request by an admin, in the activity log.
+	SecretVisibility_SECRET_VISIBILITY_HIDDEN SecretVisibility = 2
+	// Never read back: it can only be replaced.
+	SecretVisibility_SECRET_VISIBILITY_WRITE_ONLY SecretVisibility = 3
+)
+
+// Enum value maps for SecretVisibility.
+var (
+	SecretVisibility_name = map[int32]string{
+		0: "SECRET_VISIBILITY_UNSPECIFIED",
+		1: "SECRET_VISIBILITY_VISIBLE",
+		2: "SECRET_VISIBILITY_HIDDEN",
+		3: "SECRET_VISIBILITY_WRITE_ONLY",
+	}
+	SecretVisibility_value = map[string]int32{
+		"SECRET_VISIBILITY_UNSPECIFIED": 0,
+		"SECRET_VISIBILITY_VISIBLE":     1,
+		"SECRET_VISIBILITY_HIDDEN":      2,
+		"SECRET_VISIBILITY_WRITE_ONLY":  3,
+	}
+)
+
+func (x SecretVisibility) Enum() *SecretVisibility {
+	p := new(SecretVisibility)
+	*p = x
+	return p
+}
+
+func (x SecretVisibility) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SecretVisibility) Descriptor() protoreflect.EnumDescriptor {
+	return file_stagd_api_v1_secrets_proto_enumTypes[0].Descriptor()
+}
+
+func (SecretVisibility) Type() protoreflect.EnumType {
+	return &file_stagd_api_v1_secrets_proto_enumTypes[0]
+}
+
+func (x SecretVisibility) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SecretVisibility.Descriptor instead.
+func (SecretVisibility) EnumDescriptor() ([]byte, []int) {
+	return file_stagd_api_v1_secrets_proto_rawDescGZIP(), []int{0}
+}
+
+// Secret is a secret's name, its visibility and when it last changed; its
+// value only when it's visible.
 type Secret struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -31,7 +88,10 @@ type Secret struct {
 	Repository string                 `protobuf:"bytes,2,opt,name=repository,proto3" json:"repository,omitempty"`
 	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// Who set it last, by email; empty once they're deleted.
-	UpdatedBy     string `protobuf:"bytes,4,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
+	UpdatedBy  string           `protobuf:"bytes,4,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
+	Visibility SecretVisibility `protobuf:"varint,5,opt,name=visibility,proto3,enum=stagd.api.v1.SecretVisibility" json:"visibility,omitempty"`
+	// The value, for a visible secret only; empty otherwise.
+	Value         string `protobuf:"bytes,6,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -90,6 +150,20 @@ func (x *Secret) GetUpdateTime() *timestamppb.Timestamp {
 func (x *Secret) GetUpdatedBy() string {
 	if x != nil {
 		return x.UpdatedBy
+	}
+	return ""
+}
+
+func (x *Secret) GetVisibility() SecretVisibility {
+	if x != nil {
+		return x.Visibility
+	}
+	return SecretVisibility_SECRET_VISIBILITY_UNSPECIFIED
+}
+
+func (x *Secret) GetValue() string {
+	if x != nil {
+		return x.Value
 	}
 	return ""
 }
@@ -186,8 +260,11 @@ func (x *ListSecretsResponse) GetSecrets() []*Secret {
 type SetSecretsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// A repository id or "owner/name"; empty for the org's own.
-	Repository    string            `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
-	Values        map[string]string `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Repository string            `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
+	Values     map[string]string `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// The visibility of every secret set. Unspecified keeps a secret's own, and
+	// makes a new one hidden.
+	Visibility    SecretVisibility `protobuf:"varint,3,opt,name=visibility,proto3,enum=stagd.api.v1.SecretVisibility" json:"visibility,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -234,6 +311,13 @@ func (x *SetSecretsRequest) GetValues() map[string]string {
 		return x.Values
 	}
 	return nil
+}
+
+func (x *SetSecretsRequest) GetVisibility() SecretVisibility {
+	if x != nil {
+		return x.Visibility
+	}
+	return SecretVisibility_SECRET_VISIBILITY_UNSPECIFIED
 }
 
 type SetSecretsResponse struct {
@@ -378,11 +462,213 @@ func (*DeleteSecretResponse) Descriptor() ([]byte, []int) {
 	return file_stagd_api_v1_secrets_proto_rawDescGZIP(), []int{6}
 }
 
+type RevealSecretRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// A repository id or "owner/name"; empty for the org's own.
+	Repository    string `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
+	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevealSecretRequest) Reset() {
+	*x = RevealSecretRequest{}
+	mi := &file_stagd_api_v1_secrets_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevealSecretRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevealSecretRequest) ProtoMessage() {}
+
+func (x *RevealSecretRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_secrets_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevealSecretRequest.ProtoReflect.Descriptor instead.
+func (*RevealSecretRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_secrets_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RevealSecretRequest) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
+}
+
+func (x *RevealSecretRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type RevealSecretResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevealSecretResponse) Reset() {
+	*x = RevealSecretResponse{}
+	mi := &file_stagd_api_v1_secrets_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevealSecretResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevealSecretResponse) ProtoMessage() {}
+
+func (x *RevealSecretResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_secrets_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevealSecretResponse.ProtoReflect.Descriptor instead.
+func (*RevealSecretResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_secrets_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RevealSecretResponse) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type UpdateSecretVisibilityRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// A repository id or "owner/name"; empty for the org's own.
+	Repository    string           `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
+	Name          string           `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Visibility    SecretVisibility `protobuf:"varint,3,opt,name=visibility,proto3,enum=stagd.api.v1.SecretVisibility" json:"visibility,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateSecretVisibilityRequest) Reset() {
+	*x = UpdateSecretVisibilityRequest{}
+	mi := &file_stagd_api_v1_secrets_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateSecretVisibilityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateSecretVisibilityRequest) ProtoMessage() {}
+
+func (x *UpdateSecretVisibilityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_secrets_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateSecretVisibilityRequest.ProtoReflect.Descriptor instead.
+func (*UpdateSecretVisibilityRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_secrets_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateSecretVisibilityRequest) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
+}
+
+func (x *UpdateSecretVisibilityRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UpdateSecretVisibilityRequest) GetVisibility() SecretVisibility {
+	if x != nil {
+		return x.Visibility
+	}
+	return SecretVisibility_SECRET_VISIBILITY_UNSPECIFIED
+}
+
+type UpdateSecretVisibilityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Secret        *Secret                `protobuf:"bytes,1,opt,name=secret,proto3" json:"secret,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateSecretVisibilityResponse) Reset() {
+	*x = UpdateSecretVisibilityResponse{}
+	mi := &file_stagd_api_v1_secrets_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateSecretVisibilityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateSecretVisibilityResponse) ProtoMessage() {}
+
+func (x *UpdateSecretVisibilityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_secrets_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateSecretVisibilityResponse.ProtoReflect.Descriptor instead.
+func (*UpdateSecretVisibilityResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_secrets_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *UpdateSecretVisibilityResponse) GetSecret() *Secret {
+	if x != nil {
+		return x.Secret
+	}
+	return nil
+}
+
 var File_stagd_api_v1_secrets_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_secrets_proto_rawDesc = "" +
 	"\n" +
-	"\x1astagd/api/v1/secrets.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x98\x01\n" +
+	"\x1astagd/api/v1/secrets.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xee\x01\n" +
 	"\x06Secret\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
@@ -391,19 +677,26 @@ const file_stagd_api_v1_secrets_proto_rawDesc = "" +
 	"\vupdate_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"updateTime\x12\x1d\n" +
 	"\n" +
-	"updated_by\x18\x04 \x01(\tR\tupdatedBy\"4\n" +
+	"updated_by\x18\x04 \x01(\tR\tupdatedBy\x12>\n" +
+	"\n" +
+	"visibility\x18\x05 \x01(\x0e2\x1e.stagd.api.v1.SecretVisibilityR\n" +
+	"visibility\x12\x14\n" +
+	"\x05value\x18\x06 \x01(\tR\x05value\"4\n" +
 	"\x12ListSecretsRequest\x12\x1e\n" +
 	"\n" +
 	"repository\x18\x01 \x01(\tR\n" +
 	"repository\"E\n" +
 	"\x13ListSecretsResponse\x12.\n" +
-	"\asecrets\x18\x01 \x03(\v2\x14.stagd.api.v1.SecretR\asecrets\"\xbf\x01\n" +
+	"\asecrets\x18\x01 \x03(\v2\x14.stagd.api.v1.SecretR\asecrets\"\x89\x02\n" +
 	"\x11SetSecretsRequest\x12\x1e\n" +
 	"\n" +
 	"repository\x18\x01 \x01(\tR\n" +
 	"repository\x12O\n" +
 	"\x06values\x18\x02 \x03(\v2+.stagd.api.v1.SetSecretsRequest.ValuesEntryB\n" +
-	"\xbaH\a\x9a\x01\x04\b\x01\x10dR\x06values\x1a9\n" +
+	"\xbaH\a\x9a\x01\x04\b\x01\x10dR\x06values\x12H\n" +
+	"\n" +
+	"visibility\x18\x03 \x01(\x0e2\x1e.stagd.api.v1.SecretVisibilityB\b\xbaH\x05\x82\x01\x02\x10\x01R\n" +
+	"visibility\x1a9\n" +
 	"\vValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"`\n" +
@@ -415,12 +708,37 @@ const file_stagd_api_v1_secrets_proto_rawDesc = "" +
 	"repository\x18\x01 \x01(\tR\n" +
 	"repository\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\"\x16\n" +
-	"\x14DeleteSecretResponse2\x8b\x02\n" +
+	"\x14DeleteSecretResponse\"R\n" +
+	"\x13RevealSecretRequest\x12\x1e\n" +
+	"\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\x12\x1b\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\",\n" +
+	"\x14RevealSecretResponse\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value\"\xa8\x01\n" +
+	"\x1dUpdateSecretVisibilityRequest\x12\x1e\n" +
+	"\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\x12\x1b\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12J\n" +
+	"\n" +
+	"visibility\x18\x03 \x01(\x0e2\x1e.stagd.api.v1.SecretVisibilityB\n" +
+	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\n" +
+	"visibility\"N\n" +
+	"\x1eUpdateSecretVisibilityResponse\x12,\n" +
+	"\x06secret\x18\x01 \x01(\v2\x14.stagd.api.v1.SecretR\x06secret*\x94\x01\n" +
+	"\x10SecretVisibility\x12!\n" +
+	"\x1dSECRET_VISIBILITY_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19SECRET_VISIBILITY_VISIBLE\x10\x01\x12\x1c\n" +
+	"\x18SECRET_VISIBILITY_HIDDEN\x10\x02\x12 \n" +
+	"\x1cSECRET_VISIBILITY_WRITE_ONLY\x10\x032\xd7\x03\n" +
 	"\rSecretService\x12R\n" +
 	"\vListSecrets\x12 .stagd.api.v1.ListSecretsRequest\x1a!.stagd.api.v1.ListSecretsResponse\x12O\n" +
 	"\n" +
 	"SetSecrets\x12\x1f.stagd.api.v1.SetSecretsRequest\x1a .stagd.api.v1.SetSecretsResponse\x12U\n" +
-	"\fDeleteSecret\x12!.stagd.api.v1.DeleteSecretRequest\x1a\".stagd.api.v1.DeleteSecretResponseB\xac\x01\n" +
+	"\fDeleteSecret\x12!.stagd.api.v1.DeleteSecretRequest\x1a\".stagd.api.v1.DeleteSecretResponse\x12U\n" +
+	"\fRevealSecret\x12!.stagd.api.v1.RevealSecretRequest\x1a\".stagd.api.v1.RevealSecretResponse\x12s\n" +
+	"\x16UpdateSecretVisibility\x12+.stagd.api.v1.UpdateSecretVisibilityRequest\x1a,.stagd.api.v1.UpdateSecretVisibilityResponseB\xac\x01\n" +
 	"\x10com.stagd.api.v1B\fSecretsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -435,34 +753,48 @@ func file_stagd_api_v1_secrets_proto_rawDescGZIP() []byte {
 	return file_stagd_api_v1_secrets_proto_rawDescData
 }
 
-var file_stagd_api_v1_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_stagd_api_v1_secrets_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_stagd_api_v1_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_stagd_api_v1_secrets_proto_goTypes = []any{
-	(*Secret)(nil),                // 0: stagd.api.v1.Secret
-	(*ListSecretsRequest)(nil),    // 1: stagd.api.v1.ListSecretsRequest
-	(*ListSecretsResponse)(nil),   // 2: stagd.api.v1.ListSecretsResponse
-	(*SetSecretsRequest)(nil),     // 3: stagd.api.v1.SetSecretsRequest
-	(*SetSecretsResponse)(nil),    // 4: stagd.api.v1.SetSecretsResponse
-	(*DeleteSecretRequest)(nil),   // 5: stagd.api.v1.DeleteSecretRequest
-	(*DeleteSecretResponse)(nil),  // 6: stagd.api.v1.DeleteSecretResponse
-	nil,                           // 7: stagd.api.v1.SetSecretsRequest.ValuesEntry
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(SecretVisibility)(0),                  // 0: stagd.api.v1.SecretVisibility
+	(*Secret)(nil),                         // 1: stagd.api.v1.Secret
+	(*ListSecretsRequest)(nil),             // 2: stagd.api.v1.ListSecretsRequest
+	(*ListSecretsResponse)(nil),            // 3: stagd.api.v1.ListSecretsResponse
+	(*SetSecretsRequest)(nil),              // 4: stagd.api.v1.SetSecretsRequest
+	(*SetSecretsResponse)(nil),             // 5: stagd.api.v1.SetSecretsResponse
+	(*DeleteSecretRequest)(nil),            // 6: stagd.api.v1.DeleteSecretRequest
+	(*DeleteSecretResponse)(nil),           // 7: stagd.api.v1.DeleteSecretResponse
+	(*RevealSecretRequest)(nil),            // 8: stagd.api.v1.RevealSecretRequest
+	(*RevealSecretResponse)(nil),           // 9: stagd.api.v1.RevealSecretResponse
+	(*UpdateSecretVisibilityRequest)(nil),  // 10: stagd.api.v1.UpdateSecretVisibilityRequest
+	(*UpdateSecretVisibilityResponse)(nil), // 11: stagd.api.v1.UpdateSecretVisibilityResponse
+	nil,                                    // 12: stagd.api.v1.SetSecretsRequest.ValuesEntry
+	(*timestamppb.Timestamp)(nil),          // 13: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_secrets_proto_depIdxs = []int32{
-	8, // 0: stagd.api.v1.Secret.update_time:type_name -> google.protobuf.Timestamp
-	0, // 1: stagd.api.v1.ListSecretsResponse.secrets:type_name -> stagd.api.v1.Secret
-	7, // 2: stagd.api.v1.SetSecretsRequest.values:type_name -> stagd.api.v1.SetSecretsRequest.ValuesEntry
-	0, // 3: stagd.api.v1.SetSecretsResponse.secrets:type_name -> stagd.api.v1.Secret
-	1, // 4: stagd.api.v1.SecretService.ListSecrets:input_type -> stagd.api.v1.ListSecretsRequest
-	3, // 5: stagd.api.v1.SecretService.SetSecrets:input_type -> stagd.api.v1.SetSecretsRequest
-	5, // 6: stagd.api.v1.SecretService.DeleteSecret:input_type -> stagd.api.v1.DeleteSecretRequest
-	2, // 7: stagd.api.v1.SecretService.ListSecrets:output_type -> stagd.api.v1.ListSecretsResponse
-	4, // 8: stagd.api.v1.SecretService.SetSecrets:output_type -> stagd.api.v1.SetSecretsResponse
-	6, // 9: stagd.api.v1.SecretService.DeleteSecret:output_type -> stagd.api.v1.DeleteSecretResponse
-	7, // [7:10] is the sub-list for method output_type
-	4, // [4:7] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	13, // 0: stagd.api.v1.Secret.update_time:type_name -> google.protobuf.Timestamp
+	0,  // 1: stagd.api.v1.Secret.visibility:type_name -> stagd.api.v1.SecretVisibility
+	1,  // 2: stagd.api.v1.ListSecretsResponse.secrets:type_name -> stagd.api.v1.Secret
+	12, // 3: stagd.api.v1.SetSecretsRequest.values:type_name -> stagd.api.v1.SetSecretsRequest.ValuesEntry
+	0,  // 4: stagd.api.v1.SetSecretsRequest.visibility:type_name -> stagd.api.v1.SecretVisibility
+	1,  // 5: stagd.api.v1.SetSecretsResponse.secrets:type_name -> stagd.api.v1.Secret
+	0,  // 6: stagd.api.v1.UpdateSecretVisibilityRequest.visibility:type_name -> stagd.api.v1.SecretVisibility
+	1,  // 7: stagd.api.v1.UpdateSecretVisibilityResponse.secret:type_name -> stagd.api.v1.Secret
+	2,  // 8: stagd.api.v1.SecretService.ListSecrets:input_type -> stagd.api.v1.ListSecretsRequest
+	4,  // 9: stagd.api.v1.SecretService.SetSecrets:input_type -> stagd.api.v1.SetSecretsRequest
+	6,  // 10: stagd.api.v1.SecretService.DeleteSecret:input_type -> stagd.api.v1.DeleteSecretRequest
+	8,  // 11: stagd.api.v1.SecretService.RevealSecret:input_type -> stagd.api.v1.RevealSecretRequest
+	10, // 12: stagd.api.v1.SecretService.UpdateSecretVisibility:input_type -> stagd.api.v1.UpdateSecretVisibilityRequest
+	3,  // 13: stagd.api.v1.SecretService.ListSecrets:output_type -> stagd.api.v1.ListSecretsResponse
+	5,  // 14: stagd.api.v1.SecretService.SetSecrets:output_type -> stagd.api.v1.SetSecretsResponse
+	7,  // 15: stagd.api.v1.SecretService.DeleteSecret:output_type -> stagd.api.v1.DeleteSecretResponse
+	9,  // 16: stagd.api.v1.SecretService.RevealSecret:output_type -> stagd.api.v1.RevealSecretResponse
+	11, // 17: stagd.api.v1.SecretService.UpdateSecretVisibility:output_type -> stagd.api.v1.UpdateSecretVisibilityResponse
+	13, // [13:18] is the sub-list for method output_type
+	8,  // [8:13] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_secrets_proto_init() }
@@ -475,13 +807,14 @@ func file_stagd_api_v1_secrets_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_secrets_proto_rawDesc), len(file_stagd_api_v1_secrets_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   8,
+			NumEnums:      1,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_stagd_api_v1_secrets_proto_goTypes,
 		DependencyIndexes: file_stagd_api_v1_secrets_proto_depIdxs,
+		EnumInfos:         file_stagd_api_v1_secrets_proto_enumTypes,
 		MessageInfos:      file_stagd_api_v1_secrets_proto_msgTypes,
 	}.Build()
 	File_stagd_api_v1_secrets_proto = out.File
