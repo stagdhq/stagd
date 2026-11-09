@@ -495,7 +495,11 @@ message GetPreviewPolicyResponse {
 message UpdatePreviewPolicyRequest {
   PreviewPolicy policy = 1 [(buf.validate.field).required = true];
   // With a repository: drop its override, so it follows the org's default again.
+  // Its start (when previews start) is kept: set start to unspecified for that.
   bool reset = 2;
+  // Only the start and its label: the rest of the policy stays as it is, and a
+  // repository without an override keeps following the org's for the rest.
+  bool start_only = 3;
 }
 
 message UpdatePreviewPolicyResponse {

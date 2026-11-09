@@ -2518,7 +2518,11 @@ type UpdatePreviewPolicyRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Policy *PreviewPolicy         `protobuf:"bytes,1,opt,name=policy,proto3" json:"policy,omitempty"`
 	// With a repository: drop its override, so it follows the org's default again.
-	Reset_        bool `protobuf:"varint,2,opt,name=reset,proto3" json:"reset,omitempty"`
+	// Its start (when previews start) is kept: set start to unspecified for that.
+	Reset_ bool `protobuf:"varint,2,opt,name=reset,proto3" json:"reset,omitempty"`
+	// Only the start and its label: the rest of the policy stays as it is, and a
+	// repository without an override keeps following the org's for the rest.
+	StartOnly     bool `protobuf:"varint,3,opt,name=start_only,json=startOnly,proto3" json:"start_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2563,6 +2567,13 @@ func (x *UpdatePreviewPolicyRequest) GetPolicy() *PreviewPolicy {
 func (x *UpdatePreviewPolicyRequest) GetReset_() bool {
 	if x != nil {
 		return x.Reset_
+	}
+	return false
+}
+
+func (x *UpdatePreviewPolicyRequest) GetStartOnly() bool {
+	if x != nil {
+		return x.StartOnly
 	}
 	return false
 }
@@ -6383,10 +6394,12 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x18GetPreviewPolicyResponse\x123\n" +
 	"\x06policy\x18\x01 \x01(\v2\x1b.stagd.api.v1.PreviewPolicyR\x06policy\x12\x1c\n" +
 	"\tinherited\x18\x02 \x01(\bR\tinherited\x128\n" +
-	"\x05start\x18\x03 \x01(\v2\".stagd.api.v1.PreviewStartInEffectR\x05start\"o\n" +
+	"\x05start\x18\x03 \x01(\v2\".stagd.api.v1.PreviewStartInEffectR\x05start\"\x8e\x01\n" +
 	"\x1aUpdatePreviewPolicyRequest\x12;\n" +
 	"\x06policy\x18\x01 \x01(\v2\x1b.stagd.api.v1.PreviewPolicyB\x06\xbaH\x03\xc8\x01\x01R\x06policy\x12\x14\n" +
-	"\x05reset\x18\x02 \x01(\bR\x05reset\"\xaa\x01\n" +
+	"\x05reset\x18\x02 \x01(\bR\x05reset\x12\x1d\n" +
+	"\n" +
+	"start_only\x18\x03 \x01(\bR\tstartOnly\"\xaa\x01\n" +
 	"\x1bUpdatePreviewPolicyResponse\x123\n" +
 	"\x06policy\x18\x01 \x01(\v2\x1b.stagd.api.v1.PreviewPolicyR\x06policy\x12\x1c\n" +
 	"\tinherited\x18\x02 \x01(\bR\tinherited\x128\n" +
