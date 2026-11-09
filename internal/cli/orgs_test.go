@@ -19,6 +19,13 @@ type fakeOrgs struct {
 
 	deleted     *apiv1.DeleteOrgRequest
 	transferred *apiv1.TransferOwnershipRequest
+	renamed     *apiv1.UpdateOrgRequest
+}
+
+func (f *fakeOrgs) UpdateOrg(_ context.Context, req *connect.Request[apiv1.UpdateOrgRequest]) (*connect.Response[apiv1.UpdateOrgResponse], error) {
+	f.renamed = req.Msg
+
+	return connect.NewResponse(&apiv1.UpdateOrgResponse{Membership: &apiv1.Membership{Org: &apiv1.Org{Slug: "acme", Name: req.Msg.GetName()}, Role: "admin"}}), nil
 }
 
 func (f *fakeOrgs) ListMembers(context.Context, *connect.Request[apiv1.ListMembersRequest]) (*connect.Response[apiv1.ListMembersResponse], error) {
@@ -129,5 +136,23 @@ func TestOrgsMembersTransfer(t *testing.T) {
 
 	if f.transferred.GetUserId() != "u2" || !strings.Contains(out, "bo owns the org now") {
 		t.Fatalf("sent %v, said %q", f.transferred, out)
+	}
+}
+
+func TestOrgsRename(t *testing.T) {
+	f := &fakeOrgs{}
+	srv := orgsServer(t, f)
+
+	if _, err := run(t, srv, "--token", "tok-1", "orgs", "rename"); err == nil || f.renamed != nil {
+		t.Fatal("no --name and no terminal: want an error, and nothing sent")
+	}
+
+	out, err := run(t, srv, "--token", "tok-1", "orgs", "rename", "--name", "  Acme Inc  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if f.renamed.GetName() != "Acme Inc" || !strings.Contains(out, "Renamed: ") || !strings.Contains(out, "Acme Inc") {
+		t.Fatalf("sent %v, said %q", f.renamed, out)
 	}
 }

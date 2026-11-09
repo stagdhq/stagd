@@ -53,6 +53,8 @@ const (
 	OrgServiceTransferOwnershipProcedure = "/stagd.api.v1.OrgService/TransferOwnership"
 	// OrgServiceDeleteOrgProcedure is the fully-qualified name of the OrgService's DeleteOrg RPC.
 	OrgServiceDeleteOrgProcedure = "/stagd.api.v1.OrgService/DeleteOrg"
+	// OrgServiceUpdateOrgProcedure is the fully-qualified name of the OrgService's UpdateOrg RPC.
+	OrgServiceUpdateOrgProcedure = "/stagd.api.v1.OrgService/UpdateOrg"
 	// InviteServiceCreateInvitesProcedure is the fully-qualified name of the InviteService's
 	// CreateInvites RPC.
 	InviteServiceCreateInvitesProcedure = "/stagd.api.v1.InviteService/CreateInvites"
@@ -108,6 +110,9 @@ type OrgServiceClient interface {
 	// GitHub accounts; until then Stagd's support can restore it. Backups keep
 	// it until they age out (90 days).
 	DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error)
+	// UpdateOrg changes the active org's name, admins only. Its slug stays:
+	// it's in links and the CLI's commands.
+	UpdateOrg(context.Context, *connect.Request[v1.UpdateOrgRequest]) (*connect.Response[v1.UpdateOrgResponse], error)
 }
 
 // NewOrgServiceClient constructs a client for the stagd.api.v1.OrgService service. By default, it
@@ -169,6 +174,12 @@ func NewOrgServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(orgServiceMethods.ByName("DeleteOrg")),
 			connect.WithClientOptions(opts...),
 		),
+		updateOrg: connect.NewClient[v1.UpdateOrgRequest, v1.UpdateOrgResponse](
+			httpClient,
+			baseURL+OrgServiceUpdateOrgProcedure,
+			connect.WithSchema(orgServiceMethods.ByName("UpdateOrg")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -182,6 +193,7 @@ type orgServiceClient struct {
 	removeMember      *connect.Client[v1.RemoveMemberRequest, v1.RemoveMemberResponse]
 	transferOwnership *connect.Client[v1.TransferOwnershipRequest, v1.TransferOwnershipResponse]
 	deleteOrg         *connect.Client[v1.DeleteOrgRequest, v1.DeleteOrgResponse]
+	updateOrg         *connect.Client[v1.UpdateOrgRequest, v1.UpdateOrgResponse]
 }
 
 // CreateOrg calls stagd.api.v1.OrgService.CreateOrg.
@@ -224,6 +236,11 @@ func (c *orgServiceClient) DeleteOrg(ctx context.Context, req *connect.Request[v
 	return c.deleteOrg.CallUnary(ctx, req)
 }
 
+// UpdateOrg calls stagd.api.v1.OrgService.UpdateOrg.
+func (c *orgServiceClient) UpdateOrg(ctx context.Context, req *connect.Request[v1.UpdateOrgRequest]) (*connect.Response[v1.UpdateOrgResponse], error) {
+	return c.updateOrg.CallUnary(ctx, req)
+}
+
 // OrgServiceHandler is an implementation of the stagd.api.v1.OrgService service.
 type OrgServiceHandler interface {
 	// CreateOrg creates an org with the caller as its owner, an admin, and makes it the
@@ -256,6 +273,9 @@ type OrgServiceHandler interface {
 	// GitHub accounts; until then Stagd's support can restore it. Backups keep
 	// it until they age out (90 days).
 	DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error)
+	// UpdateOrg changes the active org's name, admins only. Its slug stays:
+	// it's in links and the CLI's commands.
+	UpdateOrg(context.Context, *connect.Request[v1.UpdateOrgRequest]) (*connect.Response[v1.UpdateOrgResponse], error)
 }
 
 // NewOrgServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -313,6 +333,12 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(orgServiceMethods.ByName("DeleteOrg")),
 		connect.WithHandlerOptions(opts...),
 	)
+	orgServiceUpdateOrgHandler := connect.NewUnaryHandler(
+		OrgServiceUpdateOrgProcedure,
+		svc.UpdateOrg,
+		connect.WithSchema(orgServiceMethods.ByName("UpdateOrg")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.OrgService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case OrgServiceCreateOrgProcedure:
@@ -331,6 +357,8 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 			orgServiceTransferOwnershipHandler.ServeHTTP(w, r)
 		case OrgServiceDeleteOrgProcedure:
 			orgServiceDeleteOrgHandler.ServeHTTP(w, r)
+		case OrgServiceUpdateOrgProcedure:
+			orgServiceUpdateOrgHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -370,6 +398,10 @@ func (UnimplementedOrgServiceHandler) TransferOwnership(context.Context, *connec
 
 func (UnimplementedOrgServiceHandler) DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.DeleteOrg is not implemented"))
+}
+
+func (UnimplementedOrgServiceHandler) UpdateOrg(context.Context, *connect.Request[v1.UpdateOrgRequest]) (*connect.Response[v1.UpdateOrgResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.UpdateOrg is not implemented"))
 }
 
 // InviteServiceClient is a client for the stagd.api.v1.InviteService service.

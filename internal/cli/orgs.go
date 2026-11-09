@@ -99,6 +99,14 @@ func orgsCommand() *cli.Command {
 				Action: orgsCreate,
 			},
 			{
+				Name:  "rename",
+				Usage: "change the current org's name (admins); its slug stays",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "name", Usage: "the new name, e.g. \"Acme Inc\""},
+				},
+				Action: orgsRename,
+			},
+			{
 				Name:      "switch",
 				Usage:     "act in another of your orgs",
 				ArgsUsage: "<slug>",
@@ -262,6 +270,54 @@ func orgsCreate(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	_, err = fmt.Fprintf(w, "Created %s; you're in it now\n", membershipLabel(res.Msg.GetMembership()))
+
+	return err
+}
+
+func orgsRename(ctx context.Context, cmd *cli.Command) error {
+	name := strings.TrimSpace(cmd.String("name"))
+
+	// Asked for when someone is at the keyboard; scripts pass --name.
+	if name == "" {
+		if !interactive() {
+			return cli.Exit("usage: stagd orgs rename --name <name>", 2)
+		}
+
+		form := newForm(huh.NewGroup(
+			huh.NewInput().Title("New name").Placeholder("Acme Inc").Value(&name).
+				Validate(func(s string) error {
+					if strings.TrimSpace(s) == "" {
+						return fmt.Errorf("give the org a name")
+					}
+
+					return nil
+				}),
+		))
+
+		if err := form.RunWithContext(ctx); err != nil {
+			return err
+		}
+
+		name = strings.TrimSpace(name)
+	}
+
+	c, err := clients(cmd)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Orgs.UpdateOrg(ctx, connect.NewRequest(&apiv1.UpdateOrgRequest{Name: name}))
+	if err != nil {
+		return err
+	}
+
+	w := cmd.Root().Writer
+
+	if cmd.Bool("json") {
+		return output.JSON(w, res.Msg)
+	}
+
+	_, err = fmt.Fprintf(w, "Renamed: %s\n", membershipLabel(res.Msg.GetMembership()))
 
 	return err
 }

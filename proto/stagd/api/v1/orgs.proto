@@ -39,6 +39,9 @@ service OrgService {
   // GitHub accounts; until then Stagd's support can restore it. Backups keep
   // it until they age out (90 days).
   rpc DeleteOrg(DeleteOrgRequest) returns (DeleteOrgResponse);
+  // UpdateOrg changes the active org's name, admins only. Its slug stays:
+  // it's in links and the CLI's commands.
+  rpc UpdateOrg(UpdateOrgRequest) returns (UpdateOrgResponse);
 }
 
 // InviteService brings people into the active org: invites by email or by
@@ -183,6 +186,19 @@ message DeleteOrgResponse {
   // customer's side, which Stagd can't remove itself: by name, for the
   // person to uninstall (stagd compute uninstall, or deleting the manifest).
   repeated string compute = 1;
+}
+
+message UpdateOrgRequest {
+  // The org's new name, e.g. "Acme Inc"; trimmed.
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+}
+
+message UpdateOrgResponse {
+  // The caller's membership in the org, with its new name.
+  Membership membership = 1;
 }
 
 message CreateInvitesRequest {
