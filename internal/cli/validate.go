@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 
 	"github.com/stagdhq/stagd/internal/client/api"
+	"github.com/stagdhq/stagd/internal/configyaml"
 	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
 	"github.com/stagdhq/stagd/internal/output"
 )
@@ -29,7 +32,11 @@ func validateCommand() *cli.Command {
 		Usage:     "check stagd.yaml and the compose file as previews would read them",
 		ArgsUsage: "[repository directory]",
 		Description: "Reads the files from your checkout (the current directory by default) and has Stagd check them\n" +
-			"with the same rules previews use. Exits non-zero when there's something to fix, so CI can run it.",
+			"with the same rules previews use. Exits non-zero when there's something to fix, so CI can run it.\n" +
+			"With --explain, also prints stagd.yaml as Stagd reads it: shorthands written out, defaults filled in.",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "explain", Usage: "also print stagd.yaml as Stagd reads it, every default filled in"},
+		},
 		Action: validate,
 	}
 }
@@ -78,6 +85,12 @@ func validate(ctx context.Context, cmd *cli.Command) error {
 		}
 	} else {
 		printValidation(w, res)
+
+		if cmd.Bool("explain") {
+			if err := explain(w, res); err != nil {
+				return err
+			}
+		}
 	}
 
 	if n := len(res.GetProblems()); n > 0 {
@@ -176,4 +189,37 @@ func printValidation(w interface{ Write([]byte) (int, error) }, res *apiv1.Valid
 			fmt.Fprintf(w, "  - %s\n", n)
 		}
 	}
+}
+
+// explain prints stagd.yaml as previews read it, or why it can't.
+func explain(w io.Writer, res *apiv1.ValidateAppResponse) error {
+	read := false
+
+	for _, f := range res.GetFiles() {
+		if slices.Contains(configFiles, f) {
+			read = true
+		}
+	}
+
+	if !read {
+		fmt.Fprintln(w, "\nNo stagd.yaml: previews go by the compose file alone. stagd init writes one to start from.")
+
+		return nil
+	}
+
+	if len(res.GetProblems()) > 0 || res.GetConfig() == nil {
+		fmt.Fprintln(w, "\nstagd.yaml as Stagd reads it shows once the problems above are fixed.")
+
+		return nil
+	}
+
+	out, err := configyaml.Marshal(res.GetConfig())
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(w, "\nstagd.yaml as Stagd reads it, every default filled in:\n\n")
+	_, err = w.Write(out)
+
+	return err
 }

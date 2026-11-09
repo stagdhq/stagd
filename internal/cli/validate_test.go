@@ -8,11 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
 	"github.com/stagdhq/stagd/internal/gen/stagd/api/v1/apiv1connect"
+	configv1 "github.com/stagdhq/stagd/internal/gen/stagd/config/v1"
 )
 
 // fakeValidator asks once for deploy/compose.yaml, like the server does when
@@ -33,8 +36,22 @@ func (f *fakeValidator) ValidateApp(_ context.Context, req *connect.Request[apiv
 		return connect.NewResponse(&apiv1.ValidateAppResponse{Files: []string{"stagd.yaml", "deploy/compose.yaml"}, Problems: []string{"deploy/compose.yaml: no services"}}), nil
 	}
 
+	files := []string{"deploy/compose.yaml"}
+	config := &configv1.Config{}
+
+	if _, ok := req.Msg.GetFiles()["stagd.yaml"]; ok {
+		files = []string{"stagd.yaml", "deploy/compose.yaml"}
+		config = &configv1.Config{
+			Version:   1,
+			App:       &configv1.App{Compose: "deploy/compose.yaml"},
+			Lifecycle: &configv1.Lifecycle{SleepAfter: durationpb.New(2 * time.Hour)},
+			Previews:  &configv1.Previews{Previews: &configv1.Previews_When{When: "on-demand"}},
+		}
+	}
+
 	return connect.NewResponse(&apiv1.ValidateAppResponse{
-		Files:      []string{"stagd.yaml", "deploy/compose.yaml"},
+		Config:     config,
+		Files:      files,
 		Components: []*apiv1.AppComponent{{Name: "web", BuildContext: "."}, {Name: "db", Image: "postgres:17"}},
 		Ingresses:  []*apiv1.PreviewIngress{{Name: "web", Component: "web", Port: 3000, Primary: true}},
 		Notes:      []string{"web: bind mount ./src left out"},
@@ -123,5 +140,51 @@ func TestValidateRefusesPathsOutsideTheRepository(t *testing.T) {
 
 	if _, _, err := readRepoFile(t.TempDir(), "/etc/passwd"); err == nil {
 		t.Error("/etc/passwd should be refused")
+	}
+}
+
+func TestValidateExplainPrintsStagdYAMLAsItReads(t *testing.T) {
+	srv := validateServer(t, &fakeValidator{})
+	dir := repo(t, map[string]string{"stagd.yaml": "app: { compose: deploy/compose.yaml }", "deploy/compose.yaml": "services: {}"})
+
+	out, err := run(t, srv, "--token", "tok-1", "validate", "--explain", dir)
+	if err != nil {
+		t.Fatalf("validate: %v\n%s", err, out)
+	}
+
+	for _, want := range []string{"stagd.yaml as Stagd reads it", "version: 1\n", "app: {compose: deploy/compose.yaml}", "previews: {when: on-demand}", "sleep_after: 2h"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output misses %q:\n%s", want, out)
+		}
+	}
+}
+
+func TestValidateExplainWithoutStagdYAMLPointsAtInit(t *testing.T) {
+	srv := validateServer(t, &fakeValidator{})
+	dir := repo(t, map[string]string{"deploy/compose.yaml": "services: {}"})
+
+	out, err := run(t, srv, "--token", "tok-1", "validate", "--explain", dir)
+	if err != nil || !strings.Contains(out, "No stagd.yaml") || !strings.Contains(out, "stagd init") || strings.Contains(out, "version:") {
+		t.Fatalf("err = %v\n%s", err, out)
+	}
+}
+
+func TestValidateExplainWithProblemsSaysWhen(t *testing.T) {
+	srv := validateServer(t, &fakeValidator{})
+	dir := repo(t, map[string]string{"stagd.yaml": "app: { compose: deploy/compose.yaml }", "deploy/compose.yaml": "broken"})
+
+	out, err := run(t, srv, "--token", "tok-1", "validate", "--explain", dir)
+	if err == nil || !strings.Contains(out, "shows once the problems above are fixed") {
+		t.Fatalf("err = %v\n%s", err, out)
+	}
+}
+
+func TestValidateWithoutExplainLeavesItOut(t *testing.T) {
+	srv := validateServer(t, &fakeValidator{})
+	dir := repo(t, map[string]string{"stagd.yaml": "app: { compose: deploy/compose.yaml }", "deploy/compose.yaml": "services: {}"})
+
+	out, err := run(t, srv, "--token", "tok-1", "validate", dir)
+	if err != nil || strings.Contains(out, "as Stagd reads it") {
+		t.Fatalf("err = %v\n%s", err, out)
 	}
 }

@@ -43,6 +43,7 @@ stagd github connect                 # install the Stagd GitHub App and link it 
 stagd compute connect namespace      # where previews run: namespace, kubernetes or docker
 stagd secrets set --repo acme/web SESSION_SECRET
 stagd validate                       # check stagd.yaml and the compose file in a checkout
+stagd validate --explain             # and print stagd.yaml as Stagd reads it, defaults filled in
 stagd preview create --repo acme/web --pr 42
 stagd preview list
 ```
