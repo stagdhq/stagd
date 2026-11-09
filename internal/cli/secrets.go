@@ -33,7 +33,9 @@ func secretsCommand() *cli.Command {
 				Usage:     "create or replace secrets",
 				ArgsUsage: "NAME=value | NAME=@- | NAME …",
 				Description: "NAME=@- reads the value from stdin; a NAME alone asks for it without echoing.\n" +
-					"Values on the command line end up in your shell's history: prefer the other two.",
+					"Values on the command line end up in your shell's history: prefer the other two.\n\n" +
+					"A random value, never shown (a session key, a signing secret, a token):\n" +
+					"  openssl rand -base64 32 | stagd secrets set SESSION_SECRET=@-",
 				Flags:  []cli.Flag{repoFlag},
 				Action: secretsSet,
 			},
