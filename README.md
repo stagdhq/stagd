@@ -42,7 +42,7 @@ stagd orgs create acme --name "Acme" # or: stagd orgs list, stagd orgs switch <s
 stagd github connect                 # install the Stagd GitHub App and link it to the org
 stagd compute connect namespace      # where previews run: namespace, kubernetes or docker
 stagd secrets set --repo acme/web STRIPE_KEY   # asks for the value without echoing it
-openssl rand -base64 32 | stagd secrets set --repo acme/web --visibility write-only SESSION_SECRET=@-   # a random one, never shown
+openssl rand -base64 32 | stagd secrets set --repo acme/web SESSION_SECRET=@-   # a random one, never shown
 stagd validate                       # check stagd.yaml and the compose file in a checkout
 stagd validate --explain             # and print stagd.yaml as Stagd reads it, defaults filled in
 stagd preview create --repo acme/web --pr 42

@@ -39,10 +39,10 @@ func secretsCommand() *cli.Command {
 				Description: "NAME=@- reads the value from stdin; a NAME alone asks for it without echoing.\n" +
 					"Values on the command line end up in your shell's history: prefer the other two.\n\n" +
 					"A random value, never shown (a session key, a signing secret, a token):\n" +
-					"  openssl rand -base64 32 | stagd secrets set --visibility write-only SESSION_SECRET=@-",
+					"  openssl rand -base64 32 | stagd secrets set SESSION_SECRET=@-",
 				Flags: []cli.Flag{
 					repoFlag,
-					&cli.StringFlag{Name: "visibility", Usage: "visible, hidden or write-only; a new secret is hidden, a replaced one keeps its own"},
+					&cli.StringFlag{Name: "visibility", Usage: "visible, hidden or write-only; a new secret is write-only, a replaced one keeps its own"},
 				},
 				Action: secretsSet,
 			},

@@ -93,7 +93,7 @@ func TestSecretsSetSendsItsVisibility(t *testing.T) {
 		t.Errorf("visibility: got %v", f.set.GetVisibility())
 	}
 
-	// Without --visibility, the server decides: a new secret is hidden, a replaced one keeps its own.
+	// Without --visibility, the server decides: a new secret is write-only, a replaced one keeps its own.
 	if _, err := run(t, srv, "--token", "tok-1", "secrets", "set", "API_URL=https://api.example.com"); err != nil {
 		t.Fatal(err)
 	}

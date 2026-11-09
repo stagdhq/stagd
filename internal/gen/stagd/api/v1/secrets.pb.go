@@ -263,7 +263,7 @@ type SetSecretsRequest struct {
 	Repository string            `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
 	Values     map[string]string `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// The visibility of every secret set. Unspecified keeps a secret's own, and
-	// makes a new one hidden.
+	// makes a new one write-only.
 	Visibility    SecretVisibility `protobuf:"varint,3,opt,name=visibility,proto3,enum=stagd.api.v1.SecretVisibility" json:"visibility,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
