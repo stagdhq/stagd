@@ -77,7 +77,7 @@ func previewCommand() *cli.Command {
 					&cli.BoolFlag{Name: "unguessable-urls", Usage: "add a random token to new previews' URLs (--unguessable-urls=false to stop)"},
 					&cli.StringFlag{Name: "sleep-after", Usage: "how long a preview nobody opens stays awake, 45m to 24h, e.g. 2h; default for Stagd's (45m)"},
 					&cli.StringFlag{Name: "expire-after", Usage: "how long a preview lives without a new commit, 1h to 48h, e.g. 36h; default for Stagd's (24h)"},
-					&cli.BoolFlag{Name: "reset", Usage: "drop the repository's override; it follows the org's default again"},
+					&cli.BoolFlag{Name: "reset", Usage: "drop the repository's override; it follows the org's default again (its start stays: --start follow for that)"},
 				},
 				Action: previewPolicy,
 			},
@@ -169,7 +169,10 @@ func previewPolicy(ctx context.Context, cmd *cli.Command) error {
 			policy.ExpireAfter = d
 		}
 
-		updated, err := c.Previews.UpdatePreviewPolicy(ctx, connect.NewRequest(&apiv1.UpdatePreviewPolicyRequest{Policy: policy, Reset_: cmd.Bool("reset")}))
+		// Only --start and --label: the rest stays, and a repository without an override keeps following the org's.
+		startOnly := !(cmd.IsSet("access") || cmd.IsSet("public-ingress") || cmd.IsSet("unguessable-urls") || cmd.IsSet("sleep-after") || cmd.IsSet("expire-after") || cmd.Bool("reset"))
+
+		updated, err := c.Previews.UpdatePreviewPolicy(ctx, connect.NewRequest(&apiv1.UpdatePreviewPolicyRequest{Policy: policy, Reset_: cmd.Bool("reset"), StartOnly: startOnly}))
 		if err != nil {
 			return err
 		}

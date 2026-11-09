@@ -223,6 +223,19 @@ func TestPreviewPolicyStart(t *testing.T) {
 		t.Errorf("sent %v", got)
 	}
 
+	// Only the start: the rest of the repository's policy keeps following the org's.
+	if !f.updated.GetStartOnly() {
+		t.Error("--start alone should change only the start")
+	}
+
+	if _, err := run(t, srv, "--token", "tok-1", "preview", "policy", "--repo", "acme-inc/web", "--start", "always", "--access", "public"); err != nil {
+		t.Fatal(err)
+	}
+
+	if f.updated.GetStartOnly() {
+		t.Error("--start with --access changes the whole policy")
+	}
+
 	// Without a label to keep from the policy, --start label needs one.
 	f.policy = &apiv1.PreviewPolicy{Access: apiv1.PreviewAccess_PREVIEW_ACCESS_ORG}
 
