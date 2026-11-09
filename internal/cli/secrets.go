@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	apiv1 "github.com/stagdhq/stagd/internal/gen/stagd/api/v1"
+	"github.com/stagdhq/stagd/internal/gen/stagd/api/v1/apiv1connect"
 	"github.com/stagdhq/stagd/internal/output"
 )
 
@@ -251,20 +253,35 @@ func secretsGet(ctx context.Context, cmd *cli.Command) error {
 	return err
 }
 
+// activityAreas are ListActivityRequest's areas, for --area.
+var activityAreas = []string{"secrets", "seeds", "compute", "integrations", "repositories", "github", "members", "workspace"}
+
 func activityCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "activity",
-		Usage: "who changed what in the org: secrets, compute, access",
+		Usage: "who changed what in the org: secrets, compute, members, access",
 		Flags: []cli.Flag{
 			&cli.IntFlag{Name: "limit", Usage: "at most this many, newest first", Value: 50},
+			&cli.BoolFlag{Name: "all", Usage: "everything, however far back"},
+			&cli.StringFlag{Name: "area", Usage: "only one area: " + strings.Join(activityAreas, ", ")},
+			&cli.StringFlag{Name: "actor", Usage: "only what this person did, by email"},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			area := strings.ToLower(strings.TrimSpace(cmd.String("area")))
+
+			if area != "" && !slices.Contains(activityAreas, area) {
+				return fmt.Errorf("no area %q: one of %s", area, strings.Join(activityAreas, ", "))
+			}
+
 			c, err := clients(cmd)
 			if err != nil {
 				return err
 			}
 
-			res, err := c.Activity.ListActivity(ctx, connect.NewRequest(&apiv1.ListActivityRequest{PageSize: int32(cmd.Int("limit"))}))
+			entries, err := listActivity(ctx, c.Activity, &apiv1.ListActivityRequest{
+				Area:  area,
+				Actor: strings.TrimSpace(cmd.String("actor")),
+			}, cmd.Int("limit"), cmd.Bool("all"))
 			if err != nil {
 				return err
 			}
@@ -272,12 +289,12 @@ func activityCommand() *cli.Command {
 			w := cmd.Root().Writer
 
 			if cmd.Bool("json") {
-				return output.JSON(w, res.Msg)
+				return output.JSON(w, &apiv1.ListActivityResponse{Activity: entries})
 			}
 
-			rows := make([][]string, 0, len(res.Msg.GetActivity()))
+			rows := make([][]string, 0, len(entries))
 
-			for _, a := range res.Msg.GetActivity() {
+			for _, a := range entries {
 				who := a.GetActor()
 				if who == "" {
 					who = "Stagd"
@@ -288,5 +305,37 @@ func activityCommand() *cli.Command {
 
 			return output.Table(w, []string{"when", "who", "via", "what", "on"}, rows)
 		},
+	}
+}
+
+// listActivity follows the pages until it has limit entries, or every one when all is set.
+func listActivity(ctx context.Context, client apiv1connect.ActivityServiceClient, req *apiv1.ListActivityRequest, limit int, all bool) ([]*apiv1.Activity, error) {
+	var entries []*apiv1.Activity
+
+	for {
+		size := 500
+
+		if !all {
+			size = min(limit-len(entries), 500)
+		}
+
+		if size <= 0 {
+			return entries, nil
+		}
+
+		req.PageSize = int32(size)
+
+		res, err := client.ListActivity(ctx, connect.NewRequest(req))
+		if err != nil {
+			return nil, err
+		}
+
+		entries = append(entries, res.Msg.GetActivity()...)
+
+		if res.Msg.GetNextPageToken() == "" {
+			return entries, nil
+		}
+
+		req.PageToken = res.Msg.GetNextPageToken()
 	}
 }

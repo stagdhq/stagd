@@ -17,10 +17,12 @@ message Activity {
   google.protobuf.Timestamp create_time = 2;
   // Who, by email; empty for Stagd itself.
   string actor = 3;
-  // How: "web", "cli", "stagd" or "relay".
+  // How: "web", "cli", "stagd", "relay", or "github" for what someone did on
+  // GitHub (detail "by" holds their login).
   string via = 4;
-  // What happened, "<area>.<what happened>": e.g. "secret.set",
-  // "compute.default_set". The list is in internal/server/store/activity.go.
+  // What happened, "<kind>.<what happened>": e.g. "secret.set",
+  // "compute.default_set". Every one is listed in the platform's
+  // docs/activity.md.
   string action = 5;
   // What it happened to, in words.
   string target = 6;
@@ -33,8 +35,25 @@ message ListActivityRequest {
     gte: 0
     lte: 500
   }];
-  // The next_page_token of the page before.
+  // The next_page_token of the page before, asked with the same filters.
   string page_token = 2;
+  // Only this area, empty for all: "secrets", "seeds", "compute",
+  // "integrations", "repositories", "github", "members" or "workspace".
+  string area = 3 [(buf.validate.field).string = {
+    in: [
+      "",
+      "secrets",
+      "seeds",
+      "compute",
+      "integrations",
+      "repositories",
+      "github",
+      "members",
+      "workspace"
+    ]
+  }];
+  // Only what this person did, by email; empty for everyone.
+  string actor = 4 [(buf.validate.field).string.max_len = 320];
 }
 
 message ListActivityResponse {

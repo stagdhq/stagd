@@ -29,10 +29,12 @@ type Activity struct {
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// Who, by email; empty for Stagd itself.
 	Actor string `protobuf:"bytes,3,opt,name=actor,proto3" json:"actor,omitempty"`
-	// How: "web", "cli", "stagd" or "relay".
+	// How: "web", "cli", "stagd", "relay", or "github" for what someone did on
+	// GitHub (detail "by" holds their login).
 	Via string `protobuf:"bytes,4,opt,name=via,proto3" json:"via,omitempty"`
-	// What happened, "<area>.<what happened>": e.g. "secret.set",
-	// "compute.default_set". The list is in internal/server/store/activity.go.
+	// What happened, "<kind>.<what happened>": e.g. "secret.set",
+	// "compute.default_set". Every one is listed in the platform's
+	// docs/activity.md.
 	Action string `protobuf:"bytes,5,opt,name=action,proto3" json:"action,omitempty"`
 	// What it happened to, in words.
 	Target        string            `protobuf:"bytes,6,opt,name=target,proto3" json:"target,omitempty"`
@@ -124,8 +126,13 @@ type ListActivityRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// At most this many, newest first; 50 when unset.
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// The next_page_token of the page before.
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// The next_page_token of the page before, asked with the same filters.
+	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Only this area, empty for all: "secrets", "seeds", "compute",
+	// "integrations", "repositories", "github", "members" or "workspace".
+	Area string `protobuf:"bytes,3,opt,name=area,proto3" json:"area,omitempty"`
+	// Only what this person did, by email; empty for everyone.
+	Actor         string `protobuf:"bytes,4,opt,name=actor,proto3" json:"actor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -170,6 +177,20 @@ func (x *ListActivityRequest) GetPageSize() int32 {
 func (x *ListActivityRequest) GetPageToken() string {
 	if x != nil {
 		return x.PageToken
+	}
+	return ""
+}
+
+func (x *ListActivityRequest) GetArea() string {
+	if x != nil {
+		return x.Area
+	}
+	return ""
+}
+
+func (x *ListActivityRequest) GetActor() string {
+	if x != nil {
+		return x.Actor
 	}
 	return ""
 }
@@ -243,12 +264,14 @@ const file_stagd_api_v1_activity_proto_rawDesc = "" +
 	"\x06detail\x18\a \x03(\v2\".stagd.api.v1.Activity.DetailEntryR\x06detail\x1a9\n" +
 	"\vDetailEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"]\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xeb\x01\n" +
 	"\x13ListActivityRequest\x12'\n" +
 	"\tpage_size\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\xf4\x03(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"r\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x12l\n" +
+	"\x04area\x18\x03 \x01(\tBX\xbaHUrSR\x00R\asecretsR\x05seedsR\acomputeR\fintegrationsR\frepositoriesR\x06githubR\amembersR\tworkspaceR\x04area\x12\x1e\n" +
+	"\x05actor\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\xc0\x02R\x05actor\"r\n" +
 	"\x14ListActivityResponse\x122\n" +
 	"\bactivity\x18\x01 \x03(\v2\x16.stagd.api.v1.ActivityR\bactivity\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2h\n" +
