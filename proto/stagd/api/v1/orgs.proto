@@ -27,6 +27,14 @@ service OrgService {
   // RemoveMember takes someone out of the active org and ends their sessions
   // in it. The last admin can't be removed.
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
+  // DeleteOrg deletes the active org and everything Stagd keeps for it: its
+  // previews are stopped, its connections, repositories, secrets, seeds and
+  // activity are deleted, and Stagd's GitHub App is uninstalled from its
+  // GitHub accounts. Admins only, with the org's slug typed as confirmation.
+  // The org is gone for its members at once; the rest runs in the
+  // background. Its members are told by email. Backups keep it until they
+  // age out (90 days).
+  rpc DeleteOrg(DeleteOrgRequest) returns (DeleteOrgResponse);
 }
 
 // InviteService brings people into the active org: invites by email or by
@@ -135,6 +143,32 @@ message RemoveMemberRequest {
 }
 
 message RemoveMemberResponse {}
+
+// Why an org is deleted, to learn from; optional.
+enum LeaveReason {
+  LEAVE_REASON_UNSPECIFIED = 0;
+  LEAVE_REASON_TOO_EXPENSIVE = 1;
+  LEAVE_REASON_MISSING_FEATURE = 2;
+  LEAVE_REASON_HARD_TO_SET_UP = 3;
+  LEAVE_REASON_OTHER_TOOL = 4;
+  LEAVE_REASON_JUST_TRYING = 5;
+  LEAVE_REASON_OTHER = 6;
+}
+
+message DeleteOrgRequest {
+  // The active org's slug, typed again: it must match.
+  string slug = 1 [(buf.validate.field).string.min_len = 1];
+  LeaveReason reason = 2;
+  // In the person's own words; kept by Stagd without any of the org's data.
+  string reason_text = 3 [(buf.validate.field).string.max_len = 2000];
+}
+
+message DeleteOrgResponse {
+  // Compute connections whose relay or access is still installed on the
+  // customer's side, which Stagd can't remove itself: by name, for the
+  // person to uninstall (stagd compute uninstall, or deleting the manifest).
+  repeated string compute = 1;
+}
 
 message CreateInvitesRequest {
   // Emails, or code-host usernames (GitHub's, with or without @).
