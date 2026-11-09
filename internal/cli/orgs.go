@@ -109,6 +109,17 @@ func orgsCommand() *cli.Command {
 				Usage:  "list the people in the current org",
 				Action: orgsMembers,
 			},
+			{
+				Name:      "delete",
+				Usage:     "delete the current org and everything Stagd keeps for it (admins)",
+				ArgsUsage: "<slug>",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{Name: "yes", Usage: "don't ask: the slug given is the confirmation"},
+					&cli.StringFlag{Name: "reason", Usage: "why: " + strings.Join(leaveReasonNames, ", ")},
+					&cli.StringFlag{Name: "why", Usage: "why, in your own words"},
+				},
+				Action: orgsDelete,
+			},
 		},
 	}
 }
@@ -289,4 +300,92 @@ func orgsMembers(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	return output.Table(w, []string{"name", "email", "role"}, rows)
+}
+
+// leaveReasons are DeleteOrg's reasons, as --reason takes them.
+var leaveReasons = map[string]apiv1.LeaveReason{
+	"too-expensive":   apiv1.LeaveReason_LEAVE_REASON_TOO_EXPENSIVE,
+	"missing-feature": apiv1.LeaveReason_LEAVE_REASON_MISSING_FEATURE,
+	"hard-to-set-up":  apiv1.LeaveReason_LEAVE_REASON_HARD_TO_SET_UP,
+	"other-tool":      apiv1.LeaveReason_LEAVE_REASON_OTHER_TOOL,
+	"just-trying":     apiv1.LeaveReason_LEAVE_REASON_JUST_TRYING,
+	"other":           apiv1.LeaveReason_LEAVE_REASON_OTHER,
+}
+
+var leaveReasonNames = []string{"too-expensive", "missing-feature", "hard-to-set-up", "other-tool", "just-trying", "other"}
+
+// orgsDelete deletes the current org: its slug typed as confirmation, asked again at the keyboard
+// unless --yes, and why, if they'll say.
+func orgsDelete(ctx context.Context, cmd *cli.Command) error {
+	slug := strings.TrimSpace(cmd.Args().First())
+	if slug == "" {
+		return cli.Exit("usage: stagd orgs delete <slug> (the current org's)", 2)
+	}
+
+	reasonName := strings.TrimSpace(cmd.String("reason"))
+	why := strings.TrimSpace(cmd.String("why"))
+
+	reason, ok := leaveReasons[reasonName]
+	if reasonName != "" && !ok {
+		return cli.Exit("--reason is one of "+strings.Join(leaveReasonNames, ", "), 2)
+	}
+
+	if !cmd.Bool("yes") {
+		if !interactive() {
+			return cli.Exit("pass --yes to delete without a prompt", 2)
+		}
+
+		typed := ""
+		options := []huh.Option[string]{huh.NewOption("Skip", "")}
+
+		for _, name := range leaveReasonNames {
+			options = append(options, huh.NewOption(name, name))
+		}
+
+		form := huh.NewForm(huh.NewGroup(
+			huh.NewInput().
+				Title("Delete "+slug+"?").
+				Description("Its previews stop, and its connections, repositories, secrets, seeds and activity\nare deleted. Stagd's GitHub App is uninstalled from its GitHub accounts.\nEveryone in it loses access. This can't be undone. Type the slug again to confirm.").
+				Value(&typed).
+				Validate(func(s string) error {
+					if strings.TrimSpace(s) != slug {
+						return fmt.Errorf("type %s", slug)
+					}
+
+					return nil
+				}),
+			huh.NewSelect[string]().Title("Why are you leaving? (optional)").Options(options...).Value(&reasonName),
+			huh.NewInput().Title("Anything else? (optional)").Value(&why),
+		))
+
+		if err := form.RunWithContext(ctx); err != nil {
+			return err
+		}
+
+		reason = leaveReasons[reasonName]
+	}
+
+	c, err := clients(cmd)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Orgs.DeleteOrg(ctx, connect.NewRequest(&apiv1.DeleteOrgRequest{Slug: slug, Reason: reason, ReasonText: strings.TrimSpace(why)}))
+	if err != nil {
+		return err
+	}
+
+	w := cmd.Root().Writer
+
+	if cmd.Bool("json") {
+		return output.JSON(w, res.Msg)
+	}
+
+	fmt.Fprintf(w, "Deleted %s. Its previews are being torn down, and its members get an email.\n", slug)
+
+	if compute := res.Msg.GetCompute(); len(compute) > 0 {
+		fmt.Fprintf(w, "Stagd's access is still installed on your side for: %s.\nRemove it with stagd compute uninstall, or delete the manifests you applied.\n", strings.Join(compute, ", "))
+	}
+
+	return nil
 }

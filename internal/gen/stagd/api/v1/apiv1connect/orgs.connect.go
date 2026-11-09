@@ -48,6 +48,8 @@ const (
 	OrgServiceUpdateMemberRoleProcedure = "/stagd.api.v1.OrgService/UpdateMemberRole"
 	// OrgServiceRemoveMemberProcedure is the fully-qualified name of the OrgService's RemoveMember RPC.
 	OrgServiceRemoveMemberProcedure = "/stagd.api.v1.OrgService/RemoveMember"
+	// OrgServiceDeleteOrgProcedure is the fully-qualified name of the OrgService's DeleteOrg RPC.
+	OrgServiceDeleteOrgProcedure = "/stagd.api.v1.OrgService/DeleteOrg"
 	// InviteServiceCreateInvitesProcedure is the fully-qualified name of the InviteService's
 	// CreateInvites RPC.
 	InviteServiceCreateInvitesProcedure = "/stagd.api.v1.InviteService/CreateInvites"
@@ -91,6 +93,14 @@ type OrgServiceClient interface {
 	// RemoveMember takes someone out of the active org and ends their sessions
 	// in it. The last admin can't be removed.
 	RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error)
+	// DeleteOrg deletes the active org and everything Stagd keeps for it: its
+	// previews are stopped, its connections, repositories, secrets, seeds and
+	// activity are deleted, and Stagd's GitHub App is uninstalled from its
+	// GitHub accounts. Admins only, with the org's slug typed as confirmation.
+	// The org is gone for its members at once; the rest runs in the
+	// background. Its members are told by email. Backups keep it until they
+	// age out (90 days).
+	DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error)
 }
 
 // NewOrgServiceClient constructs a client for the stagd.api.v1.OrgService service. By default, it
@@ -140,6 +150,12 @@ func NewOrgServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(orgServiceMethods.ByName("RemoveMember")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteOrg: connect.NewClient[v1.DeleteOrgRequest, v1.DeleteOrgResponse](
+			httpClient,
+			baseURL+OrgServiceDeleteOrgProcedure,
+			connect.WithSchema(orgServiceMethods.ByName("DeleteOrg")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -151,6 +167,7 @@ type orgServiceClient struct {
 	listMembers      *connect.Client[v1.ListMembersRequest, v1.ListMembersResponse]
 	updateMemberRole *connect.Client[v1.UpdateMemberRoleRequest, v1.UpdateMemberRoleResponse]
 	removeMember     *connect.Client[v1.RemoveMemberRequest, v1.RemoveMemberResponse]
+	deleteOrg        *connect.Client[v1.DeleteOrgRequest, v1.DeleteOrgResponse]
 }
 
 // CreateOrg calls stagd.api.v1.OrgService.CreateOrg.
@@ -183,6 +200,11 @@ func (c *orgServiceClient) RemoveMember(ctx context.Context, req *connect.Reques
 	return c.removeMember.CallUnary(ctx, req)
 }
 
+// DeleteOrg calls stagd.api.v1.OrgService.DeleteOrg.
+func (c *orgServiceClient) DeleteOrg(ctx context.Context, req *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error) {
+	return c.deleteOrg.CallUnary(ctx, req)
+}
+
 // OrgServiceHandler is an implementation of the stagd.api.v1.OrgService service.
 type OrgServiceHandler interface {
 	// CreateOrg creates an org with the caller as its owner and makes it the
@@ -203,6 +225,14 @@ type OrgServiceHandler interface {
 	// RemoveMember takes someone out of the active org and ends their sessions
 	// in it. The last admin can't be removed.
 	RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error)
+	// DeleteOrg deletes the active org and everything Stagd keeps for it: its
+	// previews are stopped, its connections, repositories, secrets, seeds and
+	// activity are deleted, and Stagd's GitHub App is uninstalled from its
+	// GitHub accounts. Admins only, with the org's slug typed as confirmation.
+	// The org is gone for its members at once; the rest runs in the
+	// background. Its members are told by email. Backups keep it until they
+	// age out (90 days).
+	DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error)
 }
 
 // NewOrgServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -248,6 +278,12 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(orgServiceMethods.ByName("RemoveMember")),
 		connect.WithHandlerOptions(opts...),
 	)
+	orgServiceDeleteOrgHandler := connect.NewUnaryHandler(
+		OrgServiceDeleteOrgProcedure,
+		svc.DeleteOrg,
+		connect.WithSchema(orgServiceMethods.ByName("DeleteOrg")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.OrgService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case OrgServiceCreateOrgProcedure:
@@ -262,6 +298,8 @@ func NewOrgServiceHandler(svc OrgServiceHandler, opts ...connect.HandlerOption) 
 			orgServiceUpdateMemberRoleHandler.ServeHTTP(w, r)
 		case OrgServiceRemoveMemberProcedure:
 			orgServiceRemoveMemberHandler.ServeHTTP(w, r)
+		case OrgServiceDeleteOrgProcedure:
+			orgServiceDeleteOrgHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -293,6 +331,10 @@ func (UnimplementedOrgServiceHandler) UpdateMemberRole(context.Context, *connect
 
 func (UnimplementedOrgServiceHandler) RemoveMember(context.Context, *connect.Request[v1.RemoveMemberRequest]) (*connect.Response[v1.RemoveMemberResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.RemoveMember is not implemented"))
+}
+
+func (UnimplementedOrgServiceHandler) DeleteOrg(context.Context, *connect.Request[v1.DeleteOrgRequest]) (*connect.Response[v1.DeleteOrgResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.OrgService.DeleteOrg is not implemented"))
 }
 
 // InviteServiceClient is a client for the stagd.api.v1.InviteService service.

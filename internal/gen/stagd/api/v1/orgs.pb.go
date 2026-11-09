@@ -82,6 +82,68 @@ func (Role) EnumDescriptor() ([]byte, []int) {
 	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{0}
 }
 
+// Why an org is deleted, to learn from; optional.
+type LeaveReason int32
+
+const (
+	LeaveReason_LEAVE_REASON_UNSPECIFIED     LeaveReason = 0
+	LeaveReason_LEAVE_REASON_TOO_EXPENSIVE   LeaveReason = 1
+	LeaveReason_LEAVE_REASON_MISSING_FEATURE LeaveReason = 2
+	LeaveReason_LEAVE_REASON_HARD_TO_SET_UP  LeaveReason = 3
+	LeaveReason_LEAVE_REASON_OTHER_TOOL      LeaveReason = 4
+	LeaveReason_LEAVE_REASON_JUST_TRYING     LeaveReason = 5
+	LeaveReason_LEAVE_REASON_OTHER           LeaveReason = 6
+)
+
+// Enum value maps for LeaveReason.
+var (
+	LeaveReason_name = map[int32]string{
+		0: "LEAVE_REASON_UNSPECIFIED",
+		1: "LEAVE_REASON_TOO_EXPENSIVE",
+		2: "LEAVE_REASON_MISSING_FEATURE",
+		3: "LEAVE_REASON_HARD_TO_SET_UP",
+		4: "LEAVE_REASON_OTHER_TOOL",
+		5: "LEAVE_REASON_JUST_TRYING",
+		6: "LEAVE_REASON_OTHER",
+	}
+	LeaveReason_value = map[string]int32{
+		"LEAVE_REASON_UNSPECIFIED":     0,
+		"LEAVE_REASON_TOO_EXPENSIVE":   1,
+		"LEAVE_REASON_MISSING_FEATURE": 2,
+		"LEAVE_REASON_HARD_TO_SET_UP":  3,
+		"LEAVE_REASON_OTHER_TOOL":      4,
+		"LEAVE_REASON_JUST_TRYING":     5,
+		"LEAVE_REASON_OTHER":           6,
+	}
+)
+
+func (x LeaveReason) Enum() *LeaveReason {
+	p := new(LeaveReason)
+	*p = x
+	return p
+}
+
+func (x LeaveReason) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LeaveReason) Descriptor() protoreflect.EnumDescriptor {
+	return file_stagd_api_v1_orgs_proto_enumTypes[1].Descriptor()
+}
+
+func (LeaveReason) Type() protoreflect.EnumType {
+	return &file_stagd_api_v1_orgs_proto_enumTypes[1]
+}
+
+func (x LeaveReason) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LeaveReason.Descriptor instead.
+func (LeaveReason) EnumDescriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{1}
+}
+
 type CreateOrgRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -666,6 +728,115 @@ func (*RemoveMemberResponse) Descriptor() ([]byte, []int) {
 	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{11}
 }
 
+type DeleteOrgRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The active org's slug, typed again: it must match.
+	Slug   string      `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
+	Reason LeaveReason `protobuf:"varint,2,opt,name=reason,proto3,enum=stagd.api.v1.LeaveReason" json:"reason,omitempty"`
+	// In the person's own words; kept by Stagd without any of the org's data.
+	ReasonText    string `protobuf:"bytes,3,opt,name=reason_text,json=reasonText,proto3" json:"reason_text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteOrgRequest) Reset() {
+	*x = DeleteOrgRequest{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteOrgRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOrgRequest) ProtoMessage() {}
+
+func (x *DeleteOrgRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOrgRequest.ProtoReflect.Descriptor instead.
+func (*DeleteOrgRequest) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *DeleteOrgRequest) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+func (x *DeleteOrgRequest) GetReason() LeaveReason {
+	if x != nil {
+		return x.Reason
+	}
+	return LeaveReason_LEAVE_REASON_UNSPECIFIED
+}
+
+func (x *DeleteOrgRequest) GetReasonText() string {
+	if x != nil {
+		return x.ReasonText
+	}
+	return ""
+}
+
+type DeleteOrgResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Compute connections whose relay or access is still installed on the
+	// customer's side, which Stagd can't remove itself: by name, for the
+	// person to uninstall (stagd compute uninstall, or deleting the manifest).
+	Compute       []string `protobuf:"bytes,1,rep,name=compute,proto3" json:"compute,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteOrgResponse) Reset() {
+	*x = DeleteOrgResponse{}
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteOrgResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOrgResponse) ProtoMessage() {}
+
+func (x *DeleteOrgResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOrgResponse.ProtoReflect.Descriptor instead.
+func (*DeleteOrgResponse) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *DeleteOrgResponse) GetCompute() []string {
+	if x != nil {
+		return x.Compute
+	}
+	return nil
+}
+
 type CreateInvitesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Emails, or code-host usernames (GitHub's, with or without @).
@@ -677,7 +848,7 @@ type CreateInvitesRequest struct {
 
 func (x *CreateInvitesRequest) Reset() {
 	*x = CreateInvitesRequest{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[12]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -689,7 +860,7 @@ func (x *CreateInvitesRequest) String() string {
 func (*CreateInvitesRequest) ProtoMessage() {}
 
 func (x *CreateInvitesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[12]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -702,7 +873,7 @@ func (x *CreateInvitesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateInvitesRequest.ProtoReflect.Descriptor instead.
 func (*CreateInvitesRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{12}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateInvitesRequest) GetInvitees() []string {
@@ -731,7 +902,7 @@ type CreateInvitesResponse struct {
 
 func (x *CreateInvitesResponse) Reset() {
 	*x = CreateInvitesResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[13]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -743,7 +914,7 @@ func (x *CreateInvitesResponse) String() string {
 func (*CreateInvitesResponse) ProtoMessage() {}
 
 func (x *CreateInvitesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[13]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -756,7 +927,7 @@ func (x *CreateInvitesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateInvitesResponse.ProtoReflect.Descriptor instead.
 func (*CreateInvitesResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{13}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateInvitesResponse) GetInvites() []*Invite {
@@ -783,7 +954,7 @@ type InviteProblem struct {
 
 func (x *InviteProblem) Reset() {
 	*x = InviteProblem{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[14]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -795,7 +966,7 @@ func (x *InviteProblem) String() string {
 func (*InviteProblem) ProtoMessage() {}
 
 func (x *InviteProblem) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[14]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -808,7 +979,7 @@ func (x *InviteProblem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InviteProblem.ProtoReflect.Descriptor instead.
 func (*InviteProblem) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{14}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *InviteProblem) GetInvitee() string {
@@ -846,7 +1017,7 @@ type Invite struct {
 
 func (x *Invite) Reset() {
 	*x = Invite{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[15]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -858,7 +1029,7 @@ func (x *Invite) String() string {
 func (*Invite) ProtoMessage() {}
 
 func (x *Invite) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[15]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -871,7 +1042,7 @@ func (x *Invite) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Invite.ProtoReflect.Descriptor instead.
 func (*Invite) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{15}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Invite) GetId() string {
@@ -945,7 +1116,7 @@ type ListInvitesRequest struct {
 
 func (x *ListInvitesRequest) Reset() {
 	*x = ListInvitesRequest{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[16]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -957,7 +1128,7 @@ func (x *ListInvitesRequest) String() string {
 func (*ListInvitesRequest) ProtoMessage() {}
 
 func (x *ListInvitesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[16]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -970,7 +1141,7 @@ func (x *ListInvitesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInvitesRequest.ProtoReflect.Descriptor instead.
 func (*ListInvitesRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{16}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{18}
 }
 
 type ListInvitesResponse struct {
@@ -982,7 +1153,7 @@ type ListInvitesResponse struct {
 
 func (x *ListInvitesResponse) Reset() {
 	*x = ListInvitesResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[17]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -994,7 +1165,7 @@ func (x *ListInvitesResponse) String() string {
 func (*ListInvitesResponse) ProtoMessage() {}
 
 func (x *ListInvitesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[17]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1007,7 +1178,7 @@ func (x *ListInvitesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInvitesResponse.ProtoReflect.Descriptor instead.
 func (*ListInvitesResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{17}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListInvitesResponse) GetInvites() []*Invite {
@@ -1026,7 +1197,7 @@ type ResendInviteRequest struct {
 
 func (x *ResendInviteRequest) Reset() {
 	*x = ResendInviteRequest{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[18]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1038,7 +1209,7 @@ func (x *ResendInviteRequest) String() string {
 func (*ResendInviteRequest) ProtoMessage() {}
 
 func (x *ResendInviteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[18]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1051,7 +1222,7 @@ func (x *ResendInviteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResendInviteRequest.ProtoReflect.Descriptor instead.
 func (*ResendInviteRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{18}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ResendInviteRequest) GetId() string {
@@ -1070,7 +1241,7 @@ type ResendInviteResponse struct {
 
 func (x *ResendInviteResponse) Reset() {
 	*x = ResendInviteResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[19]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1082,7 +1253,7 @@ func (x *ResendInviteResponse) String() string {
 func (*ResendInviteResponse) ProtoMessage() {}
 
 func (x *ResendInviteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[19]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1095,7 +1266,7 @@ func (x *ResendInviteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResendInviteResponse.ProtoReflect.Descriptor instead.
 func (*ResendInviteResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{19}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ResendInviteResponse) GetInvite() *Invite {
@@ -1114,7 +1285,7 @@ type RevokeInviteRequest struct {
 
 func (x *RevokeInviteRequest) Reset() {
 	*x = RevokeInviteRequest{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[20]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1126,7 +1297,7 @@ func (x *RevokeInviteRequest) String() string {
 func (*RevokeInviteRequest) ProtoMessage() {}
 
 func (x *RevokeInviteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[20]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1139,7 +1310,7 @@ func (x *RevokeInviteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeInviteRequest.ProtoReflect.Descriptor instead.
 func (*RevokeInviteRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{20}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *RevokeInviteRequest) GetId() string {
@@ -1157,7 +1328,7 @@ type RevokeInviteResponse struct {
 
 func (x *RevokeInviteResponse) Reset() {
 	*x = RevokeInviteResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[21]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1169,7 +1340,7 @@ func (x *RevokeInviteResponse) String() string {
 func (*RevokeInviteResponse) ProtoMessage() {}
 
 func (x *RevokeInviteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[21]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1182,7 +1353,7 @@ func (x *RevokeInviteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeInviteResponse.ProtoReflect.Descriptor instead.
 func (*RevokeInviteResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{21}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{23}
 }
 
 type InviteLink struct {
@@ -1196,7 +1367,7 @@ type InviteLink struct {
 
 func (x *InviteLink) Reset() {
 	*x = InviteLink{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[22]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1208,7 +1379,7 @@ func (x *InviteLink) String() string {
 func (*InviteLink) ProtoMessage() {}
 
 func (x *InviteLink) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[22]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1221,7 +1392,7 @@ func (x *InviteLink) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InviteLink.ProtoReflect.Descriptor instead.
 func (*InviteLink) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{22}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *InviteLink) GetUrl() string {
@@ -1253,7 +1424,7 @@ type GetInviteLinkRequest struct {
 
 func (x *GetInviteLinkRequest) Reset() {
 	*x = GetInviteLinkRequest{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[23]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1265,7 +1436,7 @@ func (x *GetInviteLinkRequest) String() string {
 func (*GetInviteLinkRequest) ProtoMessage() {}
 
 func (x *GetInviteLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[23]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1278,7 +1449,7 @@ func (x *GetInviteLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInviteLinkRequest.ProtoReflect.Descriptor instead.
 func (*GetInviteLinkRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{23}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{25}
 }
 
 type GetInviteLinkResponse struct {
@@ -1291,7 +1462,7 @@ type GetInviteLinkResponse struct {
 
 func (x *GetInviteLinkResponse) Reset() {
 	*x = GetInviteLinkResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[24]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1303,7 +1474,7 @@ func (x *GetInviteLinkResponse) String() string {
 func (*GetInviteLinkResponse) ProtoMessage() {}
 
 func (x *GetInviteLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[24]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1316,7 +1487,7 @@ func (x *GetInviteLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInviteLinkResponse.ProtoReflect.Descriptor instead.
 func (*GetInviteLinkResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{24}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetInviteLinkResponse) GetLink() *InviteLink {
@@ -1336,7 +1507,7 @@ type ResetInviteLinkRequest struct {
 
 func (x *ResetInviteLinkRequest) Reset() {
 	*x = ResetInviteLinkRequest{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[25]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1348,7 +1519,7 @@ func (x *ResetInviteLinkRequest) String() string {
 func (*ResetInviteLinkRequest) ProtoMessage() {}
 
 func (x *ResetInviteLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[25]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1361,7 +1532,7 @@ func (x *ResetInviteLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetInviteLinkRequest.ProtoReflect.Descriptor instead.
 func (*ResetInviteLinkRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{25}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ResetInviteLinkRequest) GetRole() Role {
@@ -1380,7 +1551,7 @@ type ResetInviteLinkResponse struct {
 
 func (x *ResetInviteLinkResponse) Reset() {
 	*x = ResetInviteLinkResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[26]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1392,7 +1563,7 @@ func (x *ResetInviteLinkResponse) String() string {
 func (*ResetInviteLinkResponse) ProtoMessage() {}
 
 func (x *ResetInviteLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[26]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1405,7 +1576,7 @@ func (x *ResetInviteLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResetInviteLinkResponse.ProtoReflect.Descriptor instead.
 func (*ResetInviteLinkResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{26}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ResetInviteLinkResponse) GetLink() *InviteLink {
@@ -1423,7 +1594,7 @@ type DisableInviteLinkRequest struct {
 
 func (x *DisableInviteLinkRequest) Reset() {
 	*x = DisableInviteLinkRequest{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[27]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1435,7 +1606,7 @@ func (x *DisableInviteLinkRequest) String() string {
 func (*DisableInviteLinkRequest) ProtoMessage() {}
 
 func (x *DisableInviteLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[27]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1448,7 +1619,7 @@ func (x *DisableInviteLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableInviteLinkRequest.ProtoReflect.Descriptor instead.
 func (*DisableInviteLinkRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{27}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{29}
 }
 
 type DisableInviteLinkResponse struct {
@@ -1459,7 +1630,7 @@ type DisableInviteLinkResponse struct {
 
 func (x *DisableInviteLinkResponse) Reset() {
 	*x = DisableInviteLinkResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[28]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1471,7 +1642,7 @@ func (x *DisableInviteLinkResponse) String() string {
 func (*DisableInviteLinkResponse) ProtoMessage() {}
 
 func (x *DisableInviteLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[28]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1484,7 +1655,7 @@ func (x *DisableInviteLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableInviteLinkResponse.ProtoReflect.Descriptor instead.
 func (*DisableInviteLinkResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{28}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{30}
 }
 
 type ListMembersResponse struct {
@@ -1496,7 +1667,7 @@ type ListMembersResponse struct {
 
 func (x *ListMembersResponse) Reset() {
 	*x = ListMembersResponse{}
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[29]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1508,7 +1679,7 @@ func (x *ListMembersResponse) String() string {
 func (*ListMembersResponse) ProtoMessage() {}
 
 func (x *ListMembersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_orgs_proto_msgTypes[29]
+	mi := &file_stagd_api_v1_orgs_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1521,7 +1692,7 @@ func (x *ListMembersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMembersResponse.ProtoReflect.Descriptor instead.
 func (*ListMembersResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{29}
+	return file_stagd_api_v1_orgs_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ListMembersResponse) GetMembers() []*Member {
@@ -1569,7 +1740,14 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\x06member\x18\x01 \x01(\v2\x14.stagd.api.v1.MemberR\x06member\"7\n" +
 	"\x13RemoveMemberRequest\x12 \n" +
 	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\x16\n" +
-	"\x14RemoveMemberResponse\"r\n" +
+	"\x14RemoveMemberResponse\"\x8d\x01\n" +
+	"\x10DeleteOrgRequest\x12\x1b\n" +
+	"\x04slug\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04slug\x121\n" +
+	"\x06reason\x18\x02 \x01(\x0e2\x19.stagd.api.v1.LeaveReasonR\x06reason\x12)\n" +
+	"\vreason_text\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\xd0\x0fR\n" +
+	"reasonText\"-\n" +
+	"\x11DeleteOrgResponse\x12\x18\n" +
+	"\acompute\x18\x01 \x03(\tR\acompute\"r\n" +
 	"\x14CreateInvitesRequest\x12&\n" +
 	"\binvitees\x18\x01 \x03(\tB\n" +
 	"\xbaH\a\x92\x01\x04\b\x01\x102R\binvitees\x122\n" +
@@ -1626,7 +1804,15 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\n" +
 	"ROLE_ADMIN\x10\x01\x12\x0f\n" +
 	"\vROLE_MEMBER\x10\x02\x12\x0f\n" +
-	"\vROLE_VIEWER\x10\x032\x81\x04\n" +
+	"\vROLE_VIEWER\x10\x03*\xe1\x01\n" +
+	"\vLeaveReason\x12\x1c\n" +
+	"\x18LEAVE_REASON_UNSPECIFIED\x10\x00\x12\x1e\n" +
+	"\x1aLEAVE_REASON_TOO_EXPENSIVE\x10\x01\x12 \n" +
+	"\x1cLEAVE_REASON_MISSING_FEATURE\x10\x02\x12\x1f\n" +
+	"\x1bLEAVE_REASON_HARD_TO_SET_UP\x10\x03\x12\x1b\n" +
+	"\x17LEAVE_REASON_OTHER_TOOL\x10\x04\x12\x1c\n" +
+	"\x18LEAVE_REASON_JUST_TRYING\x10\x05\x12\x16\n" +
+	"\x12LEAVE_REASON_OTHER\x10\x062\xcf\x04\n" +
 	"\n" +
 	"OrgService\x12L\n" +
 	"\tCreateOrg\x12\x1e.stagd.api.v1.CreateOrgRequest\x1a\x1f.stagd.api.v1.CreateOrgResponse\x12I\n" +
@@ -1634,7 +1820,8 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\tSwitchOrg\x12\x1e.stagd.api.v1.SwitchOrgRequest\x1a\x1f.stagd.api.v1.SwitchOrgResponse\x12R\n" +
 	"\vListMembers\x12 .stagd.api.v1.ListMembersRequest\x1a!.stagd.api.v1.ListMembersResponse\x12a\n" +
 	"\x10UpdateMemberRole\x12%.stagd.api.v1.UpdateMemberRoleRequest\x1a&.stagd.api.v1.UpdateMemberRoleResponse\x12U\n" +
-	"\fRemoveMember\x12!.stagd.api.v1.RemoveMemberRequest\x1a\".stagd.api.v1.RemoveMemberResponse2\x8b\x05\n" +
+	"\fRemoveMember\x12!.stagd.api.v1.RemoveMemberRequest\x1a\".stagd.api.v1.RemoveMemberResponse\x12L\n" +
+	"\tDeleteOrg\x12\x1e.stagd.api.v1.DeleteOrgRequest\x1a\x1f.stagd.api.v1.DeleteOrgResponse2\x8b\x05\n" +
 	"\rInviteService\x12X\n" +
 	"\rCreateInvites\x12\".stagd.api.v1.CreateInvitesRequest\x1a#.stagd.api.v1.CreateInvitesResponse\x12R\n" +
 	"\vListInvites\x12 .stagd.api.v1.ListInvitesRequest\x1a!.stagd.api.v1.ListInvitesResponse\x12U\n" +
@@ -1657,100 +1844,106 @@ func file_stagd_api_v1_orgs_proto_rawDescGZIP() []byte {
 	return file_stagd_api_v1_orgs_proto_rawDescData
 }
 
-var file_stagd_api_v1_orgs_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_stagd_api_v1_orgs_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_stagd_api_v1_orgs_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_stagd_api_v1_orgs_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_stagd_api_v1_orgs_proto_goTypes = []any{
 	(Role)(0),                         // 0: stagd.api.v1.Role
-	(*CreateOrgRequest)(nil),          // 1: stagd.api.v1.CreateOrgRequest
-	(*CreateOrgResponse)(nil),         // 2: stagd.api.v1.CreateOrgResponse
-	(*ListOrgsRequest)(nil),           // 3: stagd.api.v1.ListOrgsRequest
-	(*ListOrgsResponse)(nil),          // 4: stagd.api.v1.ListOrgsResponse
-	(*SwitchOrgRequest)(nil),          // 5: stagd.api.v1.SwitchOrgRequest
-	(*SwitchOrgResponse)(nil),         // 6: stagd.api.v1.SwitchOrgResponse
-	(*ListMembersRequest)(nil),        // 7: stagd.api.v1.ListMembersRequest
-	(*Member)(nil),                    // 8: stagd.api.v1.Member
-	(*UpdateMemberRoleRequest)(nil),   // 9: stagd.api.v1.UpdateMemberRoleRequest
-	(*UpdateMemberRoleResponse)(nil),  // 10: stagd.api.v1.UpdateMemberRoleResponse
-	(*RemoveMemberRequest)(nil),       // 11: stagd.api.v1.RemoveMemberRequest
-	(*RemoveMemberResponse)(nil),      // 12: stagd.api.v1.RemoveMemberResponse
-	(*CreateInvitesRequest)(nil),      // 13: stagd.api.v1.CreateInvitesRequest
-	(*CreateInvitesResponse)(nil),     // 14: stagd.api.v1.CreateInvitesResponse
-	(*InviteProblem)(nil),             // 15: stagd.api.v1.InviteProblem
-	(*Invite)(nil),                    // 16: stagd.api.v1.Invite
-	(*ListInvitesRequest)(nil),        // 17: stagd.api.v1.ListInvitesRequest
-	(*ListInvitesResponse)(nil),       // 18: stagd.api.v1.ListInvitesResponse
-	(*ResendInviteRequest)(nil),       // 19: stagd.api.v1.ResendInviteRequest
-	(*ResendInviteResponse)(nil),      // 20: stagd.api.v1.ResendInviteResponse
-	(*RevokeInviteRequest)(nil),       // 21: stagd.api.v1.RevokeInviteRequest
-	(*RevokeInviteResponse)(nil),      // 22: stagd.api.v1.RevokeInviteResponse
-	(*InviteLink)(nil),                // 23: stagd.api.v1.InviteLink
-	(*GetInviteLinkRequest)(nil),      // 24: stagd.api.v1.GetInviteLinkRequest
-	(*GetInviteLinkResponse)(nil),     // 25: stagd.api.v1.GetInviteLinkResponse
-	(*ResetInviteLinkRequest)(nil),    // 26: stagd.api.v1.ResetInviteLinkRequest
-	(*ResetInviteLinkResponse)(nil),   // 27: stagd.api.v1.ResetInviteLinkResponse
-	(*DisableInviteLinkRequest)(nil),  // 28: stagd.api.v1.DisableInviteLinkRequest
-	(*DisableInviteLinkResponse)(nil), // 29: stagd.api.v1.DisableInviteLinkResponse
-	(*ListMembersResponse)(nil),       // 30: stagd.api.v1.ListMembersResponse
-	(*Membership)(nil),                // 31: stagd.api.v1.Membership
-	(*User)(nil),                      // 32: stagd.api.v1.User
-	(*timestamppb.Timestamp)(nil),     // 33: google.protobuf.Timestamp
+	(LeaveReason)(0),                  // 1: stagd.api.v1.LeaveReason
+	(*CreateOrgRequest)(nil),          // 2: stagd.api.v1.CreateOrgRequest
+	(*CreateOrgResponse)(nil),         // 3: stagd.api.v1.CreateOrgResponse
+	(*ListOrgsRequest)(nil),           // 4: stagd.api.v1.ListOrgsRequest
+	(*ListOrgsResponse)(nil),          // 5: stagd.api.v1.ListOrgsResponse
+	(*SwitchOrgRequest)(nil),          // 6: stagd.api.v1.SwitchOrgRequest
+	(*SwitchOrgResponse)(nil),         // 7: stagd.api.v1.SwitchOrgResponse
+	(*ListMembersRequest)(nil),        // 8: stagd.api.v1.ListMembersRequest
+	(*Member)(nil),                    // 9: stagd.api.v1.Member
+	(*UpdateMemberRoleRequest)(nil),   // 10: stagd.api.v1.UpdateMemberRoleRequest
+	(*UpdateMemberRoleResponse)(nil),  // 11: stagd.api.v1.UpdateMemberRoleResponse
+	(*RemoveMemberRequest)(nil),       // 12: stagd.api.v1.RemoveMemberRequest
+	(*RemoveMemberResponse)(nil),      // 13: stagd.api.v1.RemoveMemberResponse
+	(*DeleteOrgRequest)(nil),          // 14: stagd.api.v1.DeleteOrgRequest
+	(*DeleteOrgResponse)(nil),         // 15: stagd.api.v1.DeleteOrgResponse
+	(*CreateInvitesRequest)(nil),      // 16: stagd.api.v1.CreateInvitesRequest
+	(*CreateInvitesResponse)(nil),     // 17: stagd.api.v1.CreateInvitesResponse
+	(*InviteProblem)(nil),             // 18: stagd.api.v1.InviteProblem
+	(*Invite)(nil),                    // 19: stagd.api.v1.Invite
+	(*ListInvitesRequest)(nil),        // 20: stagd.api.v1.ListInvitesRequest
+	(*ListInvitesResponse)(nil),       // 21: stagd.api.v1.ListInvitesResponse
+	(*ResendInviteRequest)(nil),       // 22: stagd.api.v1.ResendInviteRequest
+	(*ResendInviteResponse)(nil),      // 23: stagd.api.v1.ResendInviteResponse
+	(*RevokeInviteRequest)(nil),       // 24: stagd.api.v1.RevokeInviteRequest
+	(*RevokeInviteResponse)(nil),      // 25: stagd.api.v1.RevokeInviteResponse
+	(*InviteLink)(nil),                // 26: stagd.api.v1.InviteLink
+	(*GetInviteLinkRequest)(nil),      // 27: stagd.api.v1.GetInviteLinkRequest
+	(*GetInviteLinkResponse)(nil),     // 28: stagd.api.v1.GetInviteLinkResponse
+	(*ResetInviteLinkRequest)(nil),    // 29: stagd.api.v1.ResetInviteLinkRequest
+	(*ResetInviteLinkResponse)(nil),   // 30: stagd.api.v1.ResetInviteLinkResponse
+	(*DisableInviteLinkRequest)(nil),  // 31: stagd.api.v1.DisableInviteLinkRequest
+	(*DisableInviteLinkResponse)(nil), // 32: stagd.api.v1.DisableInviteLinkResponse
+	(*ListMembersResponse)(nil),       // 33: stagd.api.v1.ListMembersResponse
+	(*Membership)(nil),                // 34: stagd.api.v1.Membership
+	(*User)(nil),                      // 35: stagd.api.v1.User
+	(*timestamppb.Timestamp)(nil),     // 36: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_orgs_proto_depIdxs = []int32{
-	31, // 0: stagd.api.v1.CreateOrgResponse.membership:type_name -> stagd.api.v1.Membership
-	31, // 1: stagd.api.v1.ListOrgsResponse.memberships:type_name -> stagd.api.v1.Membership
-	31, // 2: stagd.api.v1.SwitchOrgResponse.active:type_name -> stagd.api.v1.Membership
-	32, // 3: stagd.api.v1.Member.user:type_name -> stagd.api.v1.User
+	34, // 0: stagd.api.v1.CreateOrgResponse.membership:type_name -> stagd.api.v1.Membership
+	34, // 1: stagd.api.v1.ListOrgsResponse.memberships:type_name -> stagd.api.v1.Membership
+	34, // 2: stagd.api.v1.SwitchOrgResponse.active:type_name -> stagd.api.v1.Membership
+	35, // 3: stagd.api.v1.Member.user:type_name -> stagd.api.v1.User
 	0,  // 4: stagd.api.v1.Member.role_kind:type_name -> stagd.api.v1.Role
-	33, // 5: stagd.api.v1.Member.joined_at:type_name -> google.protobuf.Timestamp
-	33, // 6: stagd.api.v1.Member.last_active_at:type_name -> google.protobuf.Timestamp
+	36, // 5: stagd.api.v1.Member.joined_at:type_name -> google.protobuf.Timestamp
+	36, // 6: stagd.api.v1.Member.last_active_at:type_name -> google.protobuf.Timestamp
 	0,  // 7: stagd.api.v1.UpdateMemberRoleRequest.role:type_name -> stagd.api.v1.Role
-	8,  // 8: stagd.api.v1.UpdateMemberRoleResponse.member:type_name -> stagd.api.v1.Member
-	0,  // 9: stagd.api.v1.CreateInvitesRequest.role:type_name -> stagd.api.v1.Role
-	16, // 10: stagd.api.v1.CreateInvitesResponse.invites:type_name -> stagd.api.v1.Invite
-	15, // 11: stagd.api.v1.CreateInvitesResponse.problems:type_name -> stagd.api.v1.InviteProblem
-	0,  // 12: stagd.api.v1.Invite.role:type_name -> stagd.api.v1.Role
-	32, // 13: stagd.api.v1.Invite.invited_by:type_name -> stagd.api.v1.User
-	33, // 14: stagd.api.v1.Invite.created_at:type_name -> google.protobuf.Timestamp
-	33, // 15: stagd.api.v1.Invite.expires_at:type_name -> google.protobuf.Timestamp
-	16, // 16: stagd.api.v1.ListInvitesResponse.invites:type_name -> stagd.api.v1.Invite
-	16, // 17: stagd.api.v1.ResendInviteResponse.invite:type_name -> stagd.api.v1.Invite
-	0,  // 18: stagd.api.v1.InviteLink.role:type_name -> stagd.api.v1.Role
-	33, // 19: stagd.api.v1.InviteLink.expires_at:type_name -> google.protobuf.Timestamp
-	23, // 20: stagd.api.v1.GetInviteLinkResponse.link:type_name -> stagd.api.v1.InviteLink
-	0,  // 21: stagd.api.v1.ResetInviteLinkRequest.role:type_name -> stagd.api.v1.Role
-	23, // 22: stagd.api.v1.ResetInviteLinkResponse.link:type_name -> stagd.api.v1.InviteLink
-	8,  // 23: stagd.api.v1.ListMembersResponse.members:type_name -> stagd.api.v1.Member
-	1,  // 24: stagd.api.v1.OrgService.CreateOrg:input_type -> stagd.api.v1.CreateOrgRequest
-	3,  // 25: stagd.api.v1.OrgService.ListOrgs:input_type -> stagd.api.v1.ListOrgsRequest
-	5,  // 26: stagd.api.v1.OrgService.SwitchOrg:input_type -> stagd.api.v1.SwitchOrgRequest
-	7,  // 27: stagd.api.v1.OrgService.ListMembers:input_type -> stagd.api.v1.ListMembersRequest
-	9,  // 28: stagd.api.v1.OrgService.UpdateMemberRole:input_type -> stagd.api.v1.UpdateMemberRoleRequest
-	11, // 29: stagd.api.v1.OrgService.RemoveMember:input_type -> stagd.api.v1.RemoveMemberRequest
-	13, // 30: stagd.api.v1.InviteService.CreateInvites:input_type -> stagd.api.v1.CreateInvitesRequest
-	17, // 31: stagd.api.v1.InviteService.ListInvites:input_type -> stagd.api.v1.ListInvitesRequest
-	19, // 32: stagd.api.v1.InviteService.ResendInvite:input_type -> stagd.api.v1.ResendInviteRequest
-	21, // 33: stagd.api.v1.InviteService.RevokeInvite:input_type -> stagd.api.v1.RevokeInviteRequest
-	24, // 34: stagd.api.v1.InviteService.GetInviteLink:input_type -> stagd.api.v1.GetInviteLinkRequest
-	26, // 35: stagd.api.v1.InviteService.ResetInviteLink:input_type -> stagd.api.v1.ResetInviteLinkRequest
-	28, // 36: stagd.api.v1.InviteService.DisableInviteLink:input_type -> stagd.api.v1.DisableInviteLinkRequest
-	2,  // 37: stagd.api.v1.OrgService.CreateOrg:output_type -> stagd.api.v1.CreateOrgResponse
-	4,  // 38: stagd.api.v1.OrgService.ListOrgs:output_type -> stagd.api.v1.ListOrgsResponse
-	6,  // 39: stagd.api.v1.OrgService.SwitchOrg:output_type -> stagd.api.v1.SwitchOrgResponse
-	30, // 40: stagd.api.v1.OrgService.ListMembers:output_type -> stagd.api.v1.ListMembersResponse
-	10, // 41: stagd.api.v1.OrgService.UpdateMemberRole:output_type -> stagd.api.v1.UpdateMemberRoleResponse
-	12, // 42: stagd.api.v1.OrgService.RemoveMember:output_type -> stagd.api.v1.RemoveMemberResponse
-	14, // 43: stagd.api.v1.InviteService.CreateInvites:output_type -> stagd.api.v1.CreateInvitesResponse
-	18, // 44: stagd.api.v1.InviteService.ListInvites:output_type -> stagd.api.v1.ListInvitesResponse
-	20, // 45: stagd.api.v1.InviteService.ResendInvite:output_type -> stagd.api.v1.ResendInviteResponse
-	22, // 46: stagd.api.v1.InviteService.RevokeInvite:output_type -> stagd.api.v1.RevokeInviteResponse
-	25, // 47: stagd.api.v1.InviteService.GetInviteLink:output_type -> stagd.api.v1.GetInviteLinkResponse
-	27, // 48: stagd.api.v1.InviteService.ResetInviteLink:output_type -> stagd.api.v1.ResetInviteLinkResponse
-	29, // 49: stagd.api.v1.InviteService.DisableInviteLink:output_type -> stagd.api.v1.DisableInviteLinkResponse
-	37, // [37:50] is the sub-list for method output_type
-	24, // [24:37] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	9,  // 8: stagd.api.v1.UpdateMemberRoleResponse.member:type_name -> stagd.api.v1.Member
+	1,  // 9: stagd.api.v1.DeleteOrgRequest.reason:type_name -> stagd.api.v1.LeaveReason
+	0,  // 10: stagd.api.v1.CreateInvitesRequest.role:type_name -> stagd.api.v1.Role
+	19, // 11: stagd.api.v1.CreateInvitesResponse.invites:type_name -> stagd.api.v1.Invite
+	18, // 12: stagd.api.v1.CreateInvitesResponse.problems:type_name -> stagd.api.v1.InviteProblem
+	0,  // 13: stagd.api.v1.Invite.role:type_name -> stagd.api.v1.Role
+	35, // 14: stagd.api.v1.Invite.invited_by:type_name -> stagd.api.v1.User
+	36, // 15: stagd.api.v1.Invite.created_at:type_name -> google.protobuf.Timestamp
+	36, // 16: stagd.api.v1.Invite.expires_at:type_name -> google.protobuf.Timestamp
+	19, // 17: stagd.api.v1.ListInvitesResponse.invites:type_name -> stagd.api.v1.Invite
+	19, // 18: stagd.api.v1.ResendInviteResponse.invite:type_name -> stagd.api.v1.Invite
+	0,  // 19: stagd.api.v1.InviteLink.role:type_name -> stagd.api.v1.Role
+	36, // 20: stagd.api.v1.InviteLink.expires_at:type_name -> google.protobuf.Timestamp
+	26, // 21: stagd.api.v1.GetInviteLinkResponse.link:type_name -> stagd.api.v1.InviteLink
+	0,  // 22: stagd.api.v1.ResetInviteLinkRequest.role:type_name -> stagd.api.v1.Role
+	26, // 23: stagd.api.v1.ResetInviteLinkResponse.link:type_name -> stagd.api.v1.InviteLink
+	9,  // 24: stagd.api.v1.ListMembersResponse.members:type_name -> stagd.api.v1.Member
+	2,  // 25: stagd.api.v1.OrgService.CreateOrg:input_type -> stagd.api.v1.CreateOrgRequest
+	4,  // 26: stagd.api.v1.OrgService.ListOrgs:input_type -> stagd.api.v1.ListOrgsRequest
+	6,  // 27: stagd.api.v1.OrgService.SwitchOrg:input_type -> stagd.api.v1.SwitchOrgRequest
+	8,  // 28: stagd.api.v1.OrgService.ListMembers:input_type -> stagd.api.v1.ListMembersRequest
+	10, // 29: stagd.api.v1.OrgService.UpdateMemberRole:input_type -> stagd.api.v1.UpdateMemberRoleRequest
+	12, // 30: stagd.api.v1.OrgService.RemoveMember:input_type -> stagd.api.v1.RemoveMemberRequest
+	14, // 31: stagd.api.v1.OrgService.DeleteOrg:input_type -> stagd.api.v1.DeleteOrgRequest
+	16, // 32: stagd.api.v1.InviteService.CreateInvites:input_type -> stagd.api.v1.CreateInvitesRequest
+	20, // 33: stagd.api.v1.InviteService.ListInvites:input_type -> stagd.api.v1.ListInvitesRequest
+	22, // 34: stagd.api.v1.InviteService.ResendInvite:input_type -> stagd.api.v1.ResendInviteRequest
+	24, // 35: stagd.api.v1.InviteService.RevokeInvite:input_type -> stagd.api.v1.RevokeInviteRequest
+	27, // 36: stagd.api.v1.InviteService.GetInviteLink:input_type -> stagd.api.v1.GetInviteLinkRequest
+	29, // 37: stagd.api.v1.InviteService.ResetInviteLink:input_type -> stagd.api.v1.ResetInviteLinkRequest
+	31, // 38: stagd.api.v1.InviteService.DisableInviteLink:input_type -> stagd.api.v1.DisableInviteLinkRequest
+	3,  // 39: stagd.api.v1.OrgService.CreateOrg:output_type -> stagd.api.v1.CreateOrgResponse
+	5,  // 40: stagd.api.v1.OrgService.ListOrgs:output_type -> stagd.api.v1.ListOrgsResponse
+	7,  // 41: stagd.api.v1.OrgService.SwitchOrg:output_type -> stagd.api.v1.SwitchOrgResponse
+	33, // 42: stagd.api.v1.OrgService.ListMembers:output_type -> stagd.api.v1.ListMembersResponse
+	11, // 43: stagd.api.v1.OrgService.UpdateMemberRole:output_type -> stagd.api.v1.UpdateMemberRoleResponse
+	13, // 44: stagd.api.v1.OrgService.RemoveMember:output_type -> stagd.api.v1.RemoveMemberResponse
+	15, // 45: stagd.api.v1.OrgService.DeleteOrg:output_type -> stagd.api.v1.DeleteOrgResponse
+	17, // 46: stagd.api.v1.InviteService.CreateInvites:output_type -> stagd.api.v1.CreateInvitesResponse
+	21, // 47: stagd.api.v1.InviteService.ListInvites:output_type -> stagd.api.v1.ListInvitesResponse
+	23, // 48: stagd.api.v1.InviteService.ResendInvite:output_type -> stagd.api.v1.ResendInviteResponse
+	25, // 49: stagd.api.v1.InviteService.RevokeInvite:output_type -> stagd.api.v1.RevokeInviteResponse
+	28, // 50: stagd.api.v1.InviteService.GetInviteLink:output_type -> stagd.api.v1.GetInviteLinkResponse
+	30, // 51: stagd.api.v1.InviteService.ResetInviteLink:output_type -> stagd.api.v1.ResetInviteLinkResponse
+	32, // 52: stagd.api.v1.InviteService.DisableInviteLink:output_type -> stagd.api.v1.DisableInviteLinkResponse
+	39, // [39:53] is the sub-list for method output_type
+	25, // [25:39] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_orgs_proto_init() }
@@ -1764,8 +1957,8 @@ func file_stagd_api_v1_orgs_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_orgs_proto_rawDesc), len(file_stagd_api_v1_orgs_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   30,
+			NumEnums:      2,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
