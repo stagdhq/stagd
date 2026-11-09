@@ -86,11 +86,14 @@ func computeCommand() *cli.Command {
 					"a newer relay: while its relay is connected, it keeps its token (the stagd-relay secret in the\n" +
 					"cluster stays). Otherwise, or with --new-token, the relay gets a new token and the old one stops\n" +
 					"working: a relay still running with it is cut off (with its relay connected, pass --yes).\n\n" +
-					"For a Docker host, on the host itself, --run runs the relay with a new token (--print prints\n" +
-					"docker's commands for it instead):\n\n" +
-					"  stagd compute install <name> --run",
+					"For a Docker host, on the host itself, --run runs the relay (--print prints docker's commands\n" +
+					"for it instead, with a new token):\n\n" +
+					"  stagd compute install <name> --run\n\n" +
+					"Run it again on the same host to update the relay to this CLI's version: it keeps the token the\n" +
+					"relay there runs with, and cloudflared's. Elsewhere, or with --new-token, the relay gets a new\n" +
+					"token and the old one stops working.",
 				Flags: []cli.Flag{
-					&cli.BoolFlag{Name: "new-token", Usage: "kubernetes: a new relay token even while its relay is connected"},
+					&cli.BoolFlag{Name: "new-token", Usage: "a new relay token even while its relay is connected (kubernetes), or runs here (docker --run)"},
 					&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "don't ask for confirmation when a new token cuts off its connected relay"},
 					&cli.BoolFlag{Name: "wait", Usage: "wait until the relay connects"},
 					&cli.BoolFlag{Name: "run", Usage: "docker: run the relay on this Docker host, in place of the one there, and wait until it connects"},
@@ -741,14 +744,22 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 		return cli.Exit("--run and --print are for a Docker host: "+runElsewhere(conn.GetProvider()), 2)
 	}
 
-	if cmd.Bool("new-token") && !kube {
-		return cli.Exit("--new-token is for a Kubernetes cluster: everywhere else an install always gives the relay a new token", 2)
+	if cmd.Bool("new-token") && !kube && !run {
+		return cli.Exit("--new-token is for a Kubernetes cluster, or a Docker host with --run: everywhere else an install always gives the relay a new token", 2)
 	}
 
 	connected := conn.GetStatus() == apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE
 
 	// A connected cluster's install updates it and keeps its token, unless asked for a new one.
 	renews := !kube || cmd.Bool("new-token") || !connected
+
+	// So does a Docker host's relay run here again: the tokens its containers run with are kept.
+	var keptRelay, keptTunnel string
+
+	if run && !cmd.Bool("new-token") {
+		keptRelay, keptTunnel = runningTokens(ctx, conn.GetId())
+		renews = keptRelay == ""
+	}
 
 	// A Docker host's relay is run here, or its commands printed: which, before a new token.
 	if docker && !run && !print && !cmd.Bool("json") {
@@ -767,8 +778,15 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 			detail = "The relay running now is cut off; the one started here takes over."
 		}
 
-		if ok, err := confirm(cmd, fmt.Sprintf("A new relay token for %s?", conn.GetName()), detail); err != nil || !ok {
+		ok, err := confirm(cmd, fmt.Sprintf("A new relay token for %s?", conn.GetName()), detail)
+		if err != nil {
 			return err
+		}
+
+		if !ok {
+			fmt.Fprintln(cmd.Root().ErrWriter, "Nothing changed: the relay keeps running with its token.")
+
+			return nil
 		}
 	}
 
@@ -804,6 +822,17 @@ func computeInstall(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		return waitForRelay(ctx, cmd.Root().ErrWriter, c, conn)
+	}
+
+	// Updated in place: the relay running here, on this CLI's version, with the tokens it has.
+	if keptRelay != "" {
+		fmt.Fprintf(w, "Updating the relay for %s on this Docker host; it keeps its token.\n", conn.GetName())
+
+		if err := runDockerRelay(ctx, w, cmd.String("api-url"), conn.GetId(), keptRelay, relayImage(cmd.Root().Version), keptTunnel); err != nil {
+			return err
+		}
+
+		return waitForRelay(ctx, w, c, conn)
 	}
 
 	res, err := c.Compute.CreateRelayInstall(ctx, connect.NewRequest(&apiv1.CreateRelayInstallRequest{Id: conn.GetId()}))

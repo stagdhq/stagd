@@ -157,10 +157,46 @@ func relayOwner(ctx context.Context) (found bool, connectionID string) {
 	return true, ""
 }
 
-// runDockerRelay starts the connection's relay on this host with its new
-// token: the network if it's missing, and the relay in place of one for
-// the same connection. A relay for another connection stays. With a tunnel
-// token, cloudflared runs beside it; without, one left from before goes.
+// runningTokens is the tokens this connection's relay, and cloudflared
+// beside it, run with on this host now, from their containers'
+// environment: an update keeps them, as a connected cluster keeps its
+// relay's. "" for the relay's without one of this connection's here.
+func runningTokens(ctx context.Context, connectionID string) (relay, tunnel string) {
+	if found, owner := relayOwner(ctx); !found || owner != connectionID {
+		return "", ""
+	}
+
+	relay = containerEnv(ctx, relayContainer, "STAGD_RELAY_TOKEN")
+
+	// Its token names its connection (stagd_relay.<org>.<connection>.<secret>): only this one's is kept.
+	if parts := strings.Split(relay, "."); len(parts) != 4 || parts[2] != connectionID {
+		return "", ""
+	}
+
+	return relay, containerEnv(ctx, tunnelContainer, "TUNNEL_TOKEN")
+}
+
+// containerEnv is one variable of a container's environment; "" without the container or the variable.
+func containerEnv(ctx context.Context, container, name string) string {
+	out, err := docker(ctx, nil, "inspect", "--format", `{{range .Config.Env}}{{println .}}{{end}}`, container)
+	if err != nil {
+		return ""
+	}
+
+	for _, line := range strings.Split(out, "\n") {
+		if value, ok := strings.CutPrefix(line, name+"="); ok {
+			return value
+		}
+	}
+
+	return ""
+}
+
+// runDockerRelay starts the connection's relay on this host with its
+// token, new or kept: the network if it's missing, and the relay in place
+// of one for the same connection. A relay for another connection stays.
+// With a tunnel token, cloudflared runs beside it; without, one left from
+// before goes.
 func runDockerRelay(ctx context.Context, w io.Writer, stagdURL, connectionID, token, image, tunnelToken string) error {
 	if found, owner := relayOwner(ctx); found {
 		if owner != connectionID {

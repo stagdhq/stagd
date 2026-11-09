@@ -23,6 +23,8 @@ type fakeDocker struct {
 	network bool
 	owner   string // the relay container's label; "" without one
 	tunnel  bool   // whether cloudflared runs beside it
+	token   string // the relay container's STAGD_RELAY_TOKEN
+	tunnelT string // cloudflared's TUNNEL_TOKEN
 	calls   [][]string
 	envs    [][]string
 }
@@ -36,12 +38,25 @@ func (d *fakeDocker) install(t *testing.T) {
 		d.envs = append(d.envs, env)
 
 		switch {
+		case args[0] == "inspect" && slices.Contains(args, tunnelContainer):
+			if !d.tunnel {
+				return "", errors.New("docker inspect: No such object: stagd-tunnel")
+			}
+
+			return "PATH=/usr/bin\nTUNNEL_TOKEN=" + d.tunnelT + "\n", nil
+
 		case args[0] == "inspect":
 			if d.owner == "" {
 				return "", errors.New("docker inspect: No such object: stagd-relay")
 			}
 
-			return d.owner + "\nPATH=/usr/bin\n", nil
+			out := d.owner + "\nPATH=/usr/bin\n"
+
+			if d.token != "" {
+				out += "STAGD_RELAY_TOKEN=" + d.token + "\n"
+			}
+
+			return out, nil
 
 		case args[0] == "network" && args[1] == "inspect" && !d.network:
 			return "", errors.New("docker network: network stagd-relay not found")
@@ -60,15 +75,28 @@ func (d *fakeDocker) install(t *testing.T) {
 
 		case args[0] == "run" && slices.Contains(args, tunnelContainer):
 			d.tunnel = true
+			d.tunnelT = strings.TrimPrefix(env[0], "TUNNEL_TOKEN=")
 
 		case args[0] == "run":
 			d.owner = args[slices.Index(args, "--label")+1][len(relayConnectionLabel)+1:]
+			d.token = strings.TrimPrefix(env[0], "STAGD_RELAY_TOKEN=")
 		}
 
 		return "", nil
 	}
 
 	t.Cleanup(func() { docker = before })
+}
+
+// relayRun is which call ran the relay's container: its docker run, not cloudflared's; -1 without one.
+func (d *fakeDocker) relayRun() int {
+	for i, c := range d.calls {
+		if c[0] == "run" && !slices.Contains(c, tunnelContainer) {
+			return i
+		}
+	}
+
+	return -1
 }
 
 // ran is the docker subcommands run, e.g. "network create".
@@ -94,6 +122,7 @@ type fakeDockerCompute struct {
 	looks     int
 	deleted   string
 	tunnel    string // the tunnel token Stagd answers with; "" without tunnels
+	connected bool   // its relay is connected already
 }
 
 var dockerConn = &apiv1.ComputeConnection{
@@ -124,8 +153,8 @@ func (f *fakeDockerCompute) CreateRelayInstall(context.Context, *connect.Request
 func (f *fakeDockerCompute) ListComputeConnections(context.Context, *connect.Request[apiv1.ListComputeConnectionsRequest]) (*connect.Response[apiv1.ListComputeConnectionsResponse], error) {
 	conn := dockerConn
 
-	if f.installed {
-		if f.looks++; f.looks >= 2 {
+	if f.installed || f.connected {
+		if f.looks++; f.looks >= 2 || f.connected {
 			conn = &apiv1.ComputeConnection{Id: dockerConn.Id, Provider: dockerConn.Provider, Name: dockerConn.Name, Account: "orbstack (Docker 29.8.2)", Status: apiv1.ComputeConnectionStatus_COMPUTE_CONNECTION_STATUS_ACTIVE}
 		}
 	}
@@ -189,11 +218,13 @@ func TestComputeInstallRunsTheDockerRelay(t *testing.T) {
 		t.Fatalf("install --run: %v\n%s", err, out)
 	}
 
-	if got := strings.Join(d.ran(), ", "); got != "inspect, network inspect, network create, pull, run, rm" {
+	// Looked for a relay here to keep its token, found none: a new one, on a new network.
+	if got := strings.Join(d.ran(), ", "); got != "inspect, inspect, network inspect, network create, pull, run, rm" {
 		t.Errorf("ran %s", got)
 	}
 
-	runArgs := strings.Join(d.calls[4], " ")
+	at := d.relayRun()
+	runArgs := strings.Join(d.calls[at], " ")
 
 	for _, want := range []string{"--name stagd-relay", "--network stagd-relay", "--user root", "-e STAGD_RELAY_TOKEN ", "relay"} {
 		if !strings.Contains(runArgs, want) {
@@ -201,23 +232,77 @@ func TestComputeInstallRunsTheDockerRelay(t *testing.T) {
 		}
 	}
 
-	if strings.Contains(runArgs, "secret") || !slices.Contains(d.envs[4], "STAGD_RELAY_TOKEN="+dockerToken) {
-		t.Errorf("the token: in the arguments %q, or not in the environment %v", runArgs, d.envs[4])
+	if strings.Contains(runArgs, "secret") || !slices.Contains(d.envs[at], "STAGD_RELAY_TOKEN="+dockerToken) {
+		t.Errorf("the token: in the arguments %q, or not in the environment %v", runArgs, d.envs[at])
 	}
 
 	if strings.Contains(out, "stagd_relay.") || !strings.Contains(out, "Connected: orbstack (Docker 29.8.2)") {
 		t.Errorf("output:\n%s", out)
 	}
 
-	// Again, now it's connected: this connection's relay is replaced, on the network that's there.
+	// Again, now it's connected: this connection's relay is replaced, on the network that's there, with --new-token.
 	d.calls = nil
 
-	if out, err := run(t, srv, "--token", "tok-1", "compute", "install", "docker-desktop", "--run", "--yes"); err != nil {
+	if out, err := run(t, srv, "--token", "tok-1", "compute", "install", "docker-desktop", "--run", "--new-token", "--yes"); err != nil {
 		t.Fatalf("again: %v\n%s", err, out)
 	}
 
 	if got := strings.Join(d.ran(), ", "); got != "inspect, rm, network inspect, pull, run, rm" {
 		t.Errorf("again, ran %s", got)
+	}
+}
+
+// Run again on the same host, it updates the relay there in place, keeping its token and cloudflared's: no
+// question, no new token, so nothing is cut off.
+func TestComputeInstallRunUpdatesKeepingTheToken(t *testing.T) {
+	d := &fakeDocker{network: true, owner: dockerConn.Id, token: dockerToken, tunnel: true, tunnelT: "tunnel-secret"}
+	d.install(t)
+
+	f := &fakeDockerCompute{connected: true}
+	srv := dockerServer(t, f)
+
+	out, err := run(t, srv, "--token", "tok-1", "compute", "install", "docker-desktop", "--run")
+	if err != nil {
+		t.Fatalf("install --run: %v\n%s", err, out)
+	}
+
+	if f.installed {
+		t.Error("asked Stagd for a new token")
+	}
+
+	if !strings.Contains(out, "keeps its token") || strings.Contains(out, "stagd_relay.") || strings.Contains(out, "tunnel-secret") {
+		t.Errorf("output:\n%s", out)
+	}
+
+	var relayEnv, tunnelEnv []string
+
+	for i, c := range d.calls {
+		if c[0] == "run" && slices.Contains(c, tunnelContainer) {
+			tunnelEnv = d.envs[i]
+		} else if c[0] == "run" {
+			relayEnv = d.envs[i]
+		}
+	}
+
+	if !slices.Contains(relayEnv, "STAGD_RELAY_TOKEN="+dockerToken) || !slices.Contains(tunnelEnv, "TUNNEL_TOKEN=tunnel-secret") {
+		t.Errorf("relay ran with %v, cloudflared with %v", relayEnv, tunnelEnv)
+	}
+}
+
+// A relay of this connection's running elsewhere is cut off by a new token: asked, and no is no change, said.
+func TestComputeInstallRunNoNewTokenSaysNothingChanged(t *testing.T) {
+	d := &fakeDocker{network: true}
+	d.install(t)
+
+	f := &fakeDockerCompute{connected: true}
+	srv := dockerServer(t, f)
+
+	if _, err := run(t, srv, "--token", "tok-1", "compute", "install", "docker-desktop", "--run"); err == nil || !strings.Contains(err.Error(), "--yes") {
+		t.Fatalf("no terminal, a connected relay elsewhere: want to be told about --yes, err = %v", err)
+	}
+
+	if slices.Contains(d.ran(), "run") || f.installed {
+		t.Errorf("ran %v, new token %v", d.ran(), f.installed)
 	}
 }
 
@@ -358,7 +443,7 @@ func TestComputeInstallRunsCloudflared(t *testing.T) {
 		t.Fatalf("install --run: %v, cloudflared %v:\n%s", err, d.tunnel, out)
 	}
 
-	relayArgs := strings.Join(d.calls[4], " ")
+	relayArgs := strings.Join(d.calls[d.relayRun()], " ")
 	tunnelArgs := strings.Join(d.calls[len(d.calls)-1], " ")
 
 	if !strings.Contains(relayArgs, "STAGD_RELAY_HTTP=:8081") {
