@@ -19,8 +19,15 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := cli.New(version).Run(ctx, os.Args); err != nil {
+	cmd := cli.New(version)
+
+	if err := cmd.Run(ctx, os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, "stagd:", err)
+
+		if hint := cli.StatusHint(err, cmd.String("api-url")); hint != "" {
+			fmt.Fprintln(os.Stderr, hint)
+		}
+
 		os.Exit(1)
 	}
 }
