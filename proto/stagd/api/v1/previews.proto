@@ -147,6 +147,46 @@ message PreviewPolicy {
     gte: {seconds: 3600}
     lte: {seconds: 172800}
   }];
+  // When a pull request gets a preview. Unset: a repository follows the
+  // org's default, and the org's default is on demand. A repository's
+  // stagd.yaml can set its own (previews: always), which wins over both.
+  PreviewStart start = 8;
+  // With PREVIEW_START_LABEL: the GitHub label that deploys a pull request's
+  // preview when it's added and tears it down when it's removed, e.g.
+  // "preview". It has to exist in each repository.
+  string start_label = 9 [(buf.validate.field).string.max_len = 50];
+}
+
+// PreviewStart is when a pull request gets a preview.
+enum PreviewStart {
+  // A repository: follow the org's default. The org: on demand.
+  PREVIEW_START_UNSPECIFIED = 0;
+  // When someone asks: /stagd deploy, or Stagd's dashboard, CLI or MCP.
+  PREVIEW_START_ON_DEMAND = 1;
+  // Every pull request, when it's opened and on each new commit.
+  PREVIEW_START_ALWAYS = 2;
+  // Pull requests with start_label: adding it deploys, removing it tears down.
+  PREVIEW_START_LABEL = 3;
+}
+
+// PreviewStartSource is where the start that applies comes from, first to
+// last: the repository's stagd.yaml, its override, the org's default, Stagd's.
+enum PreviewStartSource {
+  PREVIEW_START_SOURCE_UNSPECIFIED = 0;
+  PREVIEW_START_SOURCE_STAGD = 1;
+  PREVIEW_START_SOURCE_ORG = 2;
+  PREVIEW_START_SOURCE_REPOSITORY = 3;
+  // previews: in stagd.yaml on the repository's default branch; a pull
+  // request's own stagd.yaml is read when its events arrive.
+  PREVIEW_START_SOURCE_STAGD_YAML = 4;
+}
+
+// PreviewStartInEffect is when a repository's (or the org's) pull requests
+// get previews, all settings considered, and which one decided.
+message PreviewStartInEffect {
+  PreviewStart start = 1;
+  string label = 2;
+  PreviewStartSource source = 3;
 }
 
 // PreviewStatus follows the environment's state machine:
@@ -448,6 +488,8 @@ message GetPreviewPolicyResponse {
   PreviewPolicy policy = 1;
   // For a repository: true when it has no override and follows the org's default.
   bool inherited = 2;
+  // When pull requests get previews, with where that comes from.
+  PreviewStartInEffect start = 3;
 }
 
 message UpdatePreviewPolicyRequest {
@@ -459,6 +501,7 @@ message UpdatePreviewPolicyRequest {
 message UpdatePreviewPolicyResponse {
   PreviewPolicy policy = 1;
   bool inherited = 2;
+  PreviewStartInEffect start = 3;
 }
 
 message ValidateAppRequest {
