@@ -84,9 +84,13 @@ type IntegrationField struct {
 	Multiline bool `protobuf:"varint,6,opt,name=multiline,proto3" json:"multiline,omitempty"`
 	// A yes or no: its value is "true", or empty for no.
 	Checkbox bool `protobuf:"varint,7,opt,name=checkbox,proto3" json:"checkbox,omitempty"`
-	// The key of a checkbox field this one belongs to: shown, and asked for,
-	// only while that one is ticked.
-	ShownWith     string `protobuf:"bytes,8,opt,name=shown_with,json=shownWith,proto3" json:"shown_with,omitempty"`
+	// The key of a checkbox field this one belongs to, or "key=value" for an
+	// option of a choice: shown, and asked for, only while that one is ticked
+	// or chosen.
+	ShownWith string `protobuf:"bytes,8,opt,name=shown_with,json=shownWith,proto3" json:"shown_with,omitempty"`
+	// A choice of one, e.g. how to sign in: the value is an option's value,
+	// the first option's when none is given.
+	Options       []*IntegrationFieldOption `protobuf:"bytes,9,rep,name=options,proto3" json:"options,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -177,6 +181,73 @@ func (x *IntegrationField) GetShownWith() string {
 	return ""
 }
 
+func (x *IntegrationField) GetOptions() []*IntegrationFieldOption {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+type IntegrationFieldOption struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	Help          string                 `protobuf:"bytes,3,opt,name=help,proto3" json:"help,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IntegrationFieldOption) Reset() {
+	*x = IntegrationFieldOption{}
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntegrationFieldOption) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntegrationFieldOption) ProtoMessage() {}
+
+func (x *IntegrationFieldOption) ProtoReflect() protoreflect.Message {
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntegrationFieldOption.ProtoReflect.Descriptor instead.
+func (*IntegrationFieldOption) Descriptor() ([]byte, []int) {
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *IntegrationFieldOption) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *IntegrationFieldOption) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *IntegrationFieldOption) GetHelp() string {
+	if x != nil {
+		return x.Help
+	}
+	return ""
+}
+
 type IntegrationKind struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// e.g. "neon".
@@ -190,7 +261,7 @@ type IntegrationKind struct {
 
 func (x *IntegrationKind) Reset() {
 	*x = IntegrationKind{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[1]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -202,7 +273,7 @@ func (x *IntegrationKind) String() string {
 func (*IntegrationKind) ProtoMessage() {}
 
 func (x *IntegrationKind) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[1]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -215,7 +286,7 @@ func (x *IntegrationKind) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IntegrationKind.ProtoReflect.Descriptor instead.
 func (*IntegrationKind) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{1}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *IntegrationKind) GetId() string {
@@ -270,7 +341,7 @@ type Integration struct {
 
 func (x *Integration) Reset() {
 	*x = Integration{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[2]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -282,7 +353,7 @@ func (x *Integration) String() string {
 func (*Integration) ProtoMessage() {}
 
 func (x *Integration) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[2]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -295,7 +366,7 @@ func (x *Integration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Integration.ProtoReflect.Descriptor instead.
 func (*Integration) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{2}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Integration) GetId() string {
@@ -383,7 +454,7 @@ type ListIntegrationKindsRequest struct {
 
 func (x *ListIntegrationKindsRequest) Reset() {
 	*x = ListIntegrationKindsRequest{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[3]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -395,7 +466,7 @@ func (x *ListIntegrationKindsRequest) String() string {
 func (*ListIntegrationKindsRequest) ProtoMessage() {}
 
 func (x *ListIntegrationKindsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[3]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,7 +479,7 @@ func (x *ListIntegrationKindsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIntegrationKindsRequest.ProtoReflect.Descriptor instead.
 func (*ListIntegrationKindsRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{3}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{4}
 }
 
 type ListIntegrationKindsResponse struct {
@@ -420,7 +491,7 @@ type ListIntegrationKindsResponse struct {
 
 func (x *ListIntegrationKindsResponse) Reset() {
 	*x = ListIntegrationKindsResponse{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[4]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -432,7 +503,7 @@ func (x *ListIntegrationKindsResponse) String() string {
 func (*ListIntegrationKindsResponse) ProtoMessage() {}
 
 func (x *ListIntegrationKindsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[4]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -445,7 +516,7 @@ func (x *ListIntegrationKindsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIntegrationKindsResponse.ProtoReflect.Descriptor instead.
 func (*ListIntegrationKindsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{4}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListIntegrationKindsResponse) GetKinds() []*IntegrationKind {
@@ -467,7 +538,7 @@ type CreateIntegrationRequest struct {
 
 func (x *CreateIntegrationRequest) Reset() {
 	*x = CreateIntegrationRequest{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -479,7 +550,7 @@ func (x *CreateIntegrationRequest) String() string {
 func (*CreateIntegrationRequest) ProtoMessage() {}
 
 func (x *CreateIntegrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[5]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -492,7 +563,7 @@ func (x *CreateIntegrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateIntegrationRequest.ProtoReflect.Descriptor instead.
 func (*CreateIntegrationRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{5}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CreateIntegrationRequest) GetKind() string {
@@ -525,7 +596,7 @@ type CreateIntegrationResponse struct {
 
 func (x *CreateIntegrationResponse) Reset() {
 	*x = CreateIntegrationResponse{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -537,7 +608,7 @@ func (x *CreateIntegrationResponse) String() string {
 func (*CreateIntegrationResponse) ProtoMessage() {}
 
 func (x *CreateIntegrationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[6]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -550,7 +621,7 @@ func (x *CreateIntegrationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateIntegrationResponse.ProtoReflect.Descriptor instead.
 func (*CreateIntegrationResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{6}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CreateIntegrationResponse) GetIntegration() *Integration {
@@ -568,7 +639,7 @@ type ListIntegrationsRequest struct {
 
 func (x *ListIntegrationsRequest) Reset() {
 	*x = ListIntegrationsRequest{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -580,7 +651,7 @@ func (x *ListIntegrationsRequest) String() string {
 func (*ListIntegrationsRequest) ProtoMessage() {}
 
 func (x *ListIntegrationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[7]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -593,7 +664,7 @@ func (x *ListIntegrationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIntegrationsRequest.ProtoReflect.Descriptor instead.
 func (*ListIntegrationsRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{7}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{8}
 }
 
 type ListIntegrationsResponse struct {
@@ -605,7 +676,7 @@ type ListIntegrationsResponse struct {
 
 func (x *ListIntegrationsResponse) Reset() {
 	*x = ListIntegrationsResponse{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -617,7 +688,7 @@ func (x *ListIntegrationsResponse) String() string {
 func (*ListIntegrationsResponse) ProtoMessage() {}
 
 func (x *ListIntegrationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[8]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -630,7 +701,7 @@ func (x *ListIntegrationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIntegrationsResponse.ProtoReflect.Descriptor instead.
 func (*ListIntegrationsResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{8}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ListIntegrationsResponse) GetIntegrations() []*Integration {
@@ -652,7 +723,7 @@ type UpdateIntegrationRequest struct {
 
 func (x *UpdateIntegrationRequest) Reset() {
 	*x = UpdateIntegrationRequest{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[9]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -664,7 +735,7 @@ func (x *UpdateIntegrationRequest) String() string {
 func (*UpdateIntegrationRequest) ProtoMessage() {}
 
 func (x *UpdateIntegrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[9]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -677,7 +748,7 @@ func (x *UpdateIntegrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateIntegrationRequest.ProtoReflect.Descriptor instead.
 func (*UpdateIntegrationRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{9}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateIntegrationRequest) GetIntegration() string {
@@ -703,7 +774,7 @@ type UpdateIntegrationResponse struct {
 
 func (x *UpdateIntegrationResponse) Reset() {
 	*x = UpdateIntegrationResponse{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[10]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -715,7 +786,7 @@ func (x *UpdateIntegrationResponse) String() string {
 func (*UpdateIntegrationResponse) ProtoMessage() {}
 
 func (x *UpdateIntegrationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[10]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -728,7 +799,7 @@ func (x *UpdateIntegrationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateIntegrationResponse.ProtoReflect.Descriptor instead.
 func (*UpdateIntegrationResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{10}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateIntegrationResponse) GetIntegration() *Integration {
@@ -747,7 +818,7 @@ type TestIntegrationRequest struct {
 
 func (x *TestIntegrationRequest) Reset() {
 	*x = TestIntegrationRequest{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[11]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -759,7 +830,7 @@ func (x *TestIntegrationRequest) String() string {
 func (*TestIntegrationRequest) ProtoMessage() {}
 
 func (x *TestIntegrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[11]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -772,7 +843,7 @@ func (x *TestIntegrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestIntegrationRequest.ProtoReflect.Descriptor instead.
 func (*TestIntegrationRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{11}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TestIntegrationRequest) GetIntegration() string {
@@ -791,7 +862,7 @@ type TestIntegrationResponse struct {
 
 func (x *TestIntegrationResponse) Reset() {
 	*x = TestIntegrationResponse{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[12]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -803,7 +874,7 @@ func (x *TestIntegrationResponse) String() string {
 func (*TestIntegrationResponse) ProtoMessage() {}
 
 func (x *TestIntegrationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[12]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -816,7 +887,7 @@ func (x *TestIntegrationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestIntegrationResponse.ProtoReflect.Descriptor instead.
 func (*TestIntegrationResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{12}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *TestIntegrationResponse) GetIntegration() *Integration {
@@ -835,7 +906,7 @@ type DeleteIntegrationRequest struct {
 
 func (x *DeleteIntegrationRequest) Reset() {
 	*x = DeleteIntegrationRequest{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[13]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -847,7 +918,7 @@ func (x *DeleteIntegrationRequest) String() string {
 func (*DeleteIntegrationRequest) ProtoMessage() {}
 
 func (x *DeleteIntegrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[13]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -860,7 +931,7 @@ func (x *DeleteIntegrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteIntegrationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteIntegrationRequest) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{13}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DeleteIntegrationRequest) GetIntegration() string {
@@ -878,7 +949,7 @@ type DeleteIntegrationResponse struct {
 
 func (x *DeleteIntegrationResponse) Reset() {
 	*x = DeleteIntegrationResponse{}
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[14]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -890,7 +961,7 @@ func (x *DeleteIntegrationResponse) String() string {
 func (*DeleteIntegrationResponse) ProtoMessage() {}
 
 func (x *DeleteIntegrationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stagd_api_v1_integrations_proto_msgTypes[14]
+	mi := &file_stagd_api_v1_integrations_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -903,14 +974,14 @@ func (x *DeleteIntegrationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteIntegrationResponse.ProtoReflect.Descriptor instead.
 func (*DeleteIntegrationResponse) Descriptor() ([]byte, []int) {
-	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{14}
+	return file_stagd_api_v1_integrations_proto_rawDescGZIP(), []int{15}
 }
 
 var File_stagd_api_v1_integrations_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_integrations_proto_rawDesc = "" +
 	"\n" +
-	"\x1fstagd/api/v1/integrations.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdb\x01\n" +
+	"\x1fstagd/api/v1/integrations.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9b\x02\n" +
 	"\x10IntegrationField\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
@@ -920,7 +991,12 @@ const file_stagd_api_v1_integrations_proto_rawDesc = "" +
 	"\tmultiline\x18\x06 \x01(\bR\tmultiline\x12\x1a\n" +
 	"\bcheckbox\x18\a \x01(\bR\bcheckbox\x12\x1d\n" +
 	"\n" +
-	"shown_with\x18\b \x01(\tR\tshownWith\"\x8f\x01\n" +
+	"shown_with\x18\b \x01(\tR\tshownWith\x12>\n" +
+	"\aoptions\x18\t \x03(\v2$.stagd.api.v1.IntegrationFieldOptionR\aoptions\"X\n" +
+	"\x16IntegrationFieldOption\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
+	"\x04help\x18\x03 \x01(\tR\x04help\"\x8f\x01\n" +
 	"\x0fIntegrationKind\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -1002,60 +1078,62 @@ func file_stagd_api_v1_integrations_proto_rawDescGZIP() []byte {
 }
 
 var file_stagd_api_v1_integrations_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_stagd_api_v1_integrations_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_stagd_api_v1_integrations_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_stagd_api_v1_integrations_proto_goTypes = []any{
 	(IntegrationStatus)(0),               // 0: stagd.api.v1.IntegrationStatus
 	(*IntegrationField)(nil),             // 1: stagd.api.v1.IntegrationField
-	(*IntegrationKind)(nil),              // 2: stagd.api.v1.IntegrationKind
-	(*Integration)(nil),                  // 3: stagd.api.v1.Integration
-	(*ListIntegrationKindsRequest)(nil),  // 4: stagd.api.v1.ListIntegrationKindsRequest
-	(*ListIntegrationKindsResponse)(nil), // 5: stagd.api.v1.ListIntegrationKindsResponse
-	(*CreateIntegrationRequest)(nil),     // 6: stagd.api.v1.CreateIntegrationRequest
-	(*CreateIntegrationResponse)(nil),    // 7: stagd.api.v1.CreateIntegrationResponse
-	(*ListIntegrationsRequest)(nil),      // 8: stagd.api.v1.ListIntegrationsRequest
-	(*ListIntegrationsResponse)(nil),     // 9: stagd.api.v1.ListIntegrationsResponse
-	(*UpdateIntegrationRequest)(nil),     // 10: stagd.api.v1.UpdateIntegrationRequest
-	(*UpdateIntegrationResponse)(nil),    // 11: stagd.api.v1.UpdateIntegrationResponse
-	(*TestIntegrationRequest)(nil),       // 12: stagd.api.v1.TestIntegrationRequest
-	(*TestIntegrationResponse)(nil),      // 13: stagd.api.v1.TestIntegrationResponse
-	(*DeleteIntegrationRequest)(nil),     // 14: stagd.api.v1.DeleteIntegrationRequest
-	(*DeleteIntegrationResponse)(nil),    // 15: stagd.api.v1.DeleteIntegrationResponse
-	nil,                                  // 16: stagd.api.v1.Integration.SettingsEntry
-	nil,                                  // 17: stagd.api.v1.CreateIntegrationRequest.ValuesEntry
-	nil,                                  // 18: stagd.api.v1.UpdateIntegrationRequest.ValuesEntry
-	(*timestamppb.Timestamp)(nil),        // 19: google.protobuf.Timestamp
+	(*IntegrationFieldOption)(nil),       // 2: stagd.api.v1.IntegrationFieldOption
+	(*IntegrationKind)(nil),              // 3: stagd.api.v1.IntegrationKind
+	(*Integration)(nil),                  // 4: stagd.api.v1.Integration
+	(*ListIntegrationKindsRequest)(nil),  // 5: stagd.api.v1.ListIntegrationKindsRequest
+	(*ListIntegrationKindsResponse)(nil), // 6: stagd.api.v1.ListIntegrationKindsResponse
+	(*CreateIntegrationRequest)(nil),     // 7: stagd.api.v1.CreateIntegrationRequest
+	(*CreateIntegrationResponse)(nil),    // 8: stagd.api.v1.CreateIntegrationResponse
+	(*ListIntegrationsRequest)(nil),      // 9: stagd.api.v1.ListIntegrationsRequest
+	(*ListIntegrationsResponse)(nil),     // 10: stagd.api.v1.ListIntegrationsResponse
+	(*UpdateIntegrationRequest)(nil),     // 11: stagd.api.v1.UpdateIntegrationRequest
+	(*UpdateIntegrationResponse)(nil),    // 12: stagd.api.v1.UpdateIntegrationResponse
+	(*TestIntegrationRequest)(nil),       // 13: stagd.api.v1.TestIntegrationRequest
+	(*TestIntegrationResponse)(nil),      // 14: stagd.api.v1.TestIntegrationResponse
+	(*DeleteIntegrationRequest)(nil),     // 15: stagd.api.v1.DeleteIntegrationRequest
+	(*DeleteIntegrationResponse)(nil),    // 16: stagd.api.v1.DeleteIntegrationResponse
+	nil,                                  // 17: stagd.api.v1.Integration.SettingsEntry
+	nil,                                  // 18: stagd.api.v1.CreateIntegrationRequest.ValuesEntry
+	nil,                                  // 19: stagd.api.v1.UpdateIntegrationRequest.ValuesEntry
+	(*timestamppb.Timestamp)(nil),        // 20: google.protobuf.Timestamp
 }
 var file_stagd_api_v1_integrations_proto_depIdxs = []int32{
-	1,  // 0: stagd.api.v1.IntegrationKind.fields:type_name -> stagd.api.v1.IntegrationField
-	16, // 1: stagd.api.v1.Integration.settings:type_name -> stagd.api.v1.Integration.SettingsEntry
-	0,  // 2: stagd.api.v1.Integration.status:type_name -> stagd.api.v1.IntegrationStatus
-	19, // 3: stagd.api.v1.Integration.create_time:type_name -> google.protobuf.Timestamp
-	19, // 4: stagd.api.v1.Integration.check_time:type_name -> google.protobuf.Timestamp
-	19, // 5: stagd.api.v1.Integration.expire_time:type_name -> google.protobuf.Timestamp
-	2,  // 6: stagd.api.v1.ListIntegrationKindsResponse.kinds:type_name -> stagd.api.v1.IntegrationKind
-	17, // 7: stagd.api.v1.CreateIntegrationRequest.values:type_name -> stagd.api.v1.CreateIntegrationRequest.ValuesEntry
-	3,  // 8: stagd.api.v1.CreateIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
-	3,  // 9: stagd.api.v1.ListIntegrationsResponse.integrations:type_name -> stagd.api.v1.Integration
-	18, // 10: stagd.api.v1.UpdateIntegrationRequest.values:type_name -> stagd.api.v1.UpdateIntegrationRequest.ValuesEntry
-	3,  // 11: stagd.api.v1.UpdateIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
-	3,  // 12: stagd.api.v1.TestIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
-	4,  // 13: stagd.api.v1.IntegrationService.ListIntegrationKinds:input_type -> stagd.api.v1.ListIntegrationKindsRequest
-	6,  // 14: stagd.api.v1.IntegrationService.CreateIntegration:input_type -> stagd.api.v1.CreateIntegrationRequest
-	8,  // 15: stagd.api.v1.IntegrationService.ListIntegrations:input_type -> stagd.api.v1.ListIntegrationsRequest
-	10, // 16: stagd.api.v1.IntegrationService.UpdateIntegration:input_type -> stagd.api.v1.UpdateIntegrationRequest
-	12, // 17: stagd.api.v1.IntegrationService.TestIntegration:input_type -> stagd.api.v1.TestIntegrationRequest
-	14, // 18: stagd.api.v1.IntegrationService.DeleteIntegration:input_type -> stagd.api.v1.DeleteIntegrationRequest
-	5,  // 19: stagd.api.v1.IntegrationService.ListIntegrationKinds:output_type -> stagd.api.v1.ListIntegrationKindsResponse
-	7,  // 20: stagd.api.v1.IntegrationService.CreateIntegration:output_type -> stagd.api.v1.CreateIntegrationResponse
-	9,  // 21: stagd.api.v1.IntegrationService.ListIntegrations:output_type -> stagd.api.v1.ListIntegrationsResponse
-	11, // 22: stagd.api.v1.IntegrationService.UpdateIntegration:output_type -> stagd.api.v1.UpdateIntegrationResponse
-	13, // 23: stagd.api.v1.IntegrationService.TestIntegration:output_type -> stagd.api.v1.TestIntegrationResponse
-	15, // 24: stagd.api.v1.IntegrationService.DeleteIntegration:output_type -> stagd.api.v1.DeleteIntegrationResponse
-	19, // [19:25] is the sub-list for method output_type
-	13, // [13:19] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	2,  // 0: stagd.api.v1.IntegrationField.options:type_name -> stagd.api.v1.IntegrationFieldOption
+	1,  // 1: stagd.api.v1.IntegrationKind.fields:type_name -> stagd.api.v1.IntegrationField
+	17, // 2: stagd.api.v1.Integration.settings:type_name -> stagd.api.v1.Integration.SettingsEntry
+	0,  // 3: stagd.api.v1.Integration.status:type_name -> stagd.api.v1.IntegrationStatus
+	20, // 4: stagd.api.v1.Integration.create_time:type_name -> google.protobuf.Timestamp
+	20, // 5: stagd.api.v1.Integration.check_time:type_name -> google.protobuf.Timestamp
+	20, // 6: stagd.api.v1.Integration.expire_time:type_name -> google.protobuf.Timestamp
+	3,  // 7: stagd.api.v1.ListIntegrationKindsResponse.kinds:type_name -> stagd.api.v1.IntegrationKind
+	18, // 8: stagd.api.v1.CreateIntegrationRequest.values:type_name -> stagd.api.v1.CreateIntegrationRequest.ValuesEntry
+	4,  // 9: stagd.api.v1.CreateIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
+	4,  // 10: stagd.api.v1.ListIntegrationsResponse.integrations:type_name -> stagd.api.v1.Integration
+	19, // 11: stagd.api.v1.UpdateIntegrationRequest.values:type_name -> stagd.api.v1.UpdateIntegrationRequest.ValuesEntry
+	4,  // 12: stagd.api.v1.UpdateIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
+	4,  // 13: stagd.api.v1.TestIntegrationResponse.integration:type_name -> stagd.api.v1.Integration
+	5,  // 14: stagd.api.v1.IntegrationService.ListIntegrationKinds:input_type -> stagd.api.v1.ListIntegrationKindsRequest
+	7,  // 15: stagd.api.v1.IntegrationService.CreateIntegration:input_type -> stagd.api.v1.CreateIntegrationRequest
+	9,  // 16: stagd.api.v1.IntegrationService.ListIntegrations:input_type -> stagd.api.v1.ListIntegrationsRequest
+	11, // 17: stagd.api.v1.IntegrationService.UpdateIntegration:input_type -> stagd.api.v1.UpdateIntegrationRequest
+	13, // 18: stagd.api.v1.IntegrationService.TestIntegration:input_type -> stagd.api.v1.TestIntegrationRequest
+	15, // 19: stagd.api.v1.IntegrationService.DeleteIntegration:input_type -> stagd.api.v1.DeleteIntegrationRequest
+	6,  // 20: stagd.api.v1.IntegrationService.ListIntegrationKinds:output_type -> stagd.api.v1.ListIntegrationKindsResponse
+	8,  // 21: stagd.api.v1.IntegrationService.CreateIntegration:output_type -> stagd.api.v1.CreateIntegrationResponse
+	10, // 22: stagd.api.v1.IntegrationService.ListIntegrations:output_type -> stagd.api.v1.ListIntegrationsResponse
+	12, // 23: stagd.api.v1.IntegrationService.UpdateIntegration:output_type -> stagd.api.v1.UpdateIntegrationResponse
+	14, // 24: stagd.api.v1.IntegrationService.TestIntegration:output_type -> stagd.api.v1.TestIntegrationResponse
+	16, // 25: stagd.api.v1.IntegrationService.DeleteIntegration:output_type -> stagd.api.v1.DeleteIntegrationResponse
+	20, // [20:26] is the sub-list for method output_type
+	14, // [14:20] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_stagd_api_v1_integrations_proto_init() }
@@ -1069,7 +1147,7 @@ func file_stagd_api_v1_integrations_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stagd_api_v1_integrations_proto_rawDesc), len(file_stagd_api_v1_integrations_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   18,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

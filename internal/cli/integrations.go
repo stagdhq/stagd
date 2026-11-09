@@ -87,7 +87,28 @@ func integrationKinds(ctx context.Context, cmd *cli.Command) error {
 		fmt.Fprintf(w, "%s (%s): %s\n", k.GetName(), k.GetId(), k.GetDescription())
 
 		for _, f := range k.GetFields() {
-			fmt.Fprintf(w, "  --value %s=…  %s. %s\n", f.GetKey(), f.GetLabel(), f.GetHelp())
+			value := "…"
+
+			if len(f.GetOptions()) > 0 {
+				names := make([]string, 0, len(f.GetOptions()))
+
+				for _, o := range f.GetOptions() {
+					names = append(names, o.GetValue())
+				}
+
+				value = strings.Join(names, "|")
+			}
+
+			when := ""
+			if sw := f.GetShownWith(); sw != "" {
+				when = fmt.Sprintf(" (with %s)", sw)
+			}
+
+			fmt.Fprintf(w, "  --value %s=%s%s  %s. %s\n", f.GetKey(), value, when, f.GetLabel(), f.GetHelp())
+
+			for _, o := range f.GetOptions() {
+				fmt.Fprintf(w, "      %s: %s. %s\n", o.GetValue(), o.GetLabel(), o.GetHelp())
+			}
 		}
 	}
 
@@ -152,12 +173,67 @@ func integrationConnect(ctx context.Context, cmd *cli.Command) error {
 	return err
 }
 
-// askIntegrationFields asks for required fields not given; scripts get an error naming them.
+// choiceOf is a choice field's value: the one given, or its first option's.
+func choiceOf(kind *apiv1.IntegrationKind, key string, values map[string]string) string {
+	if v := values[key]; v != "" {
+		return v
+	}
+
+	for _, f := range kind.GetFields() {
+		if f.GetKey() == key && len(f.GetOptions()) > 0 {
+			return f.GetOptions()[0].GetValue()
+		}
+	}
+
+	return ""
+}
+
+// fieldShown says whether a field applies: always, or while the checkbox it belongs to is ticked, or ("key=value")
+// while that option is chosen.
+func fieldShown(kind *apiv1.IntegrationKind, f *apiv1.IntegrationField, values map[string]string) bool {
+	key, option, choice := strings.Cut(f.GetShownWith(), "=")
+
+	switch {
+	case key == "":
+		return true
+
+	case choice:
+		return choiceOf(kind, key, values) == option
+
+	default:
+		return values[key] == "true"
+	}
+}
+
+// askIntegrationFields asks for choices and required fields not given, of those that apply; scripts get a choice's
+// first option, and an error naming the required fields.
 func askIntegrationFields(ctx context.Context, kind *apiv1.IntegrationKind, values map[string]string) error {
+	// Choices first, one at a time: what else is asked for depends on them.
+	for _, f := range kind.GetFields() {
+		if len(f.GetOptions()) == 0 || values[f.GetKey()] != "" || !fieldShown(kind, f, values) || !interactive() {
+			continue
+		}
+
+		options := make([]huh.Option[string], 0, len(f.GetOptions()))
+
+		for _, o := range f.GetOptions() {
+			options = append(options, huh.NewOption(o.GetLabel(), o.GetValue()))
+		}
+
+		var chosen string
+
+		pick := huh.NewSelect[string]().Title(f.GetLabel()).Description(f.GetHelp()).Options(options...).Value(&chosen)
+		if err := newForm(huh.NewGroup(pick)).RunWithContext(ctx); err != nil {
+			return err
+		}
+
+		values[f.GetKey()] = chosen
+	}
+
 	var missing []*apiv1.IntegrationField
 
 	for _, f := range kind.GetFields() {
-		if f.GetRequired() && values[f.GetKey()] == "" {
+		if f.GetRequired() && len(f.GetOptions()) == 0 && values[f.GetKey()] == "" && fieldShown(kind, f, values) {
 			missing = append(missing, f)
 		}
 	}
