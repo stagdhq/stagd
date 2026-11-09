@@ -62,13 +62,16 @@ func previewCommand() *cli.Command {
 			previewUsageCommand(),
 			{
 				Name:  "policy",
-				Usage: "who may open previews, and how their URLs look",
+				Usage: "when previews start, who may open them, and how their URLs look",
 				Description: "Without flags, shows the policy. --repo picks one repository (its own override, or the org's default\n" +
 					"it follows); without --repo it's the org's default. Access applies to existing previews on their\n" +
-					"next deploy; URL style only to new previews, so links already shared keep working. A repository's\n" +
-					"stagd.yaml can set its own sleep and expiry (lifecycle: { sleep_after: 2h, expire_after: 36h }), which win.",
+					"next deploy; URL style only to new previews, so links already shared keep working. When previews start\n" +
+					"applies from the next pull request event; a repository's start left as follow uses the org's. A\n" +
+					"repository's stagd.yaml can set its own (previews: always; lifecycle: { sleep_after: 2h }), which wins.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "repo", Usage: "a repository, owner/name; the org's default when left out"},
+					&cli.StringFlag{Name: "start", Usage: "when pull requests get previews: on-demand (/stagd deploy), always, label (with --label), or follow (a repository: the org's)"},
+					&cli.StringFlag{Name: "label", Usage: "with --start label: the GitHub label that deploys a preview, e.g. preview; it has to exist in each repository"},
 					&cli.StringFlag{Name: "access", Usage: "org (members signed in to Stagd) or public (anyone with the link)"},
 					&cli.StringSliceFlag{Name: "public-ingress", Usage: "an ingress anyone can reach even when access is org (repeatable)"},
 					&cli.BoolFlag{Name: "unguessable-urls", Usage: "add a random token to new previews' URLs (--unguessable-urls=false to stop)"},
@@ -99,12 +102,35 @@ func previewPolicy(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	res := &apiv1.UpdatePreviewPolicyResponse{Policy: current.Msg.GetPolicy(), Inherited: current.Msg.GetInherited()}
-	changing := cmd.IsSet("access") || cmd.IsSet("public-ingress") || cmd.IsSet("unguessable-urls") || cmd.IsSet("sleep-after") || cmd.IsSet("expire-after") || cmd.Bool("reset")
+	changing := cmd.IsSet("start") || cmd.IsSet("label") || cmd.IsSet("access") || cmd.IsSet("public-ingress") || cmd.IsSet("unguessable-urls") || cmd.IsSet("sleep-after") || cmd.IsSet("expire-after") || cmd.Bool("reset")
 
 	if changing {
 		// Start from what applies now and change only what was asked.
 		policy := current.Msg.GetPolicy()
 		policy.Repository = repo
+
+		if cmd.IsSet("start") {
+			switch cmd.String("start") {
+			case "on-demand":
+				policy.Start = apiv1.PreviewStart_PREVIEW_START_ON_DEMAND
+			case "always":
+				policy.Start = apiv1.PreviewStart_PREVIEW_START_ALWAYS
+			case "label":
+				policy.Start = apiv1.PreviewStart_PREVIEW_START_LABEL
+			case "follow":
+				policy.Start = apiv1.PreviewStart_PREVIEW_START_UNSPECIFIED
+			default:
+				return cli.Exit("--start: on-demand, always, label or follow", 2)
+			}
+		}
+
+		if cmd.IsSet("label") {
+			policy.StartLabel = cmd.String("label")
+		}
+
+		if policy.GetStart() == apiv1.PreviewStart_PREVIEW_START_LABEL && strings.TrimSpace(policy.GetStartLabel()) == "" {
+			return cli.Exit("--start label needs --label, the label's name, e.g. --label preview", 2)
+		}
 
 		if cmd.IsSet("access") {
 			switch cmd.String("access") {
@@ -173,6 +199,7 @@ func previewPolicy(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	fmt.Fprintf(w, "%s\n", scope)
+	fmt.Fprintf(w, "previews start:   %s\n", startLabel(res.GetStart()))
 	fmt.Fprintf(w, "access:           %s\n", accessLabel(p.GetAccess()))
 	fmt.Fprintf(w, "public ingresses: %s\n", public)
 	fmt.Fprintf(w, "unguessable URLs: %s\n", yesNo(p.GetUnguessableUrls()))
@@ -180,6 +207,35 @@ func previewPolicy(ctx context.Context, cmd *cli.Command) error {
 	fmt.Fprintf(w, "expires after:    %s\n", policySpan(p.GetExpireAfter(), "24h"))
 
 	return nil
+}
+
+// startLabel says when previews start and where that comes from, e.g. "label preview (stagd.yaml)".
+func startLabel(s *apiv1.PreviewStartInEffect) string {
+	if s == nil {
+		return "on demand"
+	}
+
+	what := "on demand"
+
+	switch s.GetStart() {
+	case apiv1.PreviewStart_PREVIEW_START_ALWAYS:
+		what = "every pull request"
+	case apiv1.PreviewStart_PREVIEW_START_LABEL:
+		what = "pull requests with the label " + s.GetLabel()
+	}
+
+	from := map[apiv1.PreviewStartSource]string{
+		apiv1.PreviewStartSource_PREVIEW_START_SOURCE_STAGD_YAML: "stagd.yaml, which wins",
+		apiv1.PreviewStartSource_PREVIEW_START_SOURCE_REPOSITORY: "this repository",
+		apiv1.PreviewStartSource_PREVIEW_START_SOURCE_ORG:        "the org default",
+		apiv1.PreviewStartSource_PREVIEW_START_SOURCE_STAGD:      "Stagd's default",
+	}[s.GetSource()]
+
+	if from == "" {
+		return what
+	}
+
+	return what + " (" + from + ")"
 }
 
 // policyDuration reads 2h, 90m or 7d; "default" (nil) leaves it to Stagd.

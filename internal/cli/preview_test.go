@@ -206,6 +206,48 @@ func TestPreviewPolicyChangesOnlyWhatsAsked(t *testing.T) {
 	}
 }
 
+func TestPreviewPolicyStart(t *testing.T) {
+	f := &fakePolicy{policy: &apiv1.PreviewPolicy{Access: apiv1.PreviewAccess_PREVIEW_ACCESS_ORG}}
+	mux := http.NewServeMux()
+	path, handler := apiv1connect.NewPreviewServiceHandler(f)
+	mux.Handle(path, handler)
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	if _, err := run(t, srv, "--token", "tok-1", "preview", "policy", "--repo", "acme-inc/web", "--start", "label", "--label", "preview"); err != nil {
+		t.Fatal(err)
+	}
+
+	got := f.updated.GetPolicy()
+	if got.GetStart() != apiv1.PreviewStart_PREVIEW_START_LABEL || got.GetStartLabel() != "preview" || got.GetAccess() != apiv1.PreviewAccess_PREVIEW_ACCESS_ORG {
+		t.Errorf("sent %v", got)
+	}
+
+	// Without a label to keep from the policy, --start label needs one.
+	f.policy = &apiv1.PreviewPolicy{Access: apiv1.PreviewAccess_PREVIEW_ACCESS_ORG}
+
+	if _, err := run(t, srv, "--token", "tok-1", "preview", "policy", "--start", "label"); err == nil {
+		t.Error("--start label without --label should be refused")
+	}
+
+	if _, err := run(t, srv, "--token", "tok-1", "preview", "policy", "--start", "sometimes"); err == nil {
+		t.Error("--start sometimes should be refused")
+	}
+}
+
+func TestStartLabel(t *testing.T) {
+	for want, s := range map[string]*apiv1.PreviewStartInEffect{
+		"on demand (Stagd's default)":                                   {Start: apiv1.PreviewStart_PREVIEW_START_ON_DEMAND, Source: apiv1.PreviewStartSource_PREVIEW_START_SOURCE_STAGD},
+		"every pull request (the org default)":                          {Start: apiv1.PreviewStart_PREVIEW_START_ALWAYS, Source: apiv1.PreviewStartSource_PREVIEW_START_SOURCE_ORG},
+		"pull requests with the label preview (stagd.yaml, which wins)": {Start: apiv1.PreviewStart_PREVIEW_START_LABEL, Label: "preview", Source: apiv1.PreviewStartSource_PREVIEW_START_SOURCE_STAGD_YAML},
+		"on demand": nil,
+	} {
+		if got := startLabel(s); got != want {
+			t.Errorf("shown as %q, want %q", got, want)
+		}
+	}
+}
+
 func TestPolicyDurations(t *testing.T) {
 	for in, want := range map[string]string{"2h": "2h", "90m": "1h30m", "7d": "7d", "45m": "45m", "default": "24h (Stagd's default)"} {
 		d, err := policyDuration(in)

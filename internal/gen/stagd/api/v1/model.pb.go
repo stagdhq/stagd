@@ -543,8 +543,13 @@ type RepositorySetup struct {
 	Problems []string `protobuf:"bytes,4,rep,name=problems,proto3" json:"problems,omitempty"`
 	// A stagd.yaml to start from, made from what was found; set when the
 	// repository has none.
-	Starter       string                 `protobuf:"bytes,5,opt,name=starter,proto3" json:"starter,omitempty"`
-	CheckTime     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
+	Starter   string                 `protobuf:"bytes,5,opt,name=starter,proto3" json:"starter,omitempty"`
+	CheckTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=check_time,json=checkTime,proto3" json:"check_time,omitempty"`
+	// The secrets the app needs: names the compose file and stagd.yaml refer
+	// to as ${NAME} without a default, that stagd.yaml's env doesn't set and
+	// Stagd doesn't provide (its own are STAGD_*). Sorted. Whether each has a
+	// value is for ListSecrets to say: a repository's own or the workspace's.
+	Secrets       []string `protobuf:"bytes,7,rep,name=secrets,proto3" json:"secrets,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -617,6 +622,13 @@ func (x *RepositorySetup) GetStarter() string {
 func (x *RepositorySetup) GetCheckTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CheckTime
+	}
+	return nil
+}
+
+func (x *RepositorySetup) GetSecrets() []string {
+	if x != nil {
+		return x.Secrets
 	}
 	return nil
 }
@@ -755,7 +767,7 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\x10previews_enabled\x18\t \x01(\bR\x0fpreviewsEnabled\x123\n" +
 	"\x05setup\x18\n" +
 	" \x01(\v2\x1d.stagd.api.v1.RepositorySetupR\x05setup\x12\x16\n" +
-	"\x06hidden\x18\v \x01(\bR\x06hiddenJ\x04\b\f\x10\rR\x02ai\"\xe4\x01\n" +
+	"\x06hidden\x18\v \x01(\bR\x06hiddenJ\x04\b\f\x10\rR\x02ai\"\xfe\x01\n" +
 	"\x0fRepositorySetup\x12\x1f\n" +
 	"\vconfig_file\x18\x01 \x01(\tR\n" +
 	"configFile\x12!\n" +
@@ -764,7 +776,8 @@ const file_stagd_api_v1_model_proto_rawDesc = "" +
 	"\bproblems\x18\x04 \x03(\tR\bproblems\x12\x18\n" +
 	"\astarter\x18\x05 \x01(\tR\astarter\x129\n" +
 	"\n" +
-	"check_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\"\xb8\x01\n" +
+	"check_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckTime\x12\x18\n" +
+	"\asecrets\x18\a \x03(\tR\asecrets\"\xb8\x01\n" +
 	"\rChangeRequest\x12\x16\n" +
 	"\x06number\x18\x01 \x01(\x03R\x06number\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x19\n" +
