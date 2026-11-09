@@ -45,9 +45,6 @@ const (
 	// SecretServiceRevealSecretProcedure is the fully-qualified name of the SecretService's
 	// RevealSecret RPC.
 	SecretServiceRevealSecretProcedure = "/stagd.api.v1.SecretService/RevealSecret"
-	// SecretServiceUpdateSecretVisibilityProcedure is the fully-qualified name of the SecretService's
-	// UpdateSecretVisibility RPC.
-	SecretServiceUpdateSecretVisibilityProcedure = "/stagd.api.v1.SecretService/UpdateSecretVisibility"
 )
 
 // SecretServiceClient is a client for the stagd.api.v1.SecretService service.
@@ -56,13 +53,9 @@ type SecretServiceClient interface {
 	// SetSecrets creates or replaces secrets, all or none.
 	SetSecrets(context.Context, *connect.Request[v1.SetSecretsRequest]) (*connect.Response[v1.SetSecretsResponse], error)
 	DeleteSecret(context.Context, *connect.Request[v1.DeleteSecretRequest]) (*connect.Response[v1.DeleteSecretResponse], error)
-	// RevealSecret answers a visible or hidden secret's value, and refuses a
-	// write-only one. Revealing a hidden one is in the activity log.
+	// RevealSecret answers a secret's value, for admins only. Each reveal is
+	// in the activity log, by name.
 	RevealSecret(context.Context, *connect.Request[v1.RevealSecretRequest]) (*connect.Response[v1.RevealSecretResponse], error)
-	// UpdateSecretVisibility makes a secret less readable, keeping its value:
-	// visible to hidden to write-only. Making it more readable takes a new
-	// value, through SetSecrets, so a value set as never readable stays so.
-	UpdateSecretVisibility(context.Context, *connect.Request[v1.UpdateSecretVisibilityRequest]) (*connect.Response[v1.UpdateSecretVisibilityResponse], error)
 }
 
 // NewSecretServiceClient constructs a client for the stagd.api.v1.SecretService service. By
@@ -100,22 +93,15 @@ func NewSecretServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(secretServiceMethods.ByName("RevealSecret")),
 			connect.WithClientOptions(opts...),
 		),
-		updateSecretVisibility: connect.NewClient[v1.UpdateSecretVisibilityRequest, v1.UpdateSecretVisibilityResponse](
-			httpClient,
-			baseURL+SecretServiceUpdateSecretVisibilityProcedure,
-			connect.WithSchema(secretServiceMethods.ByName("UpdateSecretVisibility")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
 // secretServiceClient implements SecretServiceClient.
 type secretServiceClient struct {
-	listSecrets            *connect.Client[v1.ListSecretsRequest, v1.ListSecretsResponse]
-	setSecrets             *connect.Client[v1.SetSecretsRequest, v1.SetSecretsResponse]
-	deleteSecret           *connect.Client[v1.DeleteSecretRequest, v1.DeleteSecretResponse]
-	revealSecret           *connect.Client[v1.RevealSecretRequest, v1.RevealSecretResponse]
-	updateSecretVisibility *connect.Client[v1.UpdateSecretVisibilityRequest, v1.UpdateSecretVisibilityResponse]
+	listSecrets  *connect.Client[v1.ListSecretsRequest, v1.ListSecretsResponse]
+	setSecrets   *connect.Client[v1.SetSecretsRequest, v1.SetSecretsResponse]
+	deleteSecret *connect.Client[v1.DeleteSecretRequest, v1.DeleteSecretResponse]
+	revealSecret *connect.Client[v1.RevealSecretRequest, v1.RevealSecretResponse]
 }
 
 // ListSecrets calls stagd.api.v1.SecretService.ListSecrets.
@@ -138,24 +124,15 @@ func (c *secretServiceClient) RevealSecret(ctx context.Context, req *connect.Req
 	return c.revealSecret.CallUnary(ctx, req)
 }
 
-// UpdateSecretVisibility calls stagd.api.v1.SecretService.UpdateSecretVisibility.
-func (c *secretServiceClient) UpdateSecretVisibility(ctx context.Context, req *connect.Request[v1.UpdateSecretVisibilityRequest]) (*connect.Response[v1.UpdateSecretVisibilityResponse], error) {
-	return c.updateSecretVisibility.CallUnary(ctx, req)
-}
-
 // SecretServiceHandler is an implementation of the stagd.api.v1.SecretService service.
 type SecretServiceHandler interface {
 	ListSecrets(context.Context, *connect.Request[v1.ListSecretsRequest]) (*connect.Response[v1.ListSecretsResponse], error)
 	// SetSecrets creates or replaces secrets, all or none.
 	SetSecrets(context.Context, *connect.Request[v1.SetSecretsRequest]) (*connect.Response[v1.SetSecretsResponse], error)
 	DeleteSecret(context.Context, *connect.Request[v1.DeleteSecretRequest]) (*connect.Response[v1.DeleteSecretResponse], error)
-	// RevealSecret answers a visible or hidden secret's value, and refuses a
-	// write-only one. Revealing a hidden one is in the activity log.
+	// RevealSecret answers a secret's value, for admins only. Each reveal is
+	// in the activity log, by name.
 	RevealSecret(context.Context, *connect.Request[v1.RevealSecretRequest]) (*connect.Response[v1.RevealSecretResponse], error)
-	// UpdateSecretVisibility makes a secret less readable, keeping its value:
-	// visible to hidden to write-only. Making it more readable takes a new
-	// value, through SetSecrets, so a value set as never readable stays so.
-	UpdateSecretVisibility(context.Context, *connect.Request[v1.UpdateSecretVisibilityRequest]) (*connect.Response[v1.UpdateSecretVisibilityResponse], error)
 }
 
 // NewSecretServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -189,12 +166,6 @@ func NewSecretServiceHandler(svc SecretServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(secretServiceMethods.ByName("RevealSecret")),
 		connect.WithHandlerOptions(opts...),
 	)
-	secretServiceUpdateSecretVisibilityHandler := connect.NewUnaryHandler(
-		SecretServiceUpdateSecretVisibilityProcedure,
-		svc.UpdateSecretVisibility,
-		connect.WithSchema(secretServiceMethods.ByName("UpdateSecretVisibility")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/stagd.api.v1.SecretService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SecretServiceListSecretsProcedure:
@@ -205,8 +176,6 @@ func NewSecretServiceHandler(svc SecretServiceHandler, opts ...connect.HandlerOp
 			secretServiceDeleteSecretHandler.ServeHTTP(w, r)
 		case SecretServiceRevealSecretProcedure:
 			secretServiceRevealSecretHandler.ServeHTTP(w, r)
-		case SecretServiceUpdateSecretVisibilityProcedure:
-			secretServiceUpdateSecretVisibilityHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -230,8 +199,4 @@ func (UnimplementedSecretServiceHandler) DeleteSecret(context.Context, *connect.
 
 func (UnimplementedSecretServiceHandler) RevealSecret(context.Context, *connect.Request[v1.RevealSecretRequest]) (*connect.Response[v1.RevealSecretResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.SecretService.RevealSecret is not implemented"))
-}
-
-func (UnimplementedSecretServiceHandler) UpdateSecretVisibility(context.Context, *connect.Request[v1.UpdateSecretVisibilityRequest]) (*connect.Response[v1.UpdateSecretVisibilityResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.SecretService.UpdateSecretVisibility is not implemented"))
 }
