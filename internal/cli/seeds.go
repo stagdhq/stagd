@@ -15,7 +15,7 @@ import (
 
 func seedsCommand() *cli.Command {
 	fromFlag := &cli.StringFlag{Name: "from", Usage: "the storage integration it's kept in (see stagd integrations list)"}
-	pathFlag := &cli.StringFlag{Name: "path", Usage: "a file in it, or a folder ending in / for its newest file"}
+	pathFlag := &cli.StringFlag{Name: "path", Usage: "a file in it; a pattern such as dumps/*.dump for the newest it matches; or a folder ending in / for its newest file"}
 
 	return &cli.Command{
 		Name:  "seeds",
@@ -23,8 +23,9 @@ func seedsCommand() *cli.Command {
 		Description: "A seed is a dump in one of the org's storage integrations, named for stagd.yaml:\n\n" +
 			"   services:\n" +
 			"     postgres: { seed: app-anonymized }\n\n" +
-			"A folder (a path ending in /) is its newest file at each deploy, so a nightly dump is picked up\n" +
-			"as it lands. Stagd streams the file to the preview's database through a short-lived link; the\n" +
+			"A pattern (dumps/*.dump, * and ? not crossing a /) is the newest file it matches at each deploy,\n" +
+			"so a nightly dump is picked up as it lands; a folder (a path ending in /) is its newest file,\n" +
+			"leaving out files without an extension such as a latest pointer. Stagd streams the file to the preview's database through a short-lived link; the\n" +
 			"storage's credentials never reach the preview.",
 		Commands: []*cli.Command{
 			{

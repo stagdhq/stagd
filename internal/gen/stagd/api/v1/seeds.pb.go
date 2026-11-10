@@ -93,7 +93,7 @@ type Seed struct {
 	// The integration whose store it's in: its id and name.
 	IntegrationId   string `protobuf:"bytes,3,opt,name=integration_id,json=integrationId,proto3" json:"integration_id,omitempty"`
 	IntegrationName string `protobuf:"bytes,4,opt,name=integration_name,json=integrationName,proto3" json:"integration_name,omitempty"`
-	// A file's name, or a prefix ending in / for the newest file under it.
+	// A file's name, a pattern (dumps/*.dump: the newest it matches), or a prefix ending in / for the newest file under it.
 	Path string `protobuf:"bytes,5,opt,name=path,proto3" json:"path,omitempty"`
 	// The file the path found at the last look.
 	File *SeedFile `protobuf:"bytes,6,opt,name=file,proto3" json:"file,omitempty"`

@@ -38,7 +38,7 @@ message Seed {
   // The integration whose store it's in: its id and name.
   string integration_id = 3;
   string integration_name = 4;
-  // A file's name, or a prefix ending in / for the newest file under it.
+  // A file's name, a pattern (dumps/*.dump: the newest it matches), or a prefix ending in / for the newest file under it.
   string path = 5;
   // The file the path found at the last look.
   SeedFile file = 6;
