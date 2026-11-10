@@ -53,6 +53,7 @@ func New(version string) *cli.Command {
 			seedsCommand(),
 			activityCommand(),
 			previewCommand(),
+			uiCommand(),
 			initCommand(),
 			setupCommand(),
 			validateCommand(),
