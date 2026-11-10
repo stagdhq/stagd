@@ -32,7 +32,7 @@ var hints = map[screen][][2]string{
 		{"l", "Logs"}, {"o", "Open"}, {"p", "Pull request"}, {"w", "Wake"}, {"ctrl-d", "Destroy"}, {"esc", "Back"},
 	},
 	logsScreen: {
-		{"s", "Autoscroll"}, {"G", "End"}, {"d", "Describe"}, {"o", "Open"}, {"ctrl-d", "Destroy"}, {"esc", "Back"},
+		{"s", "Autoscroll"}, {"g/G", "Top/End"}, {"d", "Describe"}, {"o", "Open"}, {"ctrl-d", "Destroy"}, {"esc", "Back"},
 	},
 }
 
@@ -462,7 +462,7 @@ func (m Model) logLines() (string, []string) {
 
 	status := " " + fieldStyle.Render("Autoscroll:") + on
 
-	h := m.bodyHeight() - 2
+	h := m.logsPage()
 	end := max(len(m.logs)-m.scroll, 0)
 	start := max(end-h, 0)
 

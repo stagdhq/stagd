@@ -246,8 +246,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// addLogs keeps the lines not already had: those at the last time are asked for again.
+// addLogs keeps the lines not already had: those at the last time are asked for again. Scrolled
+// back, the view stays on the lines it shows as new ones come in below.
 func (m *Model) addLogs(lines []*apiv1.LogLine) {
+	added := 0
+
+	defer func() {
+		if !m.following {
+			m.scroll = min(m.scroll+added, m.logsMax())
+		}
+	}()
+
 	for _, l := range lines {
 		k := lineKey(l)
 
@@ -257,6 +266,7 @@ func (m *Model) addLogs(lines []*apiv1.LogLine) {
 
 		m.logs = append(m.logs, l)
 		m.logsSeen[k] = true
+		added++
 	}
 
 	if n := len(m.logs); n > 0 {
@@ -267,6 +277,29 @@ func (m *Model) addLogs(lines []*apiv1.LogLine) {
 	if n := len(m.logs); n > 5000 {
 		m.logs = m.logs[n-5000:]
 	}
+}
+
+// logsPage is how many log lines fit: the box less its autoscroll line and the gap under it.
+func (m Model) logsPage() int {
+	return max(m.bodyHeight()-2, 1)
+}
+
+// logsMax is how far back the logs scroll: to their first line at the top, no further.
+func (m Model) logsMax() int {
+	return max(len(m.logs)-m.logsPage(), 0)
+}
+
+// describeMax is how far down a description scrolls: to its last line at the bottom.
+func (m Model) describeMax() int {
+	if m.current == nil {
+		return 0
+	}
+
+	all := m
+	all.scroll = 0
+	_, lines := all.describe()
+
+	return max(len(lines)-m.bodyHeight(), 0)
 }
 
 func lineKey(l *apiv1.LogLine) string {
@@ -453,9 +486,15 @@ func (m Model) describeKey(k string) (tea.Model, tea.Cmd) {
 	case "up", "k":
 		m.scroll = max(m.scroll-1, 0)
 	case "down", "j":
-		m.scroll++
+		m.scroll = min(m.scroll+1, m.describeMax())
+	case "pgdown", "ctrl+f":
+		m.scroll = min(m.scroll+m.bodyHeight(), m.describeMax())
+	case "pgup", "ctrl+b":
+		m.scroll = max(m.scroll-m.bodyHeight(), 0)
 	case "g", "home":
 		m.scroll = 0
+	case "G", "end":
+		m.scroll = m.describeMax()
 	case "l":
 		return m.open(logsScreen, m.current)
 	default:
@@ -469,14 +508,17 @@ func (m Model) logsKey(k string) (tea.Model, tea.Cmd) {
 	switch k {
 	case "up", "k":
 		m.following = false
-		m.scroll++
+		m.scroll = min(m.scroll+1, m.logsMax())
 	case "down", "j":
 		m.scroll = max(m.scroll-1, 0)
 	case "pgup", "ctrl+b":
 		m.following = false
-		m.scroll += m.bodyHeight()
+		m.scroll = min(m.scroll+m.logsPage(), m.logsMax())
 	case "pgdown", "ctrl+f":
-		m.scroll = max(m.scroll-m.bodyHeight(), 0)
+		m.scroll = max(m.scroll-m.logsPage(), 0)
+	case "g", "home":
+		m.following = false
+		m.scroll = m.logsMax()
 	case "G", "end":
 		m.scroll = 0
 		m.following = true
