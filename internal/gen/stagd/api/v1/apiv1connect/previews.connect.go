@@ -39,6 +39,9 @@ const (
 	// PreviewServiceListSourcesProcedure is the fully-qualified name of the PreviewService's
 	// ListSources RPC.
 	PreviewServiceListSourcesProcedure = "/stagd.api.v1.PreviewService/ListSources"
+	// PreviewServiceListOpenChangesProcedure is the fully-qualified name of the PreviewService's
+	// ListOpenChanges RPC.
+	PreviewServiceListOpenChangesProcedure = "/stagd.api.v1.PreviewService/ListOpenChanges"
 	// PreviewServiceGetPreviewProcedure is the fully-qualified name of the PreviewService's GetPreview
 	// RPC.
 	PreviewServiceGetPreviewProcedure = "/stagd.api.v1.PreviewService/GetPreview"
@@ -119,6 +122,13 @@ type PreviewServiceClient interface {
 	// previews), newest first, and its branches. Only for repositories with
 	// previews on: Stagd never reads the others.
 	ListSources(context.Context, *connect.Request[v1.ListSourcesRequest]) (*connect.Response[v1.ListSourcesResponse], error)
+	// ListOpenChanges lists the open pull requests that could have a preview
+	// and have none (or only a torn-down one), across the org's repositories
+	// with previews on, most recently updated first. Stagd keeps its own list,
+	// from the code host's webhooks, and checks it against the code host's
+	// when it's more than a few minutes old. Not from forks: those never get
+	// previews.
+	ListOpenChanges(context.Context, *connect.Request[v1.ListOpenChangesRequest]) (*connect.Response[v1.ListOpenChangesResponse], error)
 	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.GetPreviewResponse], error)
 	ListPreviews(context.Context, *connect.Request[v1.ListPreviewsRequest]) (*connect.Response[v1.ListPreviewsResponse], error)
 	// WatchPreview streams the preview's state until it is live, failed or
@@ -219,6 +229,12 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+PreviewServiceListSourcesProcedure,
 			connect.WithSchema(previewServiceMethods.ByName("ListSources")),
+			connect.WithClientOptions(opts...),
+		),
+		listOpenChanges: connect.NewClient[v1.ListOpenChangesRequest, v1.ListOpenChangesResponse](
+			httpClient,
+			baseURL+PreviewServiceListOpenChangesProcedure,
+			connect.WithSchema(previewServiceMethods.ByName("ListOpenChanges")),
 			connect.WithClientOptions(opts...),
 		),
 		getPreview: connect.NewClient[v1.GetPreviewRequest, v1.GetPreviewResponse](
@@ -372,6 +388,7 @@ func NewPreviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 type previewServiceClient struct {
 	createPreview       *connect.Client[v1.CreatePreviewRequest, v1.CreatePreviewResponse]
 	listSources         *connect.Client[v1.ListSourcesRequest, v1.ListSourcesResponse]
+	listOpenChanges     *connect.Client[v1.ListOpenChangesRequest, v1.ListOpenChangesResponse]
 	getPreview          *connect.Client[v1.GetPreviewRequest, v1.GetPreviewResponse]
 	listPreviews        *connect.Client[v1.ListPreviewsRequest, v1.ListPreviewsResponse]
 	watchPreview        *connect.Client[v1.WatchPreviewRequest, v1.WatchPreviewResponse]
@@ -406,6 +423,11 @@ func (c *previewServiceClient) CreatePreview(ctx context.Context, req *connect.R
 // ListSources calls stagd.api.v1.PreviewService.ListSources.
 func (c *previewServiceClient) ListSources(ctx context.Context, req *connect.Request[v1.ListSourcesRequest]) (*connect.Response[v1.ListSourcesResponse], error) {
 	return c.listSources.CallUnary(ctx, req)
+}
+
+// ListOpenChanges calls stagd.api.v1.PreviewService.ListOpenChanges.
+func (c *previewServiceClient) ListOpenChanges(ctx context.Context, req *connect.Request[v1.ListOpenChangesRequest]) (*connect.Response[v1.ListOpenChangesResponse], error) {
+	return c.listOpenChanges.CallUnary(ctx, req)
 }
 
 // GetPreview calls stagd.api.v1.PreviewService.GetPreview.
@@ -538,6 +560,13 @@ type PreviewServiceHandler interface {
 	// previews), newest first, and its branches. Only for repositories with
 	// previews on: Stagd never reads the others.
 	ListSources(context.Context, *connect.Request[v1.ListSourcesRequest]) (*connect.Response[v1.ListSourcesResponse], error)
+	// ListOpenChanges lists the open pull requests that could have a preview
+	// and have none (or only a torn-down one), across the org's repositories
+	// with previews on, most recently updated first. Stagd keeps its own list,
+	// from the code host's webhooks, and checks it against the code host's
+	// when it's more than a few minutes old. Not from forks: those never get
+	// previews.
+	ListOpenChanges(context.Context, *connect.Request[v1.ListOpenChangesRequest]) (*connect.Response[v1.ListOpenChangesResponse], error)
 	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.GetPreviewResponse], error)
 	ListPreviews(context.Context, *connect.Request[v1.ListPreviewsRequest]) (*connect.Response[v1.ListPreviewsResponse], error)
 	// WatchPreview streams the preview's state until it is live, failed or
@@ -634,6 +663,12 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 		PreviewServiceListSourcesProcedure,
 		svc.ListSources,
 		connect.WithSchema(previewServiceMethods.ByName("ListSources")),
+		connect.WithHandlerOptions(opts...),
+	)
+	previewServiceListOpenChangesHandler := connect.NewUnaryHandler(
+		PreviewServiceListOpenChangesProcedure,
+		svc.ListOpenChanges,
+		connect.WithSchema(previewServiceMethods.ByName("ListOpenChanges")),
 		connect.WithHandlerOptions(opts...),
 	)
 	previewServiceGetPreviewHandler := connect.NewUnaryHandler(
@@ -786,6 +821,8 @@ func NewPreviewServiceHandler(svc PreviewServiceHandler, opts ...connect.Handler
 			previewServiceCreatePreviewHandler.ServeHTTP(w, r)
 		case PreviewServiceListSourcesProcedure:
 			previewServiceListSourcesHandler.ServeHTTP(w, r)
+		case PreviewServiceListOpenChangesProcedure:
+			previewServiceListOpenChangesHandler.ServeHTTP(w, r)
 		case PreviewServiceGetPreviewProcedure:
 			previewServiceGetPreviewHandler.ServeHTTP(w, r)
 		case PreviewServiceListPreviewsProcedure:
@@ -849,6 +886,10 @@ func (UnimplementedPreviewServiceHandler) CreatePreview(context.Context, *connec
 
 func (UnimplementedPreviewServiceHandler) ListSources(context.Context, *connect.Request[v1.ListSourcesRequest]) (*connect.Response[v1.ListSourcesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListSources is not implemented"))
+}
+
+func (UnimplementedPreviewServiceHandler) ListOpenChanges(context.Context, *connect.Request[v1.ListOpenChangesRequest]) (*connect.Response[v1.ListOpenChangesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.PreviewService.ListOpenChanges is not implemented"))
 }
 
 func (UnimplementedPreviewServiceHandler) GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.GetPreviewResponse], error) {
