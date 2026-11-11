@@ -64,16 +64,19 @@ func host(u string) string {
 	return u
 }
 
+// The most previews the UI lists: it reloads them every few seconds.
+const uiPreviews = 1000
+
 // apiSource is the UI's previews from Stagd's API, as the signed-in person.
 type apiSource struct{ c *api.Clients }
 
 func (s apiSource) Previews(ctx context.Context) ([]*apiv1.Preview, error) {
-	res, err := s.c.Previews.ListPreviews(ctx, connect.NewRequest(&apiv1.ListPreviewsRequest{PageSize: maxPreviewPage}))
+	res, err := listPreviews(ctx, s.c, &apiv1.ListPreviewsRequest{}, uiPreviews)
 	if err != nil {
 		return nil, err
 	}
 
-	return res.Msg.GetPreviews(), nil
+	return res.GetPreviews(), nil
 }
 
 func (s apiSource) Preview(ctx context.Context, id string) (*apiv1.Preview, error) {

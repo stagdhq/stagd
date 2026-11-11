@@ -46,7 +46,7 @@ func previewCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "repo", Usage: "only this repository"},
 					&cli.BoolFlag{Name: "all", Usage: "include torn-down previews"},
-					&cli.IntFlag{Name: "limit", Usage: "the newest this many at most (up to 200)", Value: 50},
+					&cli.IntFlag{Name: "limit", Usage: "the newest this many at most (up to 5000)", Value: 50},
 				},
 				Action: previewList,
 			},
@@ -422,18 +422,18 @@ func previewList(ctx context.Context, cmd *cli.Command) error {
 
 	limit := cmd.Int("limit")
 
-	if limit < 1 || limit > maxPreviewPage {
-		return cli.Exit(fmt.Sprintf("--limit is 1 to %d", maxPreviewPage), 2)
+	if limit < 1 || limit > maxPreviews {
+		return cli.Exit(fmt.Sprintf("--limit is 1 to %d", maxPreviews), 2)
 	}
 
-	req := &apiv1.ListPreviewsRequest{Repository: cmd.String("repo"), PageSize: int32(limit)}
+	req := &apiv1.ListPreviewsRequest{Repository: cmd.String("repo")}
 	if cmd.Bool("all") {
 		for s := apiv1.PreviewStatus_PREVIEW_STATUS_QUEUED; s <= apiv1.PreviewStatus_PREVIEW_STATUS_DESTROYED; s++ {
 			req.Statuses = append(req.Statuses, s)
 		}
 	}
 
-	res, err := c.Previews.ListPreviews(ctx, connect.NewRequest(req))
+	res, err := listPreviews(ctx, c, req, limit)
 	if err != nil {
 		return err
 	}
@@ -441,12 +441,12 @@ func previewList(ctx context.Context, cmd *cli.Command) error {
 	w := cmd.Root().Writer
 
 	if cmd.Bool("json") {
-		return output.JSON(w, res.Msg)
+		return output.JSON(w, res)
 	}
 
-	rows := make([][]string, 0, len(res.Msg.GetPreviews()))
+	rows := make([][]string, 0, len(res.GetPreviews()))
 
-	for _, p := range res.Msg.GetPreviews() {
+	for _, p := range res.GetPreviews() {
 		rows = append(rows, []string{p.GetRepository().GetFullName(), what(p), statusLabel(p.GetStatus()), p.GetUrl(), p.GetId()})
 	}
 
@@ -454,16 +454,44 @@ func previewList(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	// A full page may not be all of them.
-	if len(rows) == limit && limit < maxPreviewPage {
-		fmt.Fprintf(cmd.Root().ErrWriter, "\nThe newest %d; there may be more (--limit up to %d).\n", limit, maxPreviewPage)
+	if res.GetNextPageToken() != "" {
+		fmt.Fprintf(cmd.Root().ErrWriter, "\nThe newest %d; there are more (--limit up to %d).\n", limit, maxPreviews)
 	}
 
 	return nil
 }
 
-// The most previews Stagd lists at once.
-const maxPreviewPage = 200
+// The most previews Stagd lists at once, and the most stagd lists in all.
+const (
+	maxPreviewPage = 200
+	maxPreviews    = 5000
+)
+
+// listPreviews pages through the previews req asks for, newest first, until
+// it has limit of them or there are no more. Its next page token is set when
+// there are more.
+func listPreviews(ctx context.Context, c *api.Clients, req *apiv1.ListPreviewsRequest, limit int) (*apiv1.ListPreviewsResponse, error) {
+	all := &apiv1.ListPreviewsResponse{}
+	req.PageToken = ""
+
+	for {
+		req.PageSize = int32(min(maxPreviewPage, limit-len(all.Previews)))
+
+		res, err := c.Previews.ListPreviews(ctx, connect.NewRequest(req))
+		if err != nil {
+			return nil, err
+		}
+
+		all.Previews = append(all.Previews, res.Msg.GetPreviews()...)
+		all.NextPageToken = res.Msg.GetNextPageToken()
+
+		if all.NextPageToken == "" || len(all.Previews) >= limit {
+			return all, nil
+		}
+
+		req.PageToken = all.NextPageToken
+	}
+}
 
 func previewGet(ctx context.Context, cmd *cli.Command) error {
 	id := cmd.Args().First()

@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -24,6 +26,10 @@ type fakeAccount struct {
 	revoked      []string
 	othersGone   bool
 	listPageSize int32
+
+	// When set, how many previews there are, served a page at a time: the page token is how many came before.
+	stored int
+	pages  []string
 }
 
 func (f *fakeAccount) ListSessions(context.Context, *connect.Request[apiv1.ListSessionsRequest]) (*connect.Response[apiv1.ListSessionsResponse], error) {
@@ -55,14 +61,27 @@ func (f *fakeAccount) RevokeOtherSessions(context.Context, *connect.Request[apiv
 
 func (f *fakeAccount) ListPreviews(_ context.Context, req *connect.Request[apiv1.ListPreviewsRequest]) (*connect.Response[apiv1.ListPreviewsResponse], error) {
 	f.listPageSize = req.Msg.GetPageSize()
+	f.pages = append(f.pages, req.Msg.GetPageToken())
+
+	n := int(req.Msg.GetPageSize())
+	next := ""
+
+	if f.stored > 0 {
+		from, _ := strconv.Atoi(req.Msg.GetPageToken())
+		n = min(n, f.stored-from)
+
+		if from+n < f.stored {
+			next = strconv.Itoa(from + n)
+		}
+	}
 
 	var previews []*apiv1.Preview
 
-	for range req.Msg.GetPageSize() {
+	for range n {
 		previews = append(previews, &apiv1.Preview{Id: "p", Repository: &apiv1.Repository{FullName: "acme-inc/web"}, Change: &apiv1.ChangeRequest{Number: 1}})
 	}
 
-	return connect.NewResponse(&apiv1.ListPreviewsResponse{Previews: previews}), nil
+	return connect.NewResponse(&apiv1.ListPreviewsResponse{Previews: previews, NextPageToken: next}), nil
 }
 
 func accountServer(t *testing.T, f *fakeAccount) *httptest.Server {
@@ -162,8 +181,38 @@ func TestPreviewListLimit(t *testing.T) {
 		t.Fatalf("preview list: %v, asked for %d", err, f.listPageSize)
 	}
 
-	if _, err := run(t, srv, "--token", "tok-1", "preview", "list", "--limit", "500"); err == nil {
-		t.Error("--limit 500 should refuse: Stagd lists 200 at most")
+	if _, err := run(t, srv, "--token", "tok-1", "preview", "list", "--limit", "6000"); err == nil {
+		t.Error("--limit 6000 should refuse: stagd lists 5000 at most")
+	}
+}
+
+func TestPreviewListPages(t *testing.T) {
+	f := &fakeAccount{stored: 450}
+	srv := accountServer(t, f)
+
+	// 450 of them, asked for at most 500: three pages, the last one short, and nothing said about more.
+	out, err := run(t, srv, "--token", "tok-1", "preview", "list", "--limit", "500", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got := strings.Count(out, `"id"`); got != 450 {
+		t.Errorf("listed %d, want 450", got)
+	}
+
+	if want := []string{"", "200", "400"}; !slices.Equal(f.pages, want) {
+		t.Errorf("asked for pages %q, want %q", f.pages, want)
+	}
+
+	// Asked for fewer than there are: it stops there.
+	f.pages = nil
+
+	if _, err := run(t, srv, "--token", "tok-1", "preview", "list", "--limit", "250"); err != nil {
+		t.Fatal(err)
+	}
+
+	if f.listPageSize != 50 || len(f.pages) != 2 {
+		t.Errorf("asked for %d pages, the last of %d: want 2, the last of 50", len(f.pages), f.listPageSize)
 	}
 }
 
