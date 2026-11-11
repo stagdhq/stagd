@@ -25,13 +25,6 @@ service PreviewService {
   // previews), newest first, and its branches. Only for repositories with
   // previews on: Stagd never reads the others.
   rpc ListSources(ListSourcesRequest) returns (ListSourcesResponse);
-  // ListOpenChanges lists the open pull requests that could have a preview
-  // and have none (or only a torn-down one), across the org's repositories
-  // with previews on, most recently updated first. Stagd keeps its own list,
-  // from the code host's webhooks, and checks it against the code host's
-  // when it's more than a few minutes old. Not from forks: those never get
-  // previews.
-  rpc ListOpenChanges(ListOpenChangesRequest) returns (ListOpenChangesResponse);
   rpc GetPreview(GetPreviewRequest) returns (GetPreviewResponse);
   rpc ListPreviews(ListPreviewsRequest) returns (ListPreviewsResponse);
   // WatchPreview streams the preview's state until it is live, failed or
@@ -412,28 +405,6 @@ message ListSourcesResponse {
   repeated ChangeRequest changes = 1;
   // Branch names, the default branch first; at most 100.
   repeated string branches = 2;
-}
-
-message ListOpenChangesRequest {
-  // A repository id or "owner/name"; every repository with previews on when
-  // empty.
-  string repository = 1;
-  int32 page_size = 2 [(buf.validate.field).int32 = {
-    gte: 0
-    lte: 200
-  }];
-}
-
-message ListOpenChangesResponse {
-  repeated OpenChange changes = 1;
-}
-
-// OpenChange is an open pull request without a preview.
-message OpenChange {
-  Repository repository = 1;
-  ChangeRequest change = 2;
-  // When it last changed on the code host.
-  google.protobuf.Timestamp update_time = 3;
 }
 
 message CreatePreviewRequest {
