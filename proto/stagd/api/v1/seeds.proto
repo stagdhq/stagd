@@ -4,6 +4,7 @@ package stagd.api.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/options.proto";
 
 // SeedService keeps the org's seeds: the data a preview's database starts
 // with, a database dump (pg_dump's now; MySQL's and others' as Stagd runs
@@ -12,15 +13,25 @@ import "google/protobuf/timestamp.proto";
 // a seed (services: { postgres: { seed: <name> } }); what it is, only the
 // org's admins say, so a pull request can't point its preview at other data.
 service SeedService {
-  rpc ListSeeds(ListSeedsRequest) returns (ListSeedsResponse);
+  rpc ListSeeds(ListSeedsRequest) returns (ListSeedsResponse) {
+    option (stagd.api.v1.permission) = "seeds:read";
+  }
   // CreateSeed saves a seed once its integration finds a file at its path.
-  rpc CreateSeed(CreateSeedRequest) returns (CreateSeedResponse);
+  rpc CreateSeed(CreateSeedRequest) returns (CreateSeedResponse) {
+    option (stagd.api.v1.permission) = "seeds:manage";
+  }
   // UpdateSeed changes where a seed is; the file is looked up again.
-  rpc UpdateSeed(UpdateSeedRequest) returns (UpdateSeedResponse);
-  rpc DeleteSeed(DeleteSeedRequest) returns (DeleteSeedResponse);
+  rpc UpdateSeed(UpdateSeedRequest) returns (UpdateSeedResponse) {
+    option (stagd.api.v1.permission) = "seeds:manage";
+  }
+  rpc DeleteSeed(DeleteSeedRequest) returns (DeleteSeedResponse) {
+    option (stagd.api.v1.permission) = "seeds:manage";
+  }
   // FindSeedFile says which file a path finds now, without saving
   // anything: for a form, before the seed is saved.
-  rpc FindSeedFile(FindSeedFileRequest) returns (FindSeedFileResponse);
+  rpc FindSeedFile(FindSeedFileRequest) returns (FindSeedFileResponse) {
+    option (stagd.api.v1.permission) = "seeds:manage";
+  }
 }
 
 // A file a seed restores.

@@ -1086,7 +1086,7 @@ var File_stagd_api_v1_scm_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_scm_proto_rawDesc = "" +
 	"\n" +
-	"\x16stagd/api/v1/scm.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\x94\x03\n" +
+	"\x16stagd/api/v1/scm.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\x1a\x1astagd/api/v1/options.proto\"\x94\x03\n" +
 	"\n" +
 	"Connection\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x125\n" +
@@ -1171,17 +1171,17 @@ const file_stagd_api_v1_scm_proto_rawDesc = "" +
 	"\x16CONNECT_STATUS_PENDING\x10\x01\x12\x1c\n" +
 	"\x18CONNECT_STATUS_CONNECTED\x10\x02\x12\x19\n" +
 	"\x15CONNECT_STATUS_FAILED\x10\x03\x12\x1a\n" +
-	"\x16CONNECT_STATUS_EXPIRED\x10\x042\xa1\x06\n" +
+	"\x16CONNECT_STATUS_EXPIRED\x10\x042\xe1\a\n" +
 	"\n" +
-	"ScmService\x12U\n" +
-	"\fStartConnect\x12!.stagd.api.v1.StartConnectRequest\x1a\".stagd.api.v1.StartConnectResponse\x12a\n" +
-	"\x10GetConnectStatus\x12%.stagd.api.v1.GetConnectStatusRequest\x1a&.stagd.api.v1.GetConnectStatusResponse\x12^\n" +
-	"\x0fListConnections\x12$.stagd.api.v1.ListConnectionsRequest\x1a%.stagd.api.v1.ListConnectionsResponse\x12a\n" +
-	"\x10DeleteConnection\x12%.stagd.api.v1.DeleteConnectionRequest\x1a&.stagd.api.v1.DeleteConnectionResponse\x12a\n" +
-	"\x10ListRepositories\x12%.stagd.api.v1.ListRepositoriesRequest\x1a&.stagd.api.v1.ListRepositoriesResponse\x12g\n" +
-	"\x12SetPreviewsEnabled\x12'.stagd.api.v1.SetPreviewsEnabledRequest\x1a(.stagd.api.v1.SetPreviewsEnabledResponse\x12^\n" +
-	"\x0fCheckRepository\x12$.stagd.api.v1.CheckRepositoryRequest\x1a%.stagd.api.v1.CheckRepositoryResponse\x12j\n" +
-	"\x13SetRepositoryHidden\x12(.stagd.api.v1.SetRepositoryHiddenRequest\x1a).stagd.api.v1.SetRepositoryHiddenResponseB\xa8\x01\n" +
+	"ScmService\x12m\n" +
+	"\fStartConnect\x12!.stagd.api.v1.StartConnectRequest\x1a\".stagd.api.v1.StartConnectResponse\"\x16\x8a\xb5\x18\x12connections:manage\x12y\n" +
+	"\x10GetConnectStatus\x12%.stagd.api.v1.GetConnectStatusRequest\x1a&.stagd.api.v1.GetConnectStatusResponse\"\x16\x8a\xb5\x18\x12connections:manage\x12t\n" +
+	"\x0fListConnections\x12$.stagd.api.v1.ListConnectionsRequest\x1a%.stagd.api.v1.ListConnectionsResponse\"\x14\x8a\xb5\x18\x10connections:read\x12y\n" +
+	"\x10DeleteConnection\x12%.stagd.api.v1.DeleteConnectionRequest\x1a&.stagd.api.v1.DeleteConnectionResponse\"\x16\x8a\xb5\x18\x12connections:manage\x12x\n" +
+	"\x10ListRepositories\x12%.stagd.api.v1.ListRepositoriesRequest\x1a&.stagd.api.v1.ListRepositoriesResponse\"\x15\x8a\xb5\x18\x11repositories:read\x12\x80\x01\n" +
+	"\x12SetPreviewsEnabled\x12'.stagd.api.v1.SetPreviewsEnabledRequest\x1a(.stagd.api.v1.SetPreviewsEnabledResponse\"\x17\x8a\xb5\x18\x13repositories:manage\x12u\n" +
+	"\x0fCheckRepository\x12$.stagd.api.v1.CheckRepositoryRequest\x1a%.stagd.api.v1.CheckRepositoryResponse\"\x15\x8a\xb5\x18\x11repositories:read\x12\x83\x01\n" +
+	"\x13SetRepositoryHidden\x12(.stagd.api.v1.SetRepositoryHiddenRequest\x1a).stagd.api.v1.SetRepositoryHiddenResponse\"\x17\x8a\xb5\x18\x13repositories:manageB\xa8\x01\n" +
 	"\x10com.stagd.api.v1B\bScmProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -1268,6 +1268,7 @@ func file_stagd_api_v1_scm_proto_init() {
 		return
 	}
 	file_stagd_api_v1_model_proto_init()
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

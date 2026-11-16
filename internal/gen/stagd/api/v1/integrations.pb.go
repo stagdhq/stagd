@@ -981,7 +981,7 @@ var File_stagd_api_v1_integrations_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_integrations_proto_rawDesc = "" +
 	"\n" +
-	"\x1fstagd/api/v1/integrations.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9b\x02\n" +
+	"\x1fstagd/api/v1/integrations.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1astagd/api/v1/options.proto\"\x9b\x02\n" +
 	"\x10IntegrationField\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
@@ -1055,14 +1055,14 @@ const file_stagd_api_v1_integrations_proto_rawDesc = "" +
 	"\x11IntegrationStatus\x12\"\n" +
 	"\x1eINTEGRATION_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19INTEGRATION_STATUS_ACTIVE\x10\x01\x12\x1e\n" +
-	"\x1aINTEGRATION_STATUS_FAILING\x10\x022\xf8\x04\n" +
-	"\x12IntegrationService\x12m\n" +
-	"\x14ListIntegrationKinds\x12).stagd.api.v1.ListIntegrationKindsRequest\x1a*.stagd.api.v1.ListIntegrationKindsResponse\x12d\n" +
-	"\x11CreateIntegration\x12&.stagd.api.v1.CreateIntegrationRequest\x1a'.stagd.api.v1.CreateIntegrationResponse\x12a\n" +
-	"\x10ListIntegrations\x12%.stagd.api.v1.ListIntegrationsRequest\x1a&.stagd.api.v1.ListIntegrationsResponse\x12d\n" +
-	"\x11UpdateIntegration\x12&.stagd.api.v1.UpdateIntegrationRequest\x1a'.stagd.api.v1.UpdateIntegrationResponse\x12^\n" +
-	"\x0fTestIntegration\x12$.stagd.api.v1.TestIntegrationRequest\x1a%.stagd.api.v1.TestIntegrationResponse\x12d\n" +
-	"\x11DeleteIntegration\x12&.stagd.api.v1.DeleteIntegrationRequest\x1a'.stagd.api.v1.DeleteIntegrationResponseB\xb1\x01\n" +
+	"\x1aINTEGRATION_STATUS_FAILING\x10\x022\x8b\x06\n" +
+	"\x12IntegrationService\x12\x84\x01\n" +
+	"\x14ListIntegrationKinds\x12).stagd.api.v1.ListIntegrationKindsRequest\x1a*.stagd.api.v1.ListIntegrationKindsResponse\"\x15\x8a\xb5\x18\x11integrations:read\x12}\n" +
+	"\x11CreateIntegration\x12&.stagd.api.v1.CreateIntegrationRequest\x1a'.stagd.api.v1.CreateIntegrationResponse\"\x17\x8a\xb5\x18\x13integrations:manage\x12x\n" +
+	"\x10ListIntegrations\x12%.stagd.api.v1.ListIntegrationsRequest\x1a&.stagd.api.v1.ListIntegrationsResponse\"\x15\x8a\xb5\x18\x11integrations:read\x12}\n" +
+	"\x11UpdateIntegration\x12&.stagd.api.v1.UpdateIntegrationRequest\x1a'.stagd.api.v1.UpdateIntegrationResponse\"\x17\x8a\xb5\x18\x13integrations:manage\x12w\n" +
+	"\x0fTestIntegration\x12$.stagd.api.v1.TestIntegrationRequest\x1a%.stagd.api.v1.TestIntegrationResponse\"\x17\x8a\xb5\x18\x13integrations:manage\x12}\n" +
+	"\x11DeleteIntegration\x12&.stagd.api.v1.DeleteIntegrationRequest\x1a'.stagd.api.v1.DeleteIntegrationResponse\"\x17\x8a\xb5\x18\x13integrations:manageB\xb1\x01\n" +
 	"\x10com.stagd.api.v1B\x11IntegrationsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -1141,6 +1141,7 @@ func file_stagd_api_v1_integrations_proto_init() {
 	if File_stagd_api_v1_integrations_proto != nil {
 		return
 	}
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

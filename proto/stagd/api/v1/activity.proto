@@ -4,12 +4,15 @@ package stagd.api.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/options.proto";
 
 // ActivityService is the org's activity log: who changed what its previews
 // depend on (secrets, compute, integrations, access), and when. It never
 // holds a secret's value.
 service ActivityService {
-  rpc ListActivity(ListActivityRequest) returns (ListActivityResponse);
+  rpc ListActivity(ListActivityRequest) returns (ListActivityResponse) {
+    option (stagd.api.v1.permission) = "activity:read";
+  }
 }
 
 message Activity {

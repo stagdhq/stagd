@@ -1970,7 +1970,7 @@ var File_stagd_api_v1_compute_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\n" +
-	"\x1astagd/api/v1/compute.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bstagd/api/v1/activity.proto\x1a\x18stagd/api/v1/model.proto\"\xae\x01\n" +
+	"\x1astagd/api/v1/compute.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bstagd/api/v1/activity.proto\x1a\x18stagd/api/v1/model.proto\x1a\x1astagd/api/v1/options.proto\"\xae\x01\n" +
 	"\x13ComputeCapabilities\x12\x14\n" +
 	"\x05sleep\x18\x01 \x01(\bR\x05sleep\x12)\n" +
 	"\x10volume_snapshots\x18\x02 \x01(\bR\x0fvolumeSnapshots\x12\x18\n" +
@@ -2129,18 +2129,19 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x17ComputeConnectionStatus\x12)\n" +
 	"%COMPUTE_CONNECTION_STATUS_UNSPECIFIED\x10\x00\x12$\n" +
 	" COMPUTE_CONNECTION_STATUS_ACTIVE\x10\x01\x12%\n" +
-	"!COMPUTE_CONNECTION_STATUS_FAILING\x10\x022\x9e\t\n" +
-	"\x0eComputeService\x12X\n" +
-	"\rListProviders\x12\".stagd.api.v1.ListProvidersRequest\x1a#.stagd.api.v1.ListProvidersResponse\x12v\n" +
-	"\x17CreateComputeConnection\x12,.stagd.api.v1.CreateComputeConnectionRequest\x1a-.stagd.api.v1.CreateComputeConnectionResponse\x12s\n" +
-	"\x16ListComputeConnections\x12+.stagd.api.v1.ListComputeConnectionsRequest\x1a,.stagd.api.v1.ListComputeConnectionsResponse\x12p\n" +
-	"\x15TestComputeConnection\x12*.stagd.api.v1.TestComputeConnectionRequest\x1a+.stagd.api.v1.TestComputeConnectionResponse\x12v\n" +
-	"\x17UpdateComputeConnection\x12,.stagd.api.v1.UpdateComputeConnectionRequest\x1a-.stagd.api.v1.UpdateComputeConnectionResponse\x12\x82\x01\n" +
-	"\x1bSetDefaultComputeConnection\x120.stagd.api.v1.SetDefaultComputeConnectionRequest\x1a1.stagd.api.v1.SetDefaultComputeConnectionResponse\x12v\n" +
-	"\x17DeleteComputeConnection\x12,.stagd.api.v1.DeleteComputeConnectionRequest\x1a-.stagd.api.v1.DeleteComputeConnectionResponse\x12g\n" +
-	"\x12CreateRelayInstall\x12'.stagd.api.v1.CreateRelayInstallRequest\x1a(.stagd.api.v1.CreateRelayInstallResponse\x12p\n" +
-	"\x15CreateInstallManifest\x12*.stagd.api.v1.CreateInstallManifestRequest\x1a+.stagd.api.v1.CreateInstallManifestResponse\x12\x82\x01\n" +
-	"\x1bGetComputeConnectionDetails\x120.stagd.api.v1.GetComputeConnectionDetailsRequest\x1a1.stagd.api.v1.GetComputeConnectionDetailsResponseB\xac\x01\n" +
+	"!COMPUTE_CONNECTION_STATUS_FAILING\x10\x022\xe6\n" +
+	"\n" +
+	"\x0eComputeService\x12j\n" +
+	"\rListProviders\x12\".stagd.api.v1.ListProvidersRequest\x1a#.stagd.api.v1.ListProvidersResponse\"\x10\x8a\xb5\x18\fcompute:read\x12\x8a\x01\n" +
+	"\x17CreateComputeConnection\x12,.stagd.api.v1.CreateComputeConnectionRequest\x1a-.stagd.api.v1.CreateComputeConnectionResponse\"\x12\x8a\xb5\x18\x0ecompute:manage\x12\x85\x01\n" +
+	"\x16ListComputeConnections\x12+.stagd.api.v1.ListComputeConnectionsRequest\x1a,.stagd.api.v1.ListComputeConnectionsResponse\"\x10\x8a\xb5\x18\fcompute:read\x12\x84\x01\n" +
+	"\x15TestComputeConnection\x12*.stagd.api.v1.TestComputeConnectionRequest\x1a+.stagd.api.v1.TestComputeConnectionResponse\"\x12\x8a\xb5\x18\x0ecompute:manage\x12\x8a\x01\n" +
+	"\x17UpdateComputeConnection\x12,.stagd.api.v1.UpdateComputeConnectionRequest\x1a-.stagd.api.v1.UpdateComputeConnectionResponse\"\x12\x8a\xb5\x18\x0ecompute:manage\x12\x96\x01\n" +
+	"\x1bSetDefaultComputeConnection\x120.stagd.api.v1.SetDefaultComputeConnectionRequest\x1a1.stagd.api.v1.SetDefaultComputeConnectionResponse\"\x12\x8a\xb5\x18\x0ecompute:manage\x12\x8a\x01\n" +
+	"\x17DeleteComputeConnection\x12,.stagd.api.v1.DeleteComputeConnectionRequest\x1a-.stagd.api.v1.DeleteComputeConnectionResponse\"\x12\x8a\xb5\x18\x0ecompute:manage\x12{\n" +
+	"\x12CreateRelayInstall\x12'.stagd.api.v1.CreateRelayInstallRequest\x1a(.stagd.api.v1.CreateRelayInstallResponse\"\x12\x8a\xb5\x18\x0ecompute:manage\x12\x84\x01\n" +
+	"\x15CreateInstallManifest\x12*.stagd.api.v1.CreateInstallManifestRequest\x1a+.stagd.api.v1.CreateInstallManifestResponse\"\x12\x8a\xb5\x18\x0ecompute:manage\x12\x94\x01\n" +
+	"\x1bGetComputeConnectionDetails\x120.stagd.api.v1.GetComputeConnectionDetailsRequest\x1a1.stagd.api.v1.GetComputeConnectionDetailsResponse\"\x10\x8a\xb5\x18\fcompute:readB\xac\x01\n" +
 	"\x10com.stagd.api.v1B\fComputeProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -2267,6 +2268,7 @@ func file_stagd_api_v1_compute_proto_init() {
 	}
 	file_stagd_api_v1_activity_proto_init()
 	file_stagd_api_v1_model_proto_init()
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -7,6 +7,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/compute.proto";
 import "stagd/api/v1/model.proto";
+import "stagd/api/v1/options.proto";
 import "stagd/api/v1/seeds.proto";
 import "stagd/config/v1/config.proto";
 
@@ -19,93 +20,145 @@ import "stagd/config/v1/config.proto";
 service PreviewService {
   // CreatePreview starts a preview, or updates the existing one for the same
   // change request or branch to the new commit.
-  rpc CreatePreview(CreatePreviewRequest) returns (CreatePreviewResponse);
+  rpc CreatePreview(CreatePreviewRequest) returns (CreatePreviewResponse) {
+    option (stagd.api.v1.permission) = "previews:write";
+  }
   // ListSources lists what a repository's previews can be of, from its code
   // host: its open pull requests (not from forks: those never get
   // previews), newest first, and its branches. Only for repositories with
   // previews on: Stagd never reads the others.
-  rpc ListSources(ListSourcesRequest) returns (ListSourcesResponse);
-  rpc GetPreview(GetPreviewRequest) returns (GetPreviewResponse);
-  rpc ListPreviews(ListPreviewsRequest) returns (ListPreviewsResponse);
+  rpc ListSources(ListSourcesRequest) returns (ListSourcesResponse) {
+    option (stagd.api.v1.permission) = "sources:read";
+  }
+  rpc GetPreview(GetPreviewRequest) returns (GetPreviewResponse) {
+    option (stagd.api.v1.permission) = "previews:read";
+  }
+  rpc ListPreviews(ListPreviewsRequest) returns (ListPreviewsResponse) {
+    option (stagd.api.v1.permission) = "previews:read";
+  }
   // WatchPreview streams the preview's state until it is live, failed or
   // destroyed, starting with its current state.
-  rpc WatchPreview(WatchPreviewRequest) returns (stream WatchPreviewResponse);
+  rpc WatchPreview(WatchPreviewRequest) returns (stream WatchPreviewResponse) {
+    option (stagd.api.v1.permission) = "previews:read";
+  }
   // ListPreviewEvents returns what happened to a preview: all of it, oldest
   // first; or, with a page_size, a page at a time, newest first.
-  rpc ListPreviewEvents(ListPreviewEventsRequest) returns (ListPreviewEventsResponse);
+  rpc ListPreviewEvents(ListPreviewEventsRequest) returns (ListPreviewEventsResponse) {
+    option (stagd.api.v1.permission) = "preview_events:read";
+  }
   // WakePreview starts a sleeping preview again.
-  rpc WakePreview(WakePreviewRequest) returns (WakePreviewResponse);
+  rpc WakePreview(WakePreviewRequest) returns (WakePreviewResponse) {
+    option (stagd.api.v1.permission) = "previews:wake";
+  }
   // DestroyPreview tears a preview down now.
-  rpc DestroyPreview(DestroyPreviewRequest) returns (DestroyPreviewResponse);
+  rpc DestroyPreview(DestroyPreviewRequest) returns (DestroyPreviewResponse) {
+    option (stagd.api.v1.permission) = "previews:write";
+  }
   // GetPreviewFailure answers what was collected about a failed preview's
   // current failure: its explanation, and the masked error and log lines
   // it was explained from, for a coding agent to read with its own model.
-  rpc GetPreviewFailure(GetPreviewFailureRequest) returns (GetPreviewFailureResponse);
+  rpc GetPreviewFailure(GetPreviewFailureRequest) returns (GetPreviewFailureResponse) {
+    option (stagd.api.v1.permission) = "preview_events:read";
+  }
   // ListTesters lists the users stagd.yaml names for signing in to the
   // preview (testers), and how each signs in.
-  rpc ListTesters(ListTestersRequest) returns (ListTestersResponse);
+  rpc ListTesters(ListTestersRequest) returns (ListTestersResponse) {
+    option (stagd.api.v1.permission) = "testers:read";
+  }
   // CheckTesters signs in to the preview as each tester, as stagd.yaml says,
   // and says how each step went.
-  rpc CheckTesters(CheckTestersRequest) returns (CheckTestersResponse);
+  rpc CheckTesters(CheckTestersRequest) returns (CheckTestersResponse) {
+    option (stagd.api.v1.permission) = "testers:check";
+  }
   // GetPreviewPolicy returns who may open previews and how their URLs look:
   // the org's default, or a repository's (its own, or the default it inherits).
-  rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse);
+  rpc GetPreviewPolicy(GetPreviewPolicyRequest) returns (GetPreviewPolicyResponse) {
+    option (stagd.api.v1.permission) = "preview_policy:read";
+  }
   // UpdatePreviewPolicy sets the org's default, or a repository's override.
   // Access applies to existing previews on their next deploy; URL style only
   // to new previews, so links already shared keep working.
-  rpc UpdatePreviewPolicy(UpdatePreviewPolicyRequest) returns (UpdatePreviewPolicyResponse);
+  rpc UpdatePreviewPolicy(UpdatePreviewPolicyRequest) returns (UpdatePreviewPolicyResponse) {
+    option (stagd.api.v1.permission) = "preview_policy:manage";
+  }
   // ValidateApp checks a repository's stagd.yaml and compose file exactly as
   // previews read them, without starting anything (stagd validate). The
   // client sends the files it has; when stagd.yaml points at another file,
   // the response asks for it in `requested`, and the client calls again.
-  rpc ValidateApp(ValidateAppRequest) returns (ValidateAppResponse);
+  rpc ValidateApp(ValidateAppRequest) returns (ValidateAppResponse) {
+    option (stagd.api.v1.permission) = "apps:validate";
+  }
   // ListMail lists the mail a preview captured, newest first. Only for
   // previews with mail capture on (stagd.yaml `services: { mail: {} }`) and
   // running: a sleeping preview keeps its mail, but has to wake to show it.
-  rpc ListMail(ListMailRequest) returns (ListMailResponse);
+  rpc ListMail(ListMailRequest) returns (ListMailResponse) {
+    option (stagd.api.v1.permission) = "mail:read";
+  }
   // GetMail returns one captured message with its text, HTML and headers.
-  rpc GetMail(GetMailRequest) returns (GetMailResponse);
+  rpc GetMail(GetMailRequest) returns (GetMailResponse) {
+    option (stagd.api.v1.permission) = "mail:read";
+  }
   // ClearMail deletes everything a preview captured.
-  rpc ClearMail(ClearMailRequest) returns (ClearMailResponse);
+  rpc ClearMail(ClearMailRequest) returns (ClearMailResponse) {
+    option (stagd.api.v1.permission) = "mail:write";
+  }
   // DeleteMail deletes one message a preview captured.
-  rpc DeleteMail(DeleteMailRequest) returns (DeleteMailResponse);
+  rpc DeleteMail(DeleteMailRequest) returns (DeleteMailResponse) {
+    option (stagd.api.v1.permission) = "mail:write";
+  }
   // WaitForMail answers as soon as a message matching the filter arrives
   // after the cursor, or with none when the timeout passes: what a test
   // waits on after the step that should send it, and how it checks that a
   // step sent nothing.
-  rpc WaitForMail(WaitForMailRequest) returns (WaitForMailResponse);
+  rpc WaitForMail(WaitForMailRequest) returns (WaitForMailResponse) {
+    option (stagd.api.v1.permission) = "mail:read";
+  }
   // ListTexts lists the text messages (SMS) a preview's app sent, newest
   // first, caught by Stagd's mock of the vendors' APIs. Only for previews
   // with text capture on (stagd.yaml `services: { sms: {} }`) and running.
-  rpc ListTexts(ListTextsRequest) returns (ListTextsResponse);
+  rpc ListTexts(ListTextsRequest) returns (ListTextsResponse) {
+    option (stagd.api.v1.permission) = "texts:read";
+  }
   // WaitForTexts is WaitForMail for text messages.
-  rpc WaitForTexts(WaitForTextsRequest) returns (WaitForTextsResponse);
+  rpc WaitForTexts(WaitForTextsRequest) returns (WaitForTextsResponse) {
+    option (stagd.api.v1.permission) = "texts:read";
+  }
 
   // GetServiceUsage returns CPU and memory per service of a preview over a
   // window up to 24 hours. Stagd samples them every 30 seconds while a
   // preview is live, on compute that can say: nothing while it sleeps, so
   // the series have gaps.
-  rpc GetServiceUsage(GetServiceUsageRequest) returns (GetServiceUsageResponse);
+  rpc GetServiceUsage(GetServiceUsageRequest) returns (GetServiceUsageResponse) {
+    option (stagd.api.v1.permission) = "usage:read";
+  }
 
   // ListLogs returns the latest lines a preview's services wrote, read from
   // its compute when asked: Stagd keeps no copy. Each line is read for its
   // level and message, and JSON and logfmt lines for their fields. The
   // preview's secrets are hidden. A sleeping preview has to wake first; a
   // torn-down one's logs are gone.
-  rpc ListLogs(ListLogsRequest) returns (ListLogsResponse);
+  rpc ListLogs(ListLogsRequest) returns (ListLogsResponse) {
+    option (stagd.api.v1.permission) = "logs:read";
+  }
 
   // ListBuildLogs returns what each service's build printed, for those its
   // compute builds, read from the compute when asked: Stagd keeps no copy.
   // There while it builds, to follow by asking again, and after, until the
   // preview's instance goes; the preview's secrets are hidden.
-  rpc ListBuildLogs(ListBuildLogsRequest) returns (ListBuildLogsResponse);
+  rpc ListBuildLogs(ListBuildLogsRequest) returns (ListBuildLogsResponse) {
+    option (stagd.api.v1.permission) = "logs:read";
+  }
 
   // ListTraces lists a preview's traces, newest first, from its own
   // OpenTelemetry endpoint (stagd.yaml `services: { otel: {} }`), read when
   // asked: Stagd keeps no copy. A sleeping preview has to wake first.
-  rpc ListTraces(ListTracesRequest) returns (ListTracesResponse);
+  rpc ListTraces(ListTracesRequest) returns (ListTracesResponse) {
+    option (stagd.api.v1.permission) = "traces:read";
+  }
   // GetTrace returns one trace's spans, for a waterfall.
-  rpc GetTrace(GetTraceRequest) returns (GetTraceResponse);
+  rpc GetTrace(GetTraceRequest) returns (GetTraceResponse) {
+    option (stagd.api.v1.permission) = "traces:read";
+  }
 }
 
 // Who may open a preview.

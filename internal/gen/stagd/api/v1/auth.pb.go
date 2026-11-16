@@ -141,16 +141,16 @@ var File_stagd_api_v1_auth_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x17stagd/api/v1/auth.proto\x12\fstagd.api.v1\x1a\x18stagd/api/v1/model.proto\"\x0e\n" +
+	"\x17stagd/api/v1/auth.proto\x12\fstagd.api.v1\x1a\x18stagd/api/v1/model.proto\x1a\x1astagd/api/v1/options.proto\"\x0e\n" +
 	"\fGetMeRequest\"\x88\x02\n" +
 	"\rGetMeResponse\x12&\n" +
 	"\x04user\x18\x01 \x01(\v2\x12.stagd.api.v1.UserR\x04user\x120\n" +
 	"\x06active\x18\x02 \x01(\v2\x18.stagd.api.v1.MembershipR\x06active\x12:\n" +
 	"\vmemberships\x18\x03 \x03(\v2\x18.stagd.api.v1.MembershipR\vmemberships\x12;\n" +
 	"\vpreferences\x18\x04 \x01(\v2\x19.stagd.api.v1.PreferencesR\vpreferences\x12$\n" +
-	"\x0ecan_create_org\x18\x05 \x01(\bR\fcanCreateOrg2O\n" +
-	"\vAuthService\x12@\n" +
-	"\x05GetMe\x12\x1a.stagd.api.v1.GetMeRequest\x1a\x1b.stagd.api.v1.GetMeResponseB\xa9\x01\n" +
+	"\x0ecan_create_org\x18\x05 \x01(\bR\fcanCreateOrg2a\n" +
+	"\vAuthService\x12R\n" +
+	"\x05GetMe\x12\x1a.stagd.api.v1.GetMeRequest\x1a\x1b.stagd.api.v1.GetMeResponse\"\x10\x8a\xb5\x18\faccount:readB\xa9\x01\n" +
 	"\x10com.stagd.api.v1B\tAuthProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -193,6 +193,7 @@ func file_stagd_api_v1_auth_proto_init() {
 		return
 	}
 	file_stagd_api_v1_model_proto_init()
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

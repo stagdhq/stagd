@@ -5,6 +5,7 @@ package stagd.api.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/model.proto";
+import "stagd/api/v1/options.proto";
 
 // ScmService connects code hosts to the active org and lists the
 // repositories they give Stagd access to.
@@ -19,26 +20,42 @@ import "stagd/api/v1/model.proto";
 //  3. The client calls GetConnectStatus with `state` until it is CONNECTED.
 service ScmService {
   // StartConnect begins connecting a code host account to the active org.
-  rpc StartConnect(StartConnectRequest) returns (StartConnectResponse);
+  rpc StartConnect(StartConnectRequest) returns (StartConnectResponse) {
+    option (stagd.api.v1.permission) = "connections:manage";
+  }
   // GetConnectStatus reports how a connect started by StartConnect is going.
-  rpc GetConnectStatus(GetConnectStatusRequest) returns (GetConnectStatusResponse);
+  rpc GetConnectStatus(GetConnectStatusRequest) returns (GetConnectStatusResponse) {
+    option (stagd.api.v1.permission) = "connections:manage";
+  }
   // ListConnections lists the code host accounts connected to the active org.
-  rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse);
+  rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse) {
+    option (stagd.api.v1.permission) = "connections:read";
+  }
   // DeleteConnection disconnects a code host account. Its repositories stop
   // getting previews; running previews are torn down.
-  rpc DeleteConnection(DeleteConnectionRequest) returns (DeleteConnectionResponse);
+  rpc DeleteConnection(DeleteConnectionRequest) returns (DeleteConnectionResponse) {
+    option (stagd.api.v1.permission) = "connections:manage";
+  }
   // ListRepositories lists the repositories the active org can preview.
-  rpc ListRepositories(ListRepositoriesRequest) returns (ListRepositoriesResponse);
+  rpc ListRepositories(ListRepositoriesRequest) returns (ListRepositoriesResponse) {
+    option (stagd.api.v1.permission) = "repositories:read";
+  }
   // SetPreviewsEnabled turns previews on or off for a repository. Turning
   // them off tears down its running previews.
-  rpc SetPreviewsEnabled(SetPreviewsEnabledRequest) returns (SetPreviewsEnabledResponse);
+  rpc SetPreviewsEnabled(SetPreviewsEnabledRequest) returns (SetPreviewsEnabledResponse) {
+    option (stagd.api.v1.permission) = "repositories:manage";
+  }
   // CheckRepository looks at how a repository's app is described on its
   // default branch (its setup), unless it looked in the last few minutes.
   // Only for repositories with previews on: Stagd never reads the others.
-  rpc CheckRepository(CheckRepositoryRequest) returns (CheckRepositoryResponse);
+  rpc CheckRepository(CheckRepositoryRequest) returns (CheckRepositoryResponse) {
+    option (stagd.api.v1.permission) = "repositories:read";
+  }
   // SetRepositoryHidden hides a repository from the org's lists, or shows it
   // again. Its previews are left as they are.
-  rpc SetRepositoryHidden(SetRepositoryHiddenRequest) returns (SetRepositoryHiddenResponse);
+  rpc SetRepositoryHidden(SetRepositoryHiddenRequest) returns (SetRepositoryHiddenResponse) {
+    option (stagd.api.v1.permission) = "repositories:manage";
+  }
 }
 
 enum ConnectionStatus {

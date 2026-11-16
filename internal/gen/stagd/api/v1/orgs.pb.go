@@ -2264,7 +2264,7 @@ var File_stagd_api_v1_orgs_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\n" +
-	"\x17stagd/api/v1/orgs.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"q\n" +
+	"\x17stagd/api/v1/orgs.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\x1a\x1astagd/api/v1/options.proto\"q\n" +
 	"\x10CreateOrgRequest\x12\x1d\n" +
 	"\x04name\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18@R\x04name\x12>\n" +
 	"\x04slug\x18\x02 \x01(\tB*\xbaH'r%\x10\x02\x18'2\x1f^[a-z0-9]([a-z0-9-]*[a-z0-9])?$R\x04slug\"M\n" +
@@ -2410,28 +2410,28 @@ const file_stagd_api_v1_orgs_proto_rawDesc = "" +
 	"\x1bLEAVE_REASON_HARD_TO_SET_UP\x10\x03\x12\x1b\n" +
 	"\x17LEAVE_REASON_OTHER_TOOL\x10\x04\x12\x1c\n" +
 	"\x18LEAVE_REASON_JUST_TRYING\x10\x05\x12\x16\n" +
-	"\x12LEAVE_REASON_OTHER\x10\x062\xc3\a\n" +
+	"\x12LEAVE_REASON_OTHER\x10\x062\x97\t\n" +
 	"\n" +
-	"OrgService\x12L\n" +
-	"\tCreateOrg\x12\x1e.stagd.api.v1.CreateOrgRequest\x1a\x1f.stagd.api.v1.CreateOrgResponse\x12I\n" +
-	"\bListOrgs\x12\x1d.stagd.api.v1.ListOrgsRequest\x1a\x1e.stagd.api.v1.ListOrgsResponse\x12L\n" +
-	"\tSwitchOrg\x12\x1e.stagd.api.v1.SwitchOrgRequest\x1a\x1f.stagd.api.v1.SwitchOrgResponse\x12R\n" +
-	"\vListMembers\x12 .stagd.api.v1.ListMembersRequest\x1a!.stagd.api.v1.ListMembersResponse\x12a\n" +
-	"\x10UpdateMemberRole\x12%.stagd.api.v1.UpdateMemberRoleRequest\x1a&.stagd.api.v1.UpdateMemberRoleResponse\x12U\n" +
-	"\fRemoveMember\x12!.stagd.api.v1.RemoveMemberRequest\x1a\".stagd.api.v1.RemoveMemberResponse\x12d\n" +
-	"\x11TransferOwnership\x12&.stagd.api.v1.TransferOwnershipRequest\x1a'.stagd.api.v1.TransferOwnershipResponse\x12L\n" +
-	"\tDeleteOrg\x12\x1e.stagd.api.v1.DeleteOrgRequest\x1a\x1f.stagd.api.v1.DeleteOrgResponse\x12L\n" +
-	"\tUpdateOrg\x12\x1e.stagd.api.v1.UpdateOrgRequest\x1a\x1f.stagd.api.v1.UpdateOrgResponse\x12X\n" +
-	"\rGetOnboarding\x12\".stagd.api.v1.GetOnboardingRequest\x1a#.stagd.api.v1.GetOnboardingResponse\x12d\n" +
-	"\x11DismissOnboarding\x12&.stagd.api.v1.DismissOnboardingRequest\x1a'.stagd.api.v1.DismissOnboardingResponse2\x8b\x05\n" +
-	"\rInviteService\x12X\n" +
-	"\rCreateInvites\x12\".stagd.api.v1.CreateInvitesRequest\x1a#.stagd.api.v1.CreateInvitesResponse\x12R\n" +
-	"\vListInvites\x12 .stagd.api.v1.ListInvitesRequest\x1a!.stagd.api.v1.ListInvitesResponse\x12U\n" +
-	"\fResendInvite\x12!.stagd.api.v1.ResendInviteRequest\x1a\".stagd.api.v1.ResendInviteResponse\x12U\n" +
-	"\fRevokeInvite\x12!.stagd.api.v1.RevokeInviteRequest\x1a\".stagd.api.v1.RevokeInviteResponse\x12X\n" +
-	"\rGetInviteLink\x12\".stagd.api.v1.GetInviteLinkRequest\x1a#.stagd.api.v1.GetInviteLinkResponse\x12^\n" +
-	"\x0fResetInviteLink\x12$.stagd.api.v1.ResetInviteLinkRequest\x1a%.stagd.api.v1.ResetInviteLinkResponse\x12d\n" +
-	"\x11DisableInviteLink\x12&.stagd.api.v1.DisableInviteLinkRequest\x1a'.stagd.api.v1.DisableInviteLinkResponseB\xa9\x01\n" +
+	"OrgService\x12]\n" +
+	"\tCreateOrg\x12\x1e.stagd.api.v1.CreateOrgRequest\x1a\x1f.stagd.api.v1.CreateOrgResponse\"\x0f\x8a\xb5\x18\vorgs:create\x12X\n" +
+	"\bListOrgs\x12\x1d.stagd.api.v1.ListOrgsRequest\x1a\x1e.stagd.api.v1.ListOrgsResponse\"\r\x8a\xb5\x18\torgs:read\x12]\n" +
+	"\tSwitchOrg\x12\x1e.stagd.api.v1.SwitchOrgRequest\x1a\x1f.stagd.api.v1.SwitchOrgResponse\"\x0f\x8a\xb5\x18\vorgs:switch\x12d\n" +
+	"\vListMembers\x12 .stagd.api.v1.ListMembersRequest\x1a!.stagd.api.v1.ListMembersResponse\"\x10\x8a\xb5\x18\fmembers:read\x12y\n" +
+	"\x10UpdateMemberRole\x12%.stagd.api.v1.UpdateMemberRoleRequest\x1a&.stagd.api.v1.UpdateMemberRoleResponse\"\x16\x8a\xb5\x18\x0emembers:manage\x90\xb5\x18\x01\x12m\n" +
+	"\fRemoveMember\x12!.stagd.api.v1.RemoveMemberRequest\x1a\".stagd.api.v1.RemoveMemberResponse\"\x16\x8a\xb5\x18\x0emembers:manage\x90\xb5\x18\x01\x12w\n" +
+	"\x11TransferOwnership\x12&.stagd.api.v1.TransferOwnershipRequest\x1a'.stagd.api.v1.TransferOwnershipResponse\"\x11\x8a\xb5\x18\rorgs:transfer\x12]\n" +
+	"\tDeleteOrg\x12\x1e.stagd.api.v1.DeleteOrgRequest\x1a\x1f.stagd.api.v1.DeleteOrgResponse\"\x0f\x8a\xb5\x18\vorgs:delete\x12]\n" +
+	"\tUpdateOrg\x12\x1e.stagd.api.v1.UpdateOrgRequest\x1a\x1f.stagd.api.v1.UpdateOrgResponse\"\x0f\x8a\xb5\x18\vorgs:manage\x12m\n" +
+	"\rGetOnboarding\x12\".stagd.api.v1.GetOnboardingRequest\x1a#.stagd.api.v1.GetOnboardingResponse\"\x13\x8a\xb5\x18\x0fonboarding:read\x12{\n" +
+	"\x11DismissOnboarding\x12&.stagd.api.v1.DismissOnboardingRequest\x1a'.stagd.api.v1.DismissOnboardingResponse\"\x15\x8a\xb5\x18\x11onboarding:manage2\xa1\x06\n" +
+	"\rInviteService\x12p\n" +
+	"\rCreateInvites\x12\".stagd.api.v1.CreateInvitesRequest\x1a#.stagd.api.v1.CreateInvitesResponse\"\x16\x8a\xb5\x18\x0einvites:manage\x90\xb5\x18\x01\x12d\n" +
+	"\vListInvites\x12 .stagd.api.v1.ListInvitesRequest\x1a!.stagd.api.v1.ListInvitesResponse\"\x10\x8a\xb5\x18\finvites:read\x12i\n" +
+	"\fResendInvite\x12!.stagd.api.v1.ResendInviteRequest\x1a\".stagd.api.v1.ResendInviteResponse\"\x12\x8a\xb5\x18\x0einvites:manage\x12i\n" +
+	"\fRevokeInvite\x12!.stagd.api.v1.RevokeInviteRequest\x1a\".stagd.api.v1.RevokeInviteResponse\"\x12\x8a\xb5\x18\x0einvites:manage\x12p\n" +
+	"\rGetInviteLink\x12\".stagd.api.v1.GetInviteLinkRequest\x1a#.stagd.api.v1.GetInviteLinkResponse\"\x16\x8a\xb5\x18\x0einvites:manage\x90\xb5\x18\x01\x12v\n" +
+	"\x0fResetInviteLink\x12$.stagd.api.v1.ResetInviteLinkRequest\x1a%.stagd.api.v1.ResetInviteLinkResponse\"\x16\x8a\xb5\x18\x0einvites:manage\x90\xb5\x18\x01\x12x\n" +
+	"\x11DisableInviteLink\x12&.stagd.api.v1.DisableInviteLinkRequest\x1a'.stagd.api.v1.DisableInviteLinkResponse\"\x12\x8a\xb5\x18\x0einvites:manageB\xa9\x01\n" +
 	"\x10com.stagd.api.v1B\tOrgsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -2579,6 +2579,7 @@ func file_stagd_api_v1_orgs_proto_init() {
 		return
 	}
 	file_stagd_api_v1_model_proto_init()
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -5,6 +5,7 @@ package stagd.api.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/model.proto";
+import "stagd/api/v1/options.proto";
 
 // OrgService creates orgs and moves between them. Every other service acts in
 // the session's active org.
@@ -13,24 +14,40 @@ service OrgService {
   // session's active org. Refused with FAILED_PRECONDITION when the server
   // runs one org that exists already, or lets each person create only one
   // and the caller has.
-  rpc CreateOrg(CreateOrgRequest) returns (CreateOrgResponse);
+  rpc CreateOrg(CreateOrgRequest) returns (CreateOrgResponse) {
+    option (stagd.api.v1.permission) = "orgs:create";
+  }
   // ListOrgs lists the orgs the caller belongs to.
-  rpc ListOrgs(ListOrgsRequest) returns (ListOrgsResponse);
+  rpc ListOrgs(ListOrgsRequest) returns (ListOrgsResponse) {
+    option (stagd.api.v1.permission) = "orgs:read";
+  }
   // SwitchOrg makes another of the caller's orgs the active one for this
   // session.
-  rpc SwitchOrg(SwitchOrgRequest) returns (SwitchOrgResponse);
+  rpc SwitchOrg(SwitchOrgRequest) returns (SwitchOrgResponse) {
+    option (stagd.api.v1.permission) = "orgs:switch";
+  }
   // ListMembers lists the people in the active org.
-  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {
+    option (stagd.api.v1.permission) = "members:read";
+  }
   // UpdateMemberRole changes someone's role. The last admin can't be
   // demoted: make someone else an admin first. Nor can the owner: they hand
   // the org on first (TransferOwnership).
-  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse);
+  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse) {
+    option (stagd.api.v1.permission) = "members:manage";
+    option (stagd.api.v1.interactive_only) = true;
+  }
   // RemoveMember takes someone out of the active org and ends their sessions
   // in it. The last admin can't be removed, nor the owner.
-  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse) {
+    option (stagd.api.v1.permission) = "members:manage";
+    option (stagd.api.v1.interactive_only) = true;
+  }
   // TransferOwnership hands the org to another of its admins, who becomes
   // its owner; the caller, its owner until then, stays an admin. Owner only.
-  rpc TransferOwnership(TransferOwnershipRequest) returns (TransferOwnershipResponse);
+  rpc TransferOwnership(TransferOwnershipRequest) returns (TransferOwnershipResponse) {
+    option (stagd.api.v1.permission) = "orgs:transfer";
+  }
   // DeleteOrg deletes the active org and everything Stagd keeps for it.
   // The owner only, with the org's slug typed as confirmation. The org is gone
   // for its members at once, its previews are stopped and its members told
@@ -38,16 +55,24 @@ service OrgService {
   // and activity are deleted, and Stagd's GitHub App is uninstalled from its
   // GitHub accounts; until then Stagd's support can restore it. Backups keep
   // it until they age out (90 days).
-  rpc DeleteOrg(DeleteOrgRequest) returns (DeleteOrgResponse);
+  rpc DeleteOrg(DeleteOrgRequest) returns (DeleteOrgResponse) {
+    option (stagd.api.v1.permission) = "orgs:delete";
+  }
   // UpdateOrg changes the active org's name, admins only. Its slug stays:
   // it's in links and the CLI's commands.
-  rpc UpdateOrg(UpdateOrgRequest) returns (UpdateOrgResponse);
+  rpc UpdateOrg(UpdateOrgRequest) returns (UpdateOrgResponse) {
+    option (stagd.api.v1.permission) = "orgs:manage";
+  }
   // GetOnboarding is the active org's way to its first live preview, worked
   // out from what Stagd knows: the dashboard's Home, stagd setup and the MCP
   // server's onboarding_status all read it, so they can't disagree.
-  rpc GetOnboarding(GetOnboardingRequest) returns (GetOnboardingResponse);
+  rpc GetOnboarding(GetOnboardingRequest) returns (GetOnboardingResponse) {
+    option (stagd.api.v1.permission) = "onboarding:read";
+  }
   // DismissOnboarding hides the steps for everyone in the org. Admins only.
-  rpc DismissOnboarding(DismissOnboardingRequest) returns (DismissOnboardingResponse);
+  rpc DismissOnboarding(DismissOnboardingRequest) returns (DismissOnboardingResponse) {
+    option (stagd.api.v1.permission) = "onboarding:manage";
+  }
 }
 
 // InviteService brings people into the active org: invites by email or by
@@ -57,21 +82,38 @@ service OrgService {
 service InviteService {
   // CreateInvites invites people with a role. Emails get a message with a
   // link; usernames join when they next sign in with that account.
-  rpc CreateInvites(CreateInvitesRequest) returns (CreateInvitesResponse);
+  rpc CreateInvites(CreateInvitesRequest) returns (CreateInvitesResponse) {
+    option (stagd.api.v1.permission) = "invites:manage";
+    option (stagd.api.v1.interactive_only) = true;
+  }
   // ListInvites lists the invites not yet accepted, revoked or expired.
-  rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse);
+  rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse) {
+    option (stagd.api.v1.permission) = "invites:read";
+  }
   // ResendInvite sends the invite again with a new link and a new expiry.
-  rpc ResendInvite(ResendInviteRequest) returns (ResendInviteResponse);
+  rpc ResendInvite(ResendInviteRequest) returns (ResendInviteResponse) {
+    option (stagd.api.v1.permission) = "invites:manage";
+  }
   // RevokeInvite cancels an invite; its link stops working.
-  rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse);
+  rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse) {
+    option (stagd.api.v1.permission) = "invites:manage";
+  }
   // GetInviteLink returns the org's invite link; none while it's off (the
   // default) or expired. The link is only shown to admins.
-  rpc GetInviteLink(GetInviteLinkRequest) returns (GetInviteLinkResponse);
+  rpc GetInviteLink(GetInviteLinkRequest) returns (GetInviteLinkResponse) {
+    option (stagd.api.v1.permission) = "invites:manage";
+    option (stagd.api.v1.interactive_only) = true;
+  }
   // ResetInviteLink turns the invite link on, or replaces it, optionally with
   // another role; an old one stops working.
-  rpc ResetInviteLink(ResetInviteLinkRequest) returns (ResetInviteLinkResponse);
+  rpc ResetInviteLink(ResetInviteLinkRequest) returns (ResetInviteLinkResponse) {
+    option (stagd.api.v1.permission) = "invites:manage";
+    option (stagd.api.v1.interactive_only) = true;
+  }
   // DisableInviteLink turns the invite link off; it stops working.
-  rpc DisableInviteLink(DisableInviteLinkRequest) returns (DisableInviteLinkResponse);
+  rpc DisableInviteLink(DisableInviteLinkRequest) returns (DisableInviteLinkResponse) {
+    option (stagd.api.v1.permission) = "invites:manage";
+  }
 }
 
 // What someone may do in an org. One of its admins is also its owner

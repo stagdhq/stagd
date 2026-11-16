@@ -191,7 +191,7 @@ var File_stagd_api_v1_events_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x19stagd/api/v1/events.proto\x12\fstagd.api.v1\"\x14\n" +
+	"\x19stagd/api/v1/events.proto\x12\fstagd.api.v1\x1a\x1astagd/api/v1/options.proto\"\x14\n" +
 	"\x12WatchEventsRequest\"S\n" +
 	"\x13WatchEventsResponse\x12,\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x18.stagd.api.v1.ChangeKindR\x04kind\x12\x0e\n" +
@@ -206,9 +206,9 @@ const file_stagd_api_v1_events_proto_rawDesc = "" +
 	"\x12CHANGE_KIND_SECRET\x10\x05\x12\x16\n" +
 	"\x12CHANGE_KIND_MEMBER\x10\x06\x12\x1b\n" +
 	"\x17CHANGE_KIND_INTEGRATION\x10\a\x12\x16\n" +
-	"\x12CHANGE_KIND_POLICY\x10\b2d\n" +
-	"\fEventService\x12T\n" +
-	"\vWatchEvents\x12 .stagd.api.v1.WatchEventsRequest\x1a!.stagd.api.v1.WatchEventsResponse0\x01B\xab\x01\n" +
+	"\x12CHANGE_KIND_POLICY\x10\b2u\n" +
+	"\fEventService\x12e\n" +
+	"\vWatchEvents\x12 .stagd.api.v1.WatchEventsRequest\x1a!.stagd.api.v1.WatchEventsResponse\"\x0f\x8a\xb5\x18\vevents:read0\x01B\xab\x01\n" +
 	"\x10com.stagd.api.v1B\vEventsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -246,6 +246,7 @@ func file_stagd_api_v1_events_proto_init() {
 	if File_stagd_api_v1_events_proto != nil {
 		return
 	}
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

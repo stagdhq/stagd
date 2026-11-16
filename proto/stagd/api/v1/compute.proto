@@ -7,6 +7,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/activity.proto";
 import "stagd/api/v1/model.proto";
+import "stagd/api/v1/options.proto";
 
 // ComputeService connects the compute that previews run on to the active
 // org. Previews run on the customer's own compute; Stagd only orchestrates.
@@ -18,26 +19,42 @@ import "stagd/api/v1/model.proto";
 // forms from it instead of knowing providers themselves.
 service ComputeService {
   // ListProviders lists the compute providers this Stagd server supports.
-  rpc ListProviders(ListProvidersRequest) returns (ListProvidersResponse);
+  rpc ListProviders(ListProvidersRequest) returns (ListProvidersResponse) {
+    option (stagd.api.v1.permission) = "compute:read";
+  }
   // CreateConnection checks the credentials with the provider and, if they
   // work, saves them (encrypted) as a connection of the active org.
-  rpc CreateComputeConnection(CreateComputeConnectionRequest) returns (CreateComputeConnectionResponse);
-  rpc ListComputeConnections(ListComputeConnectionsRequest) returns (ListComputeConnectionsResponse);
+  rpc CreateComputeConnection(CreateComputeConnectionRequest) returns (CreateComputeConnectionResponse) {
+    option (stagd.api.v1.permission) = "compute:manage";
+  }
+  rpc ListComputeConnections(ListComputeConnectionsRequest) returns (ListComputeConnectionsResponse) {
+    option (stagd.api.v1.permission) = "compute:read";
+  }
   // TestConnection checks a saved connection's credentials again.
-  rpc TestComputeConnection(TestComputeConnectionRequest) returns (TestComputeConnectionResponse);
+  rpc TestComputeConnection(TestComputeConnectionRequest) returns (TestComputeConnectionResponse) {
+    option (stagd.api.v1.permission) = "compute:manage";
+  }
   // UpdateConnection changes a connection's fields, e.g. a new token, and
   // checks the result with the provider before saving it. A secret not given
   // stays as it was.
-  rpc UpdateComputeConnection(UpdateComputeConnectionRequest) returns (UpdateComputeConnectionResponse);
+  rpc UpdateComputeConnection(UpdateComputeConnectionRequest) returns (UpdateComputeConnectionResponse) {
+    option (stagd.api.v1.permission) = "compute:manage";
+  }
   // SetDefaultConnection makes a connection the one new previews run on.
-  rpc SetDefaultComputeConnection(SetDefaultComputeConnectionRequest) returns (SetDefaultComputeConnectionResponse);
+  rpc SetDefaultComputeConnection(SetDefaultComputeConnectionRequest) returns (SetDefaultComputeConnectionResponse) {
+    option (stagd.api.v1.permission) = "compute:manage";
+  }
   // DeleteConnection forgets a connection and its credentials.
-  rpc DeleteComputeConnection(DeleteComputeConnectionRequest) returns (DeleteComputeConnectionResponse);
+  rpc DeleteComputeConnection(DeleteComputeConnectionRequest) returns (DeleteComputeConnectionResponse) {
+    option (stagd.api.v1.permission) = "compute:manage";
+  }
   // CreateRelayInstall gives a relay connection a new relay token: the old
   // one stops working, and a relay using it is cut off. For a Docker host's
   // relay (and cloudflared, with its tunnel's token); Kubernetes uses
   // CreateInstallManifest.
-  rpc CreateRelayInstall(CreateRelayInstallRequest) returns (CreateRelayInstallResponse);
+  rpc CreateRelayInstall(CreateRelayInstallRequest) returns (CreateRelayInstallResponse) {
+    option (stagd.api.v1.permission) = "compute:manage";
+  }
   // CreateInstallManifest is everything a Kubernetes connection's cluster
   // needs, as one manifest for `kubectl apply -f -`: Stagd's access, the
   // relay, and what the connection chooses (the builder, the Cloudflare
@@ -46,12 +63,16 @@ service ComputeService {
   // the one in the cluster stays. Otherwise, or with new_token, the relay
   // gets a new token (the old one stops working) and the manifest has it.
   // The tokens are in the manifest and nowhere else.
-  rpc CreateInstallManifest(CreateInstallManifestRequest) returns (CreateInstallManifestResponse);
+  rpc CreateInstallManifest(CreateInstallManifestRequest) returns (CreateInstallManifestResponse) {
+    option (stagd.api.v1.permission) = "compute:manage";
+  }
   // GetComputeConnectionDetails is everything Stagd can tell about one
   // connection, asked for now: its relay and tunnel as they are, what the
   // compute says about itself, and what's been done to it. Slower than
   // ListComputeConnections, which answers from what Stagd keeps.
-  rpc GetComputeConnectionDetails(GetComputeConnectionDetailsRequest) returns (GetComputeConnectionDetailsResponse);
+  rpc GetComputeConnectionDetails(GetComputeConnectionDetailsRequest) returns (GetComputeConnectionDetailsResponse) {
+    option (stagd.api.v1.permission) = "compute:read";
+  }
 }
 
 enum ComputeProvider {

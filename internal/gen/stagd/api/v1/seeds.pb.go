@@ -678,7 +678,7 @@ var File_stagd_api_v1_seeds_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_seeds_proto_rawDesc = "" +
 	"\n" +
-	"\x18stagd/api/v1/seeds.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"z\n" +
+	"\x18stagd/api/v1/seeds.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1astagd/api/v1/options.proto\"z\n" +
 	"\bSeedFile\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
@@ -724,16 +724,17 @@ const file_stagd_api_v1_seeds_proto_rawDesc = "" +
 	"\x04path\x18\x02 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\x80\bR\x04path\"B\n" +
 	"\x14FindSeedFileResponse\x12*\n" +
-	"\x04file\x18\x01 \x01(\v2\x16.stagd.api.v1.SeedFileR\x04file2\xa5\x03\n" +
-	"\vSeedService\x12L\n" +
-	"\tListSeeds\x12\x1e.stagd.api.v1.ListSeedsRequest\x1a\x1f.stagd.api.v1.ListSeedsResponse\x12O\n" +
+	"\x04file\x18\x01 \x01(\v2\x16.stagd.api.v1.SeedFileR\x04file2\xfd\x03\n" +
+	"\vSeedService\x12\\\n" +
+	"\tListSeeds\x12\x1e.stagd.api.v1.ListSeedsRequest\x1a\x1f.stagd.api.v1.ListSeedsResponse\"\x0e\x8a\xb5\x18\n" +
+	"seeds:read\x12a\n" +
 	"\n" +
-	"CreateSeed\x12\x1f.stagd.api.v1.CreateSeedRequest\x1a .stagd.api.v1.CreateSeedResponse\x12O\n" +
+	"CreateSeed\x12\x1f.stagd.api.v1.CreateSeedRequest\x1a .stagd.api.v1.CreateSeedResponse\"\x10\x8a\xb5\x18\fseeds:manage\x12a\n" +
 	"\n" +
-	"UpdateSeed\x12\x1f.stagd.api.v1.UpdateSeedRequest\x1a .stagd.api.v1.UpdateSeedResponse\x12O\n" +
+	"UpdateSeed\x12\x1f.stagd.api.v1.UpdateSeedRequest\x1a .stagd.api.v1.UpdateSeedResponse\"\x10\x8a\xb5\x18\fseeds:manage\x12a\n" +
 	"\n" +
-	"DeleteSeed\x12\x1f.stagd.api.v1.DeleteSeedRequest\x1a .stagd.api.v1.DeleteSeedResponse\x12U\n" +
-	"\fFindSeedFile\x12!.stagd.api.v1.FindSeedFileRequest\x1a\".stagd.api.v1.FindSeedFileResponseB\xaa\x01\n" +
+	"DeleteSeed\x12\x1f.stagd.api.v1.DeleteSeedRequest\x1a .stagd.api.v1.DeleteSeedResponse\"\x10\x8a\xb5\x18\fseeds:manage\x12g\n" +
+	"\fFindSeedFile\x12!.stagd.api.v1.FindSeedFileRequest\x1a\".stagd.api.v1.FindSeedFileResponse\"\x10\x8a\xb5\x18\fseeds:manageB\xaa\x01\n" +
 	"\x10com.stagd.api.v1B\n" +
 	"SeedsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
@@ -796,6 +797,7 @@ func file_stagd_api_v1_seeds_proto_init() {
 	if File_stagd_api_v1_seeds_proto != nil {
 		return
 	}
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

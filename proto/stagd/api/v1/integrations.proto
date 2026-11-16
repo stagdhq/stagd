@@ -4,23 +4,36 @@ package stagd.api.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "stagd/api/v1/options.proto";
 
 // IntegrationService connects the services an org's previews use, beside
 // compute and GitHub: Neon for a database branch per preview now; key
 // vaults, secret stores and blob stores for seeding later. Each kind lists
 // its own fields, so clients build their forms from it.
 service IntegrationService {
-  rpc ListIntegrationKinds(ListIntegrationKindsRequest) returns (ListIntegrationKindsResponse);
+  rpc ListIntegrationKinds(ListIntegrationKindsRequest) returns (ListIntegrationKindsResponse) {
+    option (stagd.api.v1.permission) = "integrations:read";
+  }
   // CreateIntegration checks the values with the service and saves them,
   // the secret ones encrypted, if they work.
-  rpc CreateIntegration(CreateIntegrationRequest) returns (CreateIntegrationResponse);
-  rpc ListIntegrations(ListIntegrationsRequest) returns (ListIntegrationsResponse);
+  rpc CreateIntegration(CreateIntegrationRequest) returns (CreateIntegrationResponse) {
+    option (stagd.api.v1.permission) = "integrations:manage";
+  }
+  rpc ListIntegrations(ListIntegrationsRequest) returns (ListIntegrationsResponse) {
+    option (stagd.api.v1.permission) = "integrations:read";
+  }
   // UpdateIntegration changes settings, and secrets when given again.
-  rpc UpdateIntegration(UpdateIntegrationRequest) returns (UpdateIntegrationResponse);
-  rpc TestIntegration(TestIntegrationRequest) returns (TestIntegrationResponse);
+  rpc UpdateIntegration(UpdateIntegrationRequest) returns (UpdateIntegrationResponse) {
+    option (stagd.api.v1.permission) = "integrations:manage";
+  }
+  rpc TestIntegration(TestIntegrationRequest) returns (TestIntegrationResponse) {
+    option (stagd.api.v1.permission) = "integrations:manage";
+  }
   // DeleteIntegration forgets it and its credentials; refused while a
   // preview still has something from it, e.g. a database branch.
-  rpc DeleteIntegration(DeleteIntegrationRequest) returns (DeleteIntegrationResponse);
+  rpc DeleteIntegration(DeleteIntegrationRequest) returns (DeleteIntegrationResponse) {
+    option (stagd.api.v1.permission) = "integrations:manage";
+  }
 }
 
 message IntegrationField {

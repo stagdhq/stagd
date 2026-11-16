@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package stagd.api.v1;
 
+import "stagd/api/v1/options.proto";
+
 // EventService tells the dashboard when something in its org changed, so it
 // refetches what it shows instead of polling. It says what changed, never
 // the data itself: the client reads that through the usual calls, with
@@ -11,7 +13,9 @@ service EventService {
   // heartbeat (kind unspecified) comes every 25 seconds, so proxies keep the
   // connection open. Viewers only hear about previews. A client that
   // reconnects may have missed changes: it refetches what it shows.
-  rpc WatchEvents(WatchEventsRequest) returns (stream WatchEventsResponse);
+  rpc WatchEvents(WatchEventsRequest) returns (stream WatchEventsResponse) {
+    option (stagd.api.v1.permission) = "events:read";
+  }
 }
 
 message WatchEventsRequest {}

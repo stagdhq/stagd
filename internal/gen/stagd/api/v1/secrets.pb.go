@@ -479,7 +479,7 @@ var File_stagd_api_v1_secrets_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_secrets_proto_rawDesc = "" +
 	"\n" +
-	"\x1astagd/api/v1/secrets.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x98\x01\n" +
+	"\x1astagd/api/v1/secrets.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1astagd/api/v1/options.proto\"\x98\x01\n" +
 	"\x06Secret\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
@@ -519,13 +519,13 @@ const file_stagd_api_v1_secrets_proto_rawDesc = "" +
 	"repository\x12\x1b\n" +
 	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\",\n" +
 	"\x14RevealSecretResponse\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\tR\x05value2\xe2\x02\n" +
-	"\rSecretService\x12R\n" +
-	"\vListSecrets\x12 .stagd.api.v1.ListSecretsRequest\x1a!.stagd.api.v1.ListSecretsResponse\x12O\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value2\xb0\x03\n" +
+	"\rSecretService\x12d\n" +
+	"\vListSecrets\x12 .stagd.api.v1.ListSecretsRequest\x1a!.stagd.api.v1.ListSecretsResponse\"\x10\x8a\xb5\x18\fsecrets:read\x12c\n" +
 	"\n" +
-	"SetSecrets\x12\x1f.stagd.api.v1.SetSecretsRequest\x1a .stagd.api.v1.SetSecretsResponse\x12U\n" +
-	"\fDeleteSecret\x12!.stagd.api.v1.DeleteSecretRequest\x1a\".stagd.api.v1.DeleteSecretResponse\x12U\n" +
-	"\fRevealSecret\x12!.stagd.api.v1.RevealSecretRequest\x1a\".stagd.api.v1.RevealSecretResponseB\xac\x01\n" +
+	"SetSecrets\x12\x1f.stagd.api.v1.SetSecretsRequest\x1a .stagd.api.v1.SetSecretsResponse\"\x12\x8a\xb5\x18\x0esecrets:manage\x12i\n" +
+	"\fDeleteSecret\x12!.stagd.api.v1.DeleteSecretRequest\x1a\".stagd.api.v1.DeleteSecretResponse\"\x12\x8a\xb5\x18\x0esecrets:manage\x12i\n" +
+	"\fRevealSecret\x12!.stagd.api.v1.RevealSecretRequest\x1a\".stagd.api.v1.RevealSecretResponse\"\x12\x8a\xb5\x18\x0esecrets:revealB\xac\x01\n" +
 	"\x10com.stagd.api.v1B\fSecretsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -579,6 +579,7 @@ func file_stagd_api_v1_secrets_proto_init() {
 	if File_stagd_api_v1_secrets_proto != nil {
 		return
 	}
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

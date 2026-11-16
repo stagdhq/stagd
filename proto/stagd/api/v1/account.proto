@@ -5,6 +5,7 @@ package stagd.api.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "stagd/api/v1/model.proto";
+import "stagd/api/v1/options.proto";
 
 // AccountService is the signed-in person's own account: their profile, how
 // Stagd looks for them, and where they're signed in. It follows them across
@@ -12,18 +13,30 @@ import "stagd/api/v1/model.proto";
 service AccountService {
   // GetAccount returns the caller's profile, the emails they may use, how
   // they sign in, and their preferences.
-  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {
+    option (stagd.api.v1.permission) = "account:read";
+  }
   // UpdateProfile changes the caller's display name and email. The email must
   // be one of the account's verified emails.
-  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse) {
+    option (stagd.api.v1.permission) = "account:write";
+  }
   // UpdatePreferences replaces the caller's preferences.
-  rpc UpdatePreferences(UpdatePreferencesRequest) returns (UpdatePreferencesResponse);
+  rpc UpdatePreferences(UpdatePreferencesRequest) returns (UpdatePreferencesResponse) {
+    option (stagd.api.v1.permission) = "account:write";
+  }
   // ListSessions lists where the caller is signed in: browsers and the CLI.
-  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {
+    option (stagd.api.v1.permission) = "sessions:read";
+  }
   // RevokeSession signs one of the caller's sessions out at once.
-  rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse);
+  rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse) {
+    option (stagd.api.v1.permission) = "sessions:write";
+  }
   // RevokeOtherSessions signs out every session of the caller's but this one.
-  rpc RevokeOtherSessions(RevokeOtherSessionsRequest) returns (RevokeOtherSessionsResponse);
+  rpc RevokeOtherSessions(RevokeOtherSessionsRequest) returns (RevokeOtherSessionsResponse) {
+    option (stagd.api.v1.permission) = "sessions:write";
+  }
 }
 
 message Account {

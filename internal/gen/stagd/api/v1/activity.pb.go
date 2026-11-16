@@ -252,7 +252,7 @@ var File_stagd_api_v1_activity_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_activity_proto_rawDesc = "" +
 	"\n" +
-	"\x1bstagd/api/v1/activity.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x02\n" +
+	"\x1bstagd/api/v1/activity.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1astagd/api/v1/options.proto\"\xa6\x02\n" +
 	"\bActivity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
 	"\vcreate_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -274,9 +274,9 @@ const file_stagd_api_v1_activity_proto_rawDesc = "" +
 	"\x05actor\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\xc0\x02R\x05actor\"r\n" +
 	"\x14ListActivityResponse\x122\n" +
 	"\bactivity\x18\x01 \x03(\v2\x16.stagd.api.v1.ActivityR\bactivity\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2h\n" +
-	"\x0fActivityService\x12U\n" +
-	"\fListActivity\x12!.stagd.api.v1.ListActivityRequest\x1a\".stagd.api.v1.ListActivityResponseB\xad\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2{\n" +
+	"\x0fActivityService\x12h\n" +
+	"\fListActivity\x12!.stagd.api.v1.ListActivityRequest\x1a\".stagd.api.v1.ListActivityResponse\"\x11\x8a\xb5\x18\ractivity:readB\xad\x01\n" +
 	"\x10com.stagd.api.v1B\rActivityProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -317,6 +317,7 @@ func file_stagd_api_v1_activity_proto_init() {
 	if File_stagd_api_v1_activity_proto != nil {
 		return
 	}
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -838,7 +838,7 @@ var File_stagd_api_v1_account_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_account_proto_rawDesc = "" +
 	"\n" +
-	"\x1astagd/api/v1/account.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\"\xca\x01\n" +
+	"\x1astagd/api/v1/account.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18stagd/api/v1/model.proto\x1a\x1astagd/api/v1/options.proto\"\xca\x01\n" +
 	"\aAccount\x12&\n" +
 	"\x04user\x18\x01 \x01(\v2\x12.stagd.api.v1.UserR\x04user\x12\x16\n" +
 	"\x06emails\x18\x02 \x03(\tR\x06emails\x12B\n" +
@@ -888,15 +888,15 @@ const file_stagd_api_v1_account_proto_rawDesc = "" +
 	"\vSessionKind\x12\x1c\n" +
 	"\x18SESSION_KIND_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10SESSION_KIND_WEB\x10\x01\x12\x14\n" +
-	"\x10SESSION_KIND_CLI\x10\x022\xbe\x04\n" +
-	"\x0eAccountService\x12O\n" +
+	"\x10SESSION_KIND_CLI\x10\x022\xb1\x05\n" +
+	"\x0eAccountService\x12a\n" +
 	"\n" +
-	"GetAccount\x12\x1f.stagd.api.v1.GetAccountRequest\x1a .stagd.api.v1.GetAccountResponse\x12X\n" +
-	"\rUpdateProfile\x12\".stagd.api.v1.UpdateProfileRequest\x1a#.stagd.api.v1.UpdateProfileResponse\x12d\n" +
-	"\x11UpdatePreferences\x12&.stagd.api.v1.UpdatePreferencesRequest\x1a'.stagd.api.v1.UpdatePreferencesResponse\x12U\n" +
-	"\fListSessions\x12!.stagd.api.v1.ListSessionsRequest\x1a\".stagd.api.v1.ListSessionsResponse\x12X\n" +
-	"\rRevokeSession\x12\".stagd.api.v1.RevokeSessionRequest\x1a#.stagd.api.v1.RevokeSessionResponse\x12j\n" +
-	"\x13RevokeOtherSessions\x12(.stagd.api.v1.RevokeOtherSessionsRequest\x1a).stagd.api.v1.RevokeOtherSessionsResponseB\xac\x01\n" +
+	"GetAccount\x12\x1f.stagd.api.v1.GetAccountRequest\x1a .stagd.api.v1.GetAccountResponse\"\x10\x8a\xb5\x18\faccount:read\x12k\n" +
+	"\rUpdateProfile\x12\".stagd.api.v1.UpdateProfileRequest\x1a#.stagd.api.v1.UpdateProfileResponse\"\x11\x8a\xb5\x18\raccount:write\x12w\n" +
+	"\x11UpdatePreferences\x12&.stagd.api.v1.UpdatePreferencesRequest\x1a'.stagd.api.v1.UpdatePreferencesResponse\"\x11\x8a\xb5\x18\raccount:write\x12h\n" +
+	"\fListSessions\x12!.stagd.api.v1.ListSessionsRequest\x1a\".stagd.api.v1.ListSessionsResponse\"\x11\x8a\xb5\x18\rsessions:read\x12l\n" +
+	"\rRevokeSession\x12\".stagd.api.v1.RevokeSessionRequest\x1a#.stagd.api.v1.RevokeSessionResponse\"\x12\x8a\xb5\x18\x0esessions:write\x12~\n" +
+	"\x13RevokeOtherSessions\x12(.stagd.api.v1.RevokeOtherSessionsRequest\x1a).stagd.api.v1.RevokeOtherSessionsResponse\"\x12\x8a\xb5\x18\x0esessions:writeB\xac\x01\n" +
 	"\x10com.stagd.api.v1B\fAccountProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -972,6 +972,7 @@ func file_stagd_api_v1_account_proto_init() {
 		return
 	}
 	file_stagd_api_v1_model_proto_init()
+	file_stagd_api_v1_options_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

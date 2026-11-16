@@ -3,6 +3,7 @@ syntax = "proto3";
 package stagd.api.v1;
 
 import "stagd/api/v1/model.proto";
+import "stagd/api/v1/options.proto";
 
 // AuthService tells callers who they are.
 //
@@ -13,7 +14,9 @@ import "stagd/api/v1/model.proto";
 service AuthService {
   // GetMe returns the signed-in user, the org this session acts in, and
   // every org they belong to. Works before the user has any org.
-  rpc GetMe(GetMeRequest) returns (GetMeResponse);
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {
+    option (stagd.api.v1.permission) = "account:read";
+  }
 }
 
 message GetMeRequest {}

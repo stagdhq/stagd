@@ -6238,7 +6238,7 @@ var File_stagd_api_v1_previews_proto protoreflect.FileDescriptor
 
 const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\n" +
-	"\x1bstagd/api/v1/previews.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1astagd/api/v1/compute.proto\x1a\x18stagd/api/v1/model.proto\x1a\x18stagd/api/v1/seeds.proto\x1a\x1cstagd/config/v1/config.proto\"\xeb\x03\n" +
+	"\x1bstagd/api/v1/previews.proto\x12\fstagd.api.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1astagd/api/v1/compute.proto\x1a\x18stagd/api/v1/model.proto\x1a\x1astagd/api/v1/options.proto\x1a\x18stagd/api/v1/seeds.proto\x1a\x1cstagd/config/v1/config.proto\"\xeb\x03\n" +
 	"\rPreviewPolicy\x12\x1e\n" +
 	"\n" +
 	"repository\x18\x01 \x01(\tR\n" +
@@ -6760,37 +6760,42 @@ const file_stagd_api_v1_previews_proto_rawDesc = "" +
 	"\x10SPAN_KIND_SERVER\x10\x02\x12\x14\n" +
 	"\x10SPAN_KIND_CLIENT\x10\x03\x12\x16\n" +
 	"\x12SPAN_KIND_PRODUCER\x10\x04\x12\x16\n" +
-	"\x12SPAN_KIND_CONSUMER\x10\x052\xd6\x11\n" +
-	"\x0ePreviewService\x12X\n" +
-	"\rCreatePreview\x12\".stagd.api.v1.CreatePreviewRequest\x1a#.stagd.api.v1.CreatePreviewResponse\x12R\n" +
-	"\vListSources\x12 .stagd.api.v1.ListSourcesRequest\x1a!.stagd.api.v1.ListSourcesResponse\x12O\n" +
+	"\x12SPAN_KIND_CONSUMER\x10\x052\xb8\x15\n" +
+	"\x0ePreviewService\x12l\n" +
+	"\rCreatePreview\x12\".stagd.api.v1.CreatePreviewRequest\x1a#.stagd.api.v1.CreatePreviewResponse\"\x12\x8a\xb5\x18\x0epreviews:write\x12d\n" +
+	"\vListSources\x12 .stagd.api.v1.ListSourcesRequest\x1a!.stagd.api.v1.ListSourcesResponse\"\x10\x8a\xb5\x18\fsources:read\x12b\n" +
 	"\n" +
-	"GetPreview\x12\x1f.stagd.api.v1.GetPreviewRequest\x1a .stagd.api.v1.GetPreviewResponse\x12U\n" +
-	"\fListPreviews\x12!.stagd.api.v1.ListPreviewsRequest\x1a\".stagd.api.v1.ListPreviewsResponse\x12W\n" +
-	"\fWatchPreview\x12!.stagd.api.v1.WatchPreviewRequest\x1a\".stagd.api.v1.WatchPreviewResponse0\x01\x12d\n" +
-	"\x11ListPreviewEvents\x12&.stagd.api.v1.ListPreviewEventsRequest\x1a'.stagd.api.v1.ListPreviewEventsResponse\x12R\n" +
-	"\vWakePreview\x12 .stagd.api.v1.WakePreviewRequest\x1a!.stagd.api.v1.WakePreviewResponse\x12[\n" +
-	"\x0eDestroyPreview\x12#.stagd.api.v1.DestroyPreviewRequest\x1a$.stagd.api.v1.DestroyPreviewResponse\x12d\n" +
-	"\x11GetPreviewFailure\x12&.stagd.api.v1.GetPreviewFailureRequest\x1a'.stagd.api.v1.GetPreviewFailureResponse\x12R\n" +
-	"\vListTesters\x12 .stagd.api.v1.ListTestersRequest\x1a!.stagd.api.v1.ListTestersResponse\x12U\n" +
-	"\fCheckTesters\x12!.stagd.api.v1.CheckTestersRequest\x1a\".stagd.api.v1.CheckTestersResponse\x12a\n" +
-	"\x10GetPreviewPolicy\x12%.stagd.api.v1.GetPreviewPolicyRequest\x1a&.stagd.api.v1.GetPreviewPolicyResponse\x12j\n" +
-	"\x13UpdatePreviewPolicy\x12(.stagd.api.v1.UpdatePreviewPolicyRequest\x1a).stagd.api.v1.UpdatePreviewPolicyResponse\x12R\n" +
-	"\vValidateApp\x12 .stagd.api.v1.ValidateAppRequest\x1a!.stagd.api.v1.ValidateAppResponse\x12I\n" +
-	"\bListMail\x12\x1d.stagd.api.v1.ListMailRequest\x1a\x1e.stagd.api.v1.ListMailResponse\x12F\n" +
-	"\aGetMail\x12\x1c.stagd.api.v1.GetMailRequest\x1a\x1d.stagd.api.v1.GetMailResponse\x12L\n" +
-	"\tClearMail\x12\x1e.stagd.api.v1.ClearMailRequest\x1a\x1f.stagd.api.v1.ClearMailResponse\x12O\n" +
+	"GetPreview\x12\x1f.stagd.api.v1.GetPreviewRequest\x1a .stagd.api.v1.GetPreviewResponse\"\x11\x8a\xb5\x18\rpreviews:read\x12h\n" +
+	"\fListPreviews\x12!.stagd.api.v1.ListPreviewsRequest\x1a\".stagd.api.v1.ListPreviewsResponse\"\x11\x8a\xb5\x18\rpreviews:read\x12j\n" +
+	"\fWatchPreview\x12!.stagd.api.v1.WatchPreviewRequest\x1a\".stagd.api.v1.WatchPreviewResponse\"\x11\x8a\xb5\x18\rpreviews:read0\x01\x12}\n" +
+	"\x11ListPreviewEvents\x12&.stagd.api.v1.ListPreviewEventsRequest\x1a'.stagd.api.v1.ListPreviewEventsResponse\"\x17\x8a\xb5\x18\x13preview_events:read\x12e\n" +
+	"\vWakePreview\x12 .stagd.api.v1.WakePreviewRequest\x1a!.stagd.api.v1.WakePreviewResponse\"\x11\x8a\xb5\x18\rpreviews:wake\x12o\n" +
+	"\x0eDestroyPreview\x12#.stagd.api.v1.DestroyPreviewRequest\x1a$.stagd.api.v1.DestroyPreviewResponse\"\x12\x8a\xb5\x18\x0epreviews:write\x12}\n" +
+	"\x11GetPreviewFailure\x12&.stagd.api.v1.GetPreviewFailureRequest\x1a'.stagd.api.v1.GetPreviewFailureResponse\"\x17\x8a\xb5\x18\x13preview_events:read\x12d\n" +
+	"\vListTesters\x12 .stagd.api.v1.ListTestersRequest\x1a!.stagd.api.v1.ListTestersResponse\"\x10\x8a\xb5\x18\ftesters:read\x12h\n" +
+	"\fCheckTesters\x12!.stagd.api.v1.CheckTestersRequest\x1a\".stagd.api.v1.CheckTestersResponse\"\x11\x8a\xb5\x18\rtesters:check\x12z\n" +
+	"\x10GetPreviewPolicy\x12%.stagd.api.v1.GetPreviewPolicyRequest\x1a&.stagd.api.v1.GetPreviewPolicyResponse\"\x17\x8a\xb5\x18\x13preview_policy:read\x12\x85\x01\n" +
+	"\x13UpdatePreviewPolicy\x12(.stagd.api.v1.UpdatePreviewPolicyRequest\x1a).stagd.api.v1.UpdatePreviewPolicyResponse\"\x19\x8a\xb5\x18\x15preview_policy:manage\x12e\n" +
+	"\vValidateApp\x12 .stagd.api.v1.ValidateAppRequest\x1a!.stagd.api.v1.ValidateAppResponse\"\x11\x8a\xb5\x18\rapps:validate\x12X\n" +
+	"\bListMail\x12\x1d.stagd.api.v1.ListMailRequest\x1a\x1e.stagd.api.v1.ListMailResponse\"\r\x8a\xb5\x18\tmail:read\x12U\n" +
+	"\aGetMail\x12\x1c.stagd.api.v1.GetMailRequest\x1a\x1d.stagd.api.v1.GetMailResponse\"\r\x8a\xb5\x18\tmail:read\x12\\\n" +
+	"\tClearMail\x12\x1e.stagd.api.v1.ClearMailRequest\x1a\x1f.stagd.api.v1.ClearMailResponse\"\x0e\x8a\xb5\x18\n" +
+	"mail:write\x12_\n" +
 	"\n" +
-	"DeleteMail\x12\x1f.stagd.api.v1.DeleteMailRequest\x1a .stagd.api.v1.DeleteMailResponse\x12R\n" +
-	"\vWaitForMail\x12 .stagd.api.v1.WaitForMailRequest\x1a!.stagd.api.v1.WaitForMailResponse\x12L\n" +
-	"\tListTexts\x12\x1e.stagd.api.v1.ListTextsRequest\x1a\x1f.stagd.api.v1.ListTextsResponse\x12U\n" +
-	"\fWaitForTexts\x12!.stagd.api.v1.WaitForTextsRequest\x1a\".stagd.api.v1.WaitForTextsResponse\x12^\n" +
-	"\x0fGetServiceUsage\x12$.stagd.api.v1.GetServiceUsageRequest\x1a%.stagd.api.v1.GetServiceUsageResponse\x12I\n" +
-	"\bListLogs\x12\x1d.stagd.api.v1.ListLogsRequest\x1a\x1e.stagd.api.v1.ListLogsResponse\x12X\n" +
-	"\rListBuildLogs\x12\".stagd.api.v1.ListBuildLogsRequest\x1a#.stagd.api.v1.ListBuildLogsResponse\x12O\n" +
+	"DeleteMail\x12\x1f.stagd.api.v1.DeleteMailRequest\x1a .stagd.api.v1.DeleteMailResponse\"\x0e\x8a\xb5\x18\n" +
+	"mail:write\x12a\n" +
+	"\vWaitForMail\x12 .stagd.api.v1.WaitForMailRequest\x1a!.stagd.api.v1.WaitForMailResponse\"\r\x8a\xb5\x18\tmail:read\x12\\\n" +
+	"\tListTexts\x12\x1e.stagd.api.v1.ListTextsRequest\x1a\x1f.stagd.api.v1.ListTextsResponse\"\x0e\x8a\xb5\x18\n" +
+	"texts:read\x12e\n" +
+	"\fWaitForTexts\x12!.stagd.api.v1.WaitForTextsRequest\x1a\".stagd.api.v1.WaitForTextsResponse\"\x0e\x8a\xb5\x18\n" +
+	"texts:read\x12n\n" +
+	"\x0fGetServiceUsage\x12$.stagd.api.v1.GetServiceUsageRequest\x1a%.stagd.api.v1.GetServiceUsageResponse\"\x0e\x8a\xb5\x18\n" +
+	"usage:read\x12X\n" +
+	"\bListLogs\x12\x1d.stagd.api.v1.ListLogsRequest\x1a\x1e.stagd.api.v1.ListLogsResponse\"\r\x8a\xb5\x18\tlogs:read\x12g\n" +
+	"\rListBuildLogs\x12\".stagd.api.v1.ListBuildLogsRequest\x1a#.stagd.api.v1.ListBuildLogsResponse\"\r\x8a\xb5\x18\tlogs:read\x12`\n" +
 	"\n" +
-	"ListTraces\x12\x1f.stagd.api.v1.ListTracesRequest\x1a .stagd.api.v1.ListTracesResponse\x12I\n" +
-	"\bGetTrace\x12\x1d.stagd.api.v1.GetTraceRequest\x1a\x1e.stagd.api.v1.GetTraceResponseB\xad\x01\n" +
+	"ListTraces\x12\x1f.stagd.api.v1.ListTracesRequest\x1a .stagd.api.v1.ListTracesResponse\"\x0f\x8a\xb5\x18\vtraces:read\x12Z\n" +
+	"\bGetTrace\x12\x1d.stagd.api.v1.GetTraceRequest\x1a\x1e.stagd.api.v1.GetTraceResponse\"\x0f\x8a\xb5\x18\vtraces:readB\xad\x01\n" +
 	"\x10com.stagd.api.v1B\rPreviewsProtoP\x01Z8github.com/stagdhq/stagd/internal/gen/stagd/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\fStagd.Api.V1\xca\x02\fStagd\\Api\\V1\xe2\x02\x18Stagd\\Api\\V1\\GPBMetadata\xea\x02\x0eStagd::Api::V1b\x06proto3"
 
 var (
@@ -7080,6 +7085,7 @@ func file_stagd_api_v1_previews_proto_init() {
 	}
 	file_stagd_api_v1_compute_proto_init()
 	file_stagd_api_v1_model_proto_init()
+	file_stagd_api_v1_options_proto_init()
 	file_stagd_api_v1_seeds_proto_init()
 	file_stagd_api_v1_previews_proto_msgTypes[5].OneofWrappers = []any{
 		(*PreviewSource_ChangeNumber)(nil),
