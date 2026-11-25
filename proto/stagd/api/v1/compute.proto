@@ -118,6 +118,15 @@ message ProviderField {
   bool required = 5;
   // When set, the value must be one of these.
   repeated string choices = 6;
+  // Fields with the same alternative are ways of giving one thing, e.g. a
+  // token or a workspace that trusts Stagd: give exactly one of them. The
+  // first is the one to suggest.
+  string alternative = 7;
+  // The choice in words, among its alternatives, e.g. "Sign in as Stagd".
+  string option = 8;
+  // What to run before giving the value, with this org's details filled
+  // in, e.g. the nsc command that makes a workspace trust Stagd.
+  string setup = 9;
 }
 
 message ProviderInfo {

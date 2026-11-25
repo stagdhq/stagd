@@ -355,3 +355,29 @@ func TestRelayVersion(t *testing.T) {
 		}
 	}
 }
+
+func TestChooseAlternativesSkipsTheOthersOnceOneIsGiven(t *testing.T) {
+	info := &apiv1.ProviderInfo{Fields: []*apiv1.ProviderField{
+		{Key: "token", Label: "Workspace token", Alternative: "sign_in", Option: "Workspace token"},
+		{Key: "workspace_id", Label: "Workspace ID", Alternative: "sign_in", Option: "Sign in as Stagd", Setup: "nsc auth trust-relationships add"},
+		{Key: "region", Label: "Region"},
+	}}
+
+	skip, err := chooseAlternatives(context.Background(), info, map[string]string{"workspace_id": "tenant_abc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !skip["token"] || skip["workspace_id"] || skip["region"] {
+		t.Fatalf("skip = %v, want only token", skip)
+	}
+
+	skip, err = chooseAlternatives(context.Background(), info, map[string]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(skip) != 0 {
+		t.Fatalf("skip = %v, want none when nothing is given and no one can be asked", skip)
+	}
+}

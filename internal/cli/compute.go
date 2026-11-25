@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -208,12 +209,85 @@ func parseValues(flags []string) (map[string]string, error) {
 	return values, nil
 }
 
+// chooseAlternatives settles fields that are ways of giving one thing (a
+// token, or a workspace that trusts Stagd): one given with --value rules out
+// the others, and otherwise the user picks one and sees what to run first.
+// It returns the fields not to ask for.
+func chooseAlternatives(ctx context.Context, p *apiv1.ProviderInfo, values map[string]string) (map[string]bool, error) {
+	skip := map[string]bool{}
+	groups := map[string][]*apiv1.ProviderField{}
+	var order []string
+
+	for _, f := range p.GetFields() {
+		group := f.GetAlternative()
+		if group == "" {
+			continue
+		}
+
+		if _, seen := groups[group]; !seen {
+			order = append(order, group)
+		}
+
+		groups[group] = append(groups[group], f)
+	}
+
+	for _, group := range order {
+		fields := groups[group]
+		chosen := ""
+
+		for _, f := range fields {
+			if _, ok := values[f.GetKey()]; ok {
+				chosen = f.GetKey()
+
+				break
+			}
+		}
+
+		if chosen == "" && !interactive() {
+			continue
+		}
+
+		if chosen == "" {
+			options := make([]huh.Option[string], 0, len(fields))
+
+			for _, f := range fields {
+				options = append(options, huh.NewOption(cmp.Or(f.GetOption(), f.GetLabel()), f.GetKey()))
+			}
+
+			chosen = fields[0].GetKey()
+
+			if err := newForm(huh.NewGroup(huh.NewSelect[string]().Title("How Stagd signs in").Options(options...).Value(&chosen))).RunWithContext(ctx); err != nil {
+				return nil, err
+			}
+
+			for _, f := range fields {
+				if f.GetKey() == chosen && f.GetSetup() != "" {
+					fmt.Fprintf(os.Stderr, "First run this:\n\n%s\n\n", f.GetSetup())
+				}
+			}
+		}
+
+		for _, f := range fields {
+			if f.GetKey() != chosen {
+				skip[f.GetKey()] = true
+			}
+		}
+	}
+
+	return skip, nil
+}
+
 // askMissing prompts for the fields not given with --value; scripts get an error naming them instead.
 func askMissing(ctx context.Context, p *apiv1.ProviderInfo, values map[string]string) error {
+	skip, err := chooseAlternatives(ctx, p, values)
+	if err != nil {
+		return err
+	}
+
 	var missing []*apiv1.ProviderField
 
 	for _, f := range p.GetFields() {
-		if _, ok := values[f.GetKey()]; !ok {
+		if _, ok := values[f.GetKey()]; !ok && !skip[f.GetKey()] {
 			missing = append(missing, f)
 		}
 	}

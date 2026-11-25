@@ -232,7 +232,16 @@ type ProviderField struct {
 	Secret   bool `protobuf:"varint,4,opt,name=secret,proto3" json:"secret,omitempty"`
 	Required bool `protobuf:"varint,5,opt,name=required,proto3" json:"required,omitempty"`
 	// When set, the value must be one of these.
-	Choices       []string `protobuf:"bytes,6,rep,name=choices,proto3" json:"choices,omitempty"`
+	Choices []string `protobuf:"bytes,6,rep,name=choices,proto3" json:"choices,omitempty"`
+	// Fields with the same alternative are ways of giving one thing, e.g. a
+	// token or a workspace that trusts Stagd: give exactly one of them. The
+	// first is the one to suggest.
+	Alternative string `protobuf:"bytes,7,opt,name=alternative,proto3" json:"alternative,omitempty"`
+	// The choice in words, among its alternatives, e.g. "Sign in as Stagd".
+	Option string `protobuf:"bytes,8,opt,name=option,proto3" json:"option,omitempty"`
+	// What to run before giving the value, with this org's details filled
+	// in, e.g. the nsc command that makes a workspace trust Stagd.
+	Setup         string `protobuf:"bytes,9,opt,name=setup,proto3" json:"setup,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -307,6 +316,27 @@ func (x *ProviderField) GetChoices() []string {
 		return x.Choices
 	}
 	return nil
+}
+
+func (x *ProviderField) GetAlternative() string {
+	if x != nil {
+		return x.Alternative
+	}
+	return ""
+}
+
+func (x *ProviderField) GetOption() string {
+	if x != nil {
+		return x.Option
+	}
+	return ""
+}
+
+func (x *ProviderField) GetSetup() string {
+	if x != nil {
+		return x.Setup
+	}
+	return ""
 }
 
 type ProviderInfo struct {
@@ -1975,14 +2005,17 @@ const file_stagd_api_v1_compute_proto_rawDesc = "" +
 	"\x05sleep\x18\x01 \x01(\bR\x05sleep\x12)\n" +
 	"\x10volume_snapshots\x18\x02 \x01(\bR\x0fvolumeSnapshots\x12\x18\n" +
 	"\aregions\x18\x03 \x03(\tR\aregions\x12<\n" +
-	"\fmax_lifetime\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\vmaxLifetime\"\x99\x01\n" +
+	"\fmax_lifetime\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\vmaxLifetime\"\xe9\x01\n" +
 	"\rProviderField\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
 	"\x04help\x18\x03 \x01(\tR\x04help\x12\x16\n" +
 	"\x06secret\x18\x04 \x01(\bR\x06secret\x12\x1a\n" +
 	"\brequired\x18\x05 \x01(\bR\brequired\x12\x18\n" +
-	"\achoices\x18\x06 \x03(\tR\achoices\"\xfb\x01\n" +
+	"\achoices\x18\x06 \x03(\tR\achoices\x12 \n" +
+	"\valternative\x18\a \x01(\tR\valternative\x12\x16\n" +
+	"\x06option\x18\b \x01(\tR\x06option\x12\x14\n" +
+	"\x05setup\x18\t \x01(\tR\x05setup\"\xfb\x01\n" +
 	"\fProviderInfo\x129\n" +
 	"\bprovider\x18\x01 \x01(\x0e2\x1d.stagd.api.v1.ComputeProviderR\bprovider\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
