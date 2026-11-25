@@ -34,6 +34,18 @@ service IntegrationService {
   rpc DeleteIntegration(DeleteIntegrationRequest) returns (DeleteIntegrationResponse) {
     option (stagd.api.v1.permission) = "integrations:manage";
   }
+  // ListIntegrationLinks lists who the caller is in the org's integrations
+  // that can know them, linked or not: Slack, whose messages about a pull
+  // request go to its author. Linking happens in a browser, at a link's
+  // connect_url (Sign in with Slack); members link themselves.
+  rpc ListIntegrationLinks(ListIntegrationLinksRequest) returns (ListIntegrationLinksResponse) {
+    option (stagd.api.v1.permission) = "integrations:read";
+  }
+  // UnlinkIntegration forgets who the caller is in one of the org's
+  // integrations; only their own link. Slack then finds them by email again.
+  rpc UnlinkIntegration(UnlinkIntegrationRequest) returns (UnlinkIntegrationResponse) {
+    option (stagd.api.v1.permission) = "integrations:read";
+  }
 }
 
 message IntegrationField {
@@ -146,3 +158,34 @@ message DeleteIntegrationRequest {
 }
 
 message DeleteIntegrationResponse {}
+
+// IntegrationLink is the caller in one of the org's integrations: who they
+// are there, when they've said so.
+message IntegrationLink {
+  // The integration's id.
+  string integration = 1;
+  // Its kind, e.g. "slack".
+  string kind = 2;
+  // Where, in the service's words: the Slack workspace, e.g. "Moowork".
+  string workspace = 3;
+  bool linked = 4;
+  // Their name there, when linked.
+  string name = 5;
+  // When they linked it; unset while not linked.
+  google.protobuf.Timestamp link_time = 6;
+  // Where a browser goes to link it, or link it again.
+  string connect_url = 7;
+}
+
+message ListIntegrationLinksRequest {}
+
+message ListIntegrationLinksResponse {
+  repeated IntegrationLink links = 1;
+}
+
+message UnlinkIntegrationRequest {
+  // The integration's id or name.
+  string integration = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message UnlinkIntegrationResponse {}

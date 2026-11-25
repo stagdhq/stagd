@@ -51,6 +51,12 @@ const (
 	// IntegrationServiceDeleteIntegrationProcedure is the fully-qualified name of the
 	// IntegrationService's DeleteIntegration RPC.
 	IntegrationServiceDeleteIntegrationProcedure = "/stagd.api.v1.IntegrationService/DeleteIntegration"
+	// IntegrationServiceListIntegrationLinksProcedure is the fully-qualified name of the
+	// IntegrationService's ListIntegrationLinks RPC.
+	IntegrationServiceListIntegrationLinksProcedure = "/stagd.api.v1.IntegrationService/ListIntegrationLinks"
+	// IntegrationServiceUnlinkIntegrationProcedure is the fully-qualified name of the
+	// IntegrationService's UnlinkIntegration RPC.
+	IntegrationServiceUnlinkIntegrationProcedure = "/stagd.api.v1.IntegrationService/UnlinkIntegration"
 )
 
 // IntegrationServiceClient is a client for the stagd.api.v1.IntegrationService service.
@@ -66,6 +72,14 @@ type IntegrationServiceClient interface {
 	// DeleteIntegration forgets it and its credentials; refused while a
 	// preview still has something from it, e.g. a database branch.
 	DeleteIntegration(context.Context, *connect.Request[v1.DeleteIntegrationRequest]) (*connect.Response[v1.DeleteIntegrationResponse], error)
+	// ListIntegrationLinks lists who the caller is in the org's integrations
+	// that can know them, linked or not: Slack, whose messages about a pull
+	// request go to its author. Linking happens in a browser, at a link's
+	// connect_url (Sign in with Slack); members link themselves.
+	ListIntegrationLinks(context.Context, *connect.Request[v1.ListIntegrationLinksRequest]) (*connect.Response[v1.ListIntegrationLinksResponse], error)
+	// UnlinkIntegration forgets who the caller is in one of the org's
+	// integrations; only their own link. Slack then finds them by email again.
+	UnlinkIntegration(context.Context, *connect.Request[v1.UnlinkIntegrationRequest]) (*connect.Response[v1.UnlinkIntegrationResponse], error)
 }
 
 // NewIntegrationServiceClient constructs a client for the stagd.api.v1.IntegrationService service.
@@ -115,6 +129,18 @@ func NewIntegrationServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(integrationServiceMethods.ByName("DeleteIntegration")),
 			connect.WithClientOptions(opts...),
 		),
+		listIntegrationLinks: connect.NewClient[v1.ListIntegrationLinksRequest, v1.ListIntegrationLinksResponse](
+			httpClient,
+			baseURL+IntegrationServiceListIntegrationLinksProcedure,
+			connect.WithSchema(integrationServiceMethods.ByName("ListIntegrationLinks")),
+			connect.WithClientOptions(opts...),
+		),
+		unlinkIntegration: connect.NewClient[v1.UnlinkIntegrationRequest, v1.UnlinkIntegrationResponse](
+			httpClient,
+			baseURL+IntegrationServiceUnlinkIntegrationProcedure,
+			connect.WithSchema(integrationServiceMethods.ByName("UnlinkIntegration")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -126,6 +152,8 @@ type integrationServiceClient struct {
 	updateIntegration    *connect.Client[v1.UpdateIntegrationRequest, v1.UpdateIntegrationResponse]
 	testIntegration      *connect.Client[v1.TestIntegrationRequest, v1.TestIntegrationResponse]
 	deleteIntegration    *connect.Client[v1.DeleteIntegrationRequest, v1.DeleteIntegrationResponse]
+	listIntegrationLinks *connect.Client[v1.ListIntegrationLinksRequest, v1.ListIntegrationLinksResponse]
+	unlinkIntegration    *connect.Client[v1.UnlinkIntegrationRequest, v1.UnlinkIntegrationResponse]
 }
 
 // ListIntegrationKinds calls stagd.api.v1.IntegrationService.ListIntegrationKinds.
@@ -158,6 +186,16 @@ func (c *integrationServiceClient) DeleteIntegration(ctx context.Context, req *c
 	return c.deleteIntegration.CallUnary(ctx, req)
 }
 
+// ListIntegrationLinks calls stagd.api.v1.IntegrationService.ListIntegrationLinks.
+func (c *integrationServiceClient) ListIntegrationLinks(ctx context.Context, req *connect.Request[v1.ListIntegrationLinksRequest]) (*connect.Response[v1.ListIntegrationLinksResponse], error) {
+	return c.listIntegrationLinks.CallUnary(ctx, req)
+}
+
+// UnlinkIntegration calls stagd.api.v1.IntegrationService.UnlinkIntegration.
+func (c *integrationServiceClient) UnlinkIntegration(ctx context.Context, req *connect.Request[v1.UnlinkIntegrationRequest]) (*connect.Response[v1.UnlinkIntegrationResponse], error) {
+	return c.unlinkIntegration.CallUnary(ctx, req)
+}
+
 // IntegrationServiceHandler is an implementation of the stagd.api.v1.IntegrationService service.
 type IntegrationServiceHandler interface {
 	ListIntegrationKinds(context.Context, *connect.Request[v1.ListIntegrationKindsRequest]) (*connect.Response[v1.ListIntegrationKindsResponse], error)
@@ -171,6 +209,14 @@ type IntegrationServiceHandler interface {
 	// DeleteIntegration forgets it and its credentials; refused while a
 	// preview still has something from it, e.g. a database branch.
 	DeleteIntegration(context.Context, *connect.Request[v1.DeleteIntegrationRequest]) (*connect.Response[v1.DeleteIntegrationResponse], error)
+	// ListIntegrationLinks lists who the caller is in the org's integrations
+	// that can know them, linked or not: Slack, whose messages about a pull
+	// request go to its author. Linking happens in a browser, at a link's
+	// connect_url (Sign in with Slack); members link themselves.
+	ListIntegrationLinks(context.Context, *connect.Request[v1.ListIntegrationLinksRequest]) (*connect.Response[v1.ListIntegrationLinksResponse], error)
+	// UnlinkIntegration forgets who the caller is in one of the org's
+	// integrations; only their own link. Slack then finds them by email again.
+	UnlinkIntegration(context.Context, *connect.Request[v1.UnlinkIntegrationRequest]) (*connect.Response[v1.UnlinkIntegrationResponse], error)
 }
 
 // NewIntegrationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -216,6 +262,18 @@ func NewIntegrationServiceHandler(svc IntegrationServiceHandler, opts ...connect
 		connect.WithSchema(integrationServiceMethods.ByName("DeleteIntegration")),
 		connect.WithHandlerOptions(opts...),
 	)
+	integrationServiceListIntegrationLinksHandler := connect.NewUnaryHandler(
+		IntegrationServiceListIntegrationLinksProcedure,
+		svc.ListIntegrationLinks,
+		connect.WithSchema(integrationServiceMethods.ByName("ListIntegrationLinks")),
+		connect.WithHandlerOptions(opts...),
+	)
+	integrationServiceUnlinkIntegrationHandler := connect.NewUnaryHandler(
+		IntegrationServiceUnlinkIntegrationProcedure,
+		svc.UnlinkIntegration,
+		connect.WithSchema(integrationServiceMethods.ByName("UnlinkIntegration")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/stagd.api.v1.IntegrationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case IntegrationServiceListIntegrationKindsProcedure:
@@ -230,6 +288,10 @@ func NewIntegrationServiceHandler(svc IntegrationServiceHandler, opts ...connect
 			integrationServiceTestIntegrationHandler.ServeHTTP(w, r)
 		case IntegrationServiceDeleteIntegrationProcedure:
 			integrationServiceDeleteIntegrationHandler.ServeHTTP(w, r)
+		case IntegrationServiceListIntegrationLinksProcedure:
+			integrationServiceListIntegrationLinksHandler.ServeHTTP(w, r)
+		case IntegrationServiceUnlinkIntegrationProcedure:
+			integrationServiceUnlinkIntegrationHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -261,4 +323,12 @@ func (UnimplementedIntegrationServiceHandler) TestIntegration(context.Context, *
 
 func (UnimplementedIntegrationServiceHandler) DeleteIntegration(context.Context, *connect.Request[v1.DeleteIntegrationRequest]) (*connect.Response[v1.DeleteIntegrationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.IntegrationService.DeleteIntegration is not implemented"))
+}
+
+func (UnimplementedIntegrationServiceHandler) ListIntegrationLinks(context.Context, *connect.Request[v1.ListIntegrationLinksRequest]) (*connect.Response[v1.ListIntegrationLinksResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.IntegrationService.ListIntegrationLinks is not implemented"))
+}
+
+func (UnimplementedIntegrationServiceHandler) UnlinkIntegration(context.Context, *connect.Request[v1.UnlinkIntegrationRequest]) (*connect.Response[v1.UnlinkIntegrationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("stagd.api.v1.IntegrationService.UnlinkIntegration is not implemented"))
 }
