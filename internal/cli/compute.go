@@ -43,8 +43,7 @@ func computeCommand() *cli.Command {
 				ArgsUsage: "<provider>",
 				Description: "Asks for each value the provider needs. In scripts, pass them with --value key=value;\n" +
 					"use key=@- to read a secret from stdin instead of leaving it in your shell history.\n\n" +
-					"For Namespace, the workspace token and the grants it needs:\n" +
-					"https://stagd.dev/docs/guides/connect-compute/#namespace",
+					"Each provider, and what it needs: https://stagd.dev/docs/compute/overview/",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "name", Usage: "a name for the connection (default: the provider's name)"},
 					&cli.StringSliceFlag{Name: "value", Usage: "a field value, key=value or key=@- (stdin)"},
