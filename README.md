@@ -10,6 +10,7 @@
     <a href="https://github.com/stagdhq/stagd/actions/workflows/image.yaml"><img src="https://img.shields.io/github/actions/workflow/status/stagdhq/stagd/image.yaml?branch=main&label=build" alt="Build"></a>
     <a href="https://buf.build/stagdhq/stagd"><img src="https://img.shields.io/badge/buf-stagdhq%2Fstagd-166138" alt="Buf"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/stagdhq/stagd?color=166138" alt="License"></a>
+    <a href="https://stagd.dev"><img src="https://stagd.dev/badge.svg" alt="Previews by Stagd"></a>
   </p>
 
   <p>
