@@ -1,24 +1,53 @@
-# stagd
+<div align="center">
+  <a href="https://stagd.dev">
+    <img src=".github/assets/stagd.svg" alt="Stagd" width="72" height="72">
+  </a>
+  <h1>Stagd</h1>
+  <p><strong>A live, seeded preview of every pull request, on your own compute.</strong></p>
+
+  <p>
+    <a href="https://github.com/stagdhq/stagd/releases/latest"><img src="https://img.shields.io/github/v/release/stagdhq/stagd?label=release&color=166138" alt="Latest release"></a>
+    <a href="https://github.com/stagdhq/stagd/actions/workflows/image.yaml"><img src="https://img.shields.io/github/actions/workflow/status/stagdhq/stagd/image.yaml?branch=main&label=build" alt="Build"></a>
+    <a href="https://buf.build/stagdhq/stagd"><img src="https://img.shields.io/badge/buf-stagdhq%2Fstagd-166138" alt="Buf"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/stagdhq/stagd?color=166138" alt="License"></a>
+  </p>
+
+  <p>
+    <a href="https://stagd.dev"><strong>Website</strong></a> ·
+    <a href="https://stagd.dev/docs/"><strong>Docs</strong></a> ·
+    <a href="https://stagd.dev/docs/quickstart/"><strong>Quickstart</strong></a> ·
+    <a href="https://stagd.dev/docs/reference/cli/"><strong>CLI reference</strong></a> ·
+    <a href="https://app.stagd.dev"><strong>Dashboard</strong></a>
+  </p>
+</div>
+
+<br>
 
 [Stagd](https://stagd.dev) gives every pull request a live preview of your app: built, started with its database and seed data, and on a URL your team and reviewers can open. Previews run on your own compute, sleep when nobody uses them, and go when the pull request does.
 
-This repository is Stagd's open part:
+This repository is Stagd's open part: the `stagd` command line, the relay that connects private clusters and Docker hosts, the Kubernetes manifests a cluster gets, and the API contract.
 
-- **`stagd`**, the command line: everything the dashboard does, for your terminal and scripts.
-- **`stagd relay`**, which connects compute Stagd can't reach (a private Kubernetes cluster, a Docker host behind NAT) by dialling out to Stagd.
-- **`stagd docker up`**, which brings a preview up from its plan on Namespace and Docker hosts, and on your own Docker.
-- **The Kubernetes manifests** a cluster gets, so you can read exactly what runs in it.
-- **The API contract**, `stagd.api.v1`, which the CLI and the dashboard use, and a preview's plan, `stagd.plan.v1`, both published at [buf.build/stagdhq/stagd](https://buf.build/stagdhq/stagd).
+## Why Stagd?
 
-Stagd itself is hosted at [app.stagd.dev](https://app.stagd.dev).
+- **[Your compute](https://stagd.dev/docs/compute/overview/):** previews run on Namespace, your Kubernetes cluster or a Docker host, not ours. Private ones connect through `stagd relay`, which only dials out.
+- **[Real data](https://stagd.dev/docs/guides/seed-data/):** each preview starts with its database and seed data, so reviewers see the app as it really works.
+- **[From your compose file](https://stagd.dev/docs/guides/describe-your-app/):** `stagd init` writes a `stagd.yaml` from the compose file you have. Stagd is a GitHub App, so there's no workflow to add.
+- **[Built for coding agents](https://stagd.dev/docs/guides/coding-agents/):** `stagd mcp` lets Claude Code, Cursor and other agents make a preview, wait for it, and read its screenshot, logs and mail.
 
-## Install
-
-On macOS and Linux:
+## Quickstart
 
 ```bash
 curl -fsSL https://stagd.dev/install.sh | bash
+stagd login
+stagd init
 ```
+
+`stagd login` signs you in through your browser, and `stagd init` writes a `stagd.yaml` in your checkout. With GitHub and your compute connected ([the quickstart](https://stagd.dev/docs/quickstart/) walks through both), push it, and the next pull request gets a preview.
+
+## Install
+
+<details>
+<summary>Windows, Homebrew and Go</summary>
 
 On Windows, in PowerShell:
 
@@ -26,124 +55,40 @@ On Windows, in PowerShell:
 irm https://stagd.dev/install.ps1 | iex
 ```
 
-Either downloads the latest release for your machine (amd64 or arm64), checks it against the release's checksums, and installs `stagd`: in `~/.local/bin`, or on Windows in `%LOCALAPPDATA%\Programs\stagd`, which it adds to your PATH. `STAGD_INSTALL_DIR` puts it elsewhere, `STAGD_VERSION` installs another release. Or with Homebrew, or Go:
+With Homebrew, or Go:
 
 ```bash
 brew install stagdhq/tap/stagd
 go install github.com/stagdhq/stagd/cmd/stagd@latest
 ```
 
-`stagd update` updates it in place, the same way; `stagd update --check` only says whether there's a newer release. With Homebrew, `brew upgrade stagdhq/tap/stagd`; Homebrew 6 and later leaves third-party taps out of a plain `brew upgrade` until you trust them, once: `brew trust stagdhq/tap`. The relay runs from the image `ghcr.io/stagdhq/stagd`.
+</details>
 
-## Get started
-
-```bash
-stagd login                          # sign in through your browser; the session goes to your OS keychain
-stagd orgs create acme --name "Acme" # or: stagd orgs list, stagd orgs switch <slug>
-stagd github connect                 # install the Stagd GitHub App and link it to the org
-stagd compute connect namespace      # where previews run: namespace, kubernetes or docker
-stagd secrets set --repo acme/web STRIPE_KEY   # asks for the value without echoing it
-openssl rand -base64 32 | stagd secrets set --repo acme/web SESSION_SECRET=@-   # a random one, never on screen
-stagd validate                       # check stagd.yaml and the compose file in a checkout
-stagd validate --explain             # and print stagd.yaml as Stagd reads it, defaults filled in
-stagd preview create --repo acme/web --pr 42
-stagd preview list
-```
-
-`stagd <command> --help` explains each one. `--json` prints JSON for scripts, and `--api-url` (`STAGD_API_URL`) points the CLI at another Stagd server.
+`stagd update` keeps it up to date. Every way to install and update is in [docs/install.md](docs/install.md).
 
 ## For coding agents
-
-`stagd mcp` is Stagd's MCP server for Claude Code, Cursor and other MCP clients, signed in as you (`stagd login`). Its tools make a preview of a pull request or branch, wait for it, look at it (its screenshot, logs and mail), and check stagd.yaml before a push. The tools run on Stagd's server; `stagd mcp` carries the client's calls there.
 
 ```bash
 claude mcp add stagd -- stagd mcp
 ```
 
-Or in an `mcp.json`: `{ "mcpServers": { "stagd": { "command": "stagd", "args": ["mcp"] } } }`.
+Or in an `mcp.json`: `{ "mcpServers": { "stagd": { "command": "stagd", "args": ["mcp"] } } }`. The tools run on Stagd's server, signed in as you; `stagd mcp` carries the client's calls there. See [the MCP reference](https://stagd.dev/docs/reference/mcp/).
 
-## The relay
+## What's in this repository
 
-Some compute can't be reached from the internet, and shouldn't be. `stagd relay` runs next to it and opens one outbound connection to Stagd (a WebSocket over HTTPS); Stagd manages the compute and reaches previews through it. Nothing next to the relay needs to accept connections, and no cluster credentials leave it.
-
-### Kubernetes
-
-```bash
-stagd compute connect kubernetes --name my-cluster
-stagd compute install my-cluster | kubectl apply -f -
-```
-
-`stagd compute install` asks Stagd for the cluster's install and prints it for kubectl, with a new relay token: there's no link, and the token is only ever in the pipe. Run it again to update the cluster (a newer relay, or after changing the connection's settings): while the relay is connected, it keeps its token, and the manifest leaves the cluster's `stagd-relay` secret as it is. `--new-token` gives the relay a new one and cuts off the old. `--wait` waits until the relay connects.
-
-What it installs, from [`deploy/kubernetes`](deploy/kubernetes):
-
-| Manifest | What it is |
+| | |
 |---|---|
-| `stagd-access.yaml` | The `stagd-system` namespace and Stagd's service account. Cluster-wide it may only create namespaces and bind its own role in them; an admission policy keeps every change it makes to `stagd-*` namespaces, other than `stagd-system`. It can't read anything elsewhere. |
-| `stagd-relay.yaml` | The relay, running as that account. It only connects Stagd to services in `stagd-*` namespaces. |
-| `stagd-build.yaml` | Optional: a BuildKit daemon whose cache every preview shares, and a registry for what it builds, so building needs nothing set up. The daemon runs privileged; clusters that forbid that build elsewhere. |
-| `stagd-tunnel.yaml` | Optional: `cloudflared`, for preview traffic through a Cloudflare Tunnel Stagd makes for the cluster, which is faster than through the relay's connection. It also only dials out; the relay checks every request it passes on. |
+| **`stagd`** | The command line: everything the dashboard does, for your terminal and scripts. [Reference](https://stagd.dev/docs/reference/cli/) |
+| **`stagd relay`** | Connects compute Stagd can't reach, a private cluster or a Docker host behind NAT, by dialling out. [docs/relay.md](docs/relay.md) |
+| **`stagd docker up`** | Brings a preview up from its plan, on Namespace and Docker hosts and on your own Docker. [docs/plan.md](docs/plan.md) |
+| **[`deploy/kubernetes`](deploy/kubernetes)** | The manifests a cluster gets, so you can read exactly what runs in it. |
+| **[`proto/`](proto)** | The API contract, `stagd.api.v1`, and a preview's plan, `stagd.plan.v1`, published at [buf.build/stagdhq/stagd](https://buf.build/stagdhq/stagd). |
 
-To remove Stagd from a cluster, delete the connection in Stagd (it refuses while previews still run on it), then, as a cluster admin:
+More in [docs/](docs).
 
-```bash
-stagd compute uninstall kubernetes | kubectl delete --ignore-not-found -f -
-```
+## Contributing
 
-It prints everything an install can bring, without tokens. Stagd can't do this itself: it has no rights outside its own namespaces, by design.
-
-### Docker
-
-On the Docker host, signed in:
-
-```bash
-stagd compute connect docker --name build-box --run
-```
-
-makes the connection, starts its relay as the container `stagd-relay` on a network of its own, and waits until it connects. For a connection made elsewhere (in the dashboard, say), `stagd compute install build-box --run` gives the relay a new token and starts it the same way. With `--print` instead, both print docker's commands for the relay, with its token, to run yourself. Whoever reaches the Docker API controls the host, so use a host meant for previews. To remove the relay, on the host: `stagd compute uninstall docker --run`.
-
-## A preview's plan
-
-A plan (`stagd.plan.v1.Plan`, as JSON) is what a preview runs, whatever compute runs it: its services, builds, volumes and ingresses, where its source is, and the names of the environment variables holding its secrets, never their values. On Namespace and Docker hosts, Stagd puts the deploy's plan on the instance and runs `stagd docker up` there. Run it yourself to bring the same preview up on your own Docker, your checkout as the source:
-
-```bash
-stagd docker up plan.json --source .
-```
-
-It builds side by side, as many as there are CPUs, while images are pulled, then starts it with compose, publishing ingresses from port 18000 in the plan's order. Where it stands goes to `.stagd/state`, the logs beside it: `build-<service>.log`, `pull-<service>.log`, `up.log`.
-
-## Develop
-
-Everything runs with Go alone: `go tool task <name>` (Task is pinned in `go.mod`).
-
-```bash
-go tool task build      # bin/stagd
-go tool task check      # what CI runs: protos, formatting, vet, tests
-go tool task generate   # internal/gen from proto/ (needs buf)
-go tool task image      # the image, as stagd:local
-go tool task dist       # release files into dist/, as a v* tag publishes them
-```
-
-```
-cmd/stagd/          the stagd binary
-internal/
-  cli/              the commands
-  client/           the API client, device login and token storage
-  output/           tables and JSON
-  relay/            stagd relay, and its protocol
-  dockerup/         stagd docker up: a plan brought up on Docker
-  gen/              generated from proto/, never edited by hand
-proto/              the stagd.api.v1 contract and stagd.plan.v1 (Buf)
-deploy/kubernetes/  what a cluster gets
-```
-
-The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. Each also comes as the runner, with `-runner` after the tag (`:sha-<commit>-runner`): Docker's CLI with `stagd` in it, which Stagd runs `stagd docker up` in. A `v*` tag also makes the GitHub release, with the binaries, `install.sh`, `install.ps1` and `checksums.txt`, and updates the Homebrew cask in [stagdhq/homebrew-tap](https://github.com/stagdhq/homebrew-tap).
-
-To release, tag with a one-line summary, written as it should read at the top of the notes: `git tag -a v0.5.0 -m "v0.5.0: What's in it"`, and push the tag. The release's notes, which are the changelog, are that summary and the commits since the last tag (`scripts/release-notes.sh`): `feat:` under New, `fix:` under Fixes, `deploy:`, `docs:`, `perf:` and `refactor:` under Also, and `chore:` left out. So write commit subjects for the notes, and use `feat:` or `fix:` for what users notice; `feat!:` marks a breaking change.
-
-## Changes
-
-See [the releases](https://github.com/stagdhq/stagd/releases). Contract changes are checked for breaking changes against what's published.
+See [CONTRIBUTING.md](CONTRIBUTING.md), and [docs/development.md](docs/development.md) to build and test it. Changes are in [the releases](https://github.com/stagdhq/stagd/releases).
 
 ## Security
 
