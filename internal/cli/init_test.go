@@ -64,6 +64,10 @@ func TestInitWritesTheStarterFromTheComposeFile(t *testing.T) {
 	if !strings.Contains(out, "Wrote ") || !strings.Contains(out, "stagd validate") {
 		t.Errorf("output:\n%s", out)
 	}
+
+	if !strings.Contains(out, "\n  [![Previews by Stagd](https://stagd.dev/badge.svg)](https://stagd.dev)\n") {
+		t.Errorf("no badge line in the output:\n%s", out)
+	}
 }
 
 func TestInitSaysWhatStopsAPreview(t *testing.T) {

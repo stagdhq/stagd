@@ -68,8 +68,17 @@ func initConfig(ctx context.Context, cmd *cli.Command) error {
 
 	fmt.Fprintln(w, "\nLook it over, then stagd validate checks it as previews would read it.")
 
+	fmt.Fprintf(
+		w,
+		"\nTo show your README's readers that pull requests get previews, add the badge:\n\n  %s\n",
+		badgeMarkdown,
+	)
+
 	return nil
 }
+
+// badgeMarkdown is the Previews by Stagd badge, as a README shows it.
+const badgeMarkdown = "[![Previews by Stagd](https://stagd.dev/badge.svg)](https://stagd.dev)"
 
 // configFiles are where Stagd looks for stagd.yaml, as rootFiles has them.
 var configFiles = []string{"stagd.yaml", ".stagd.yaml"}
