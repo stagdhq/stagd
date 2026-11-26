@@ -443,6 +443,25 @@ func TestUpKept(t *testing.T) {
 	if calls := strings.Join(f.calls, "\n"); !strings.Contains(calls, "build --load --progress=plain -t stagd-build/web:") || !strings.Contains(calls, "push -q nscr.io/ws/stagd-build:aaa") {
 		t.Errorf("rebuild:\n%s", calls)
 	}
+	// Every build kept: pulled back, each a part of its own, and no source fetched.
+	state, f, err := run(t, samplePlan, func(o *Options, f *fakeDocker) {
+		kept(false)(o, f)
+		f.kept["nscr.io/ws/stagd-build:bbb"] = true
+	})
+
+	if err != nil {
+		t.Fatalf("%v: %s", err, state)
+	}
+
+	if calls := strings.Join(f.calls, "\n"); strings.Contains(calls, "build --load") || strings.Contains(calls, " push ") {
+		t.Errorf("built or pushed what was kept:\n%s", calls)
+	}
+
+	got := strings.Join(parts(state), " ")
+
+	if strings.Contains(got, "source") || !strings.Contains(got, "pull-kept-api") || !strings.Contains(got, "pull-kept-web") {
+		t.Errorf("parts: %s", got)
+	}
 }
 
 func TestUpLocalSource(t *testing.T) {

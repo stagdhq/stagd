@@ -352,12 +352,16 @@ func (u *up) run(ctx context.Context) error {
 
 	pulls := u.startPulls(ctx)
 
+	// The builds kept for this commit come back first, side by side; the source is fetched only for what's left.
+	if len(builds) > 0 {
+		u.keptLogin(ctx)
+		u.pullBack(ctx, builds)
+	}
+
 	if len(builds) > 0 {
 		if err := u.source(ctx, src); err != nil {
 			return err
 		}
-
-		u.keptLogin(ctx)
 
 		if err := u.build(ctx, builds); err != nil {
 			return err
@@ -693,7 +697,14 @@ func (u *up) build(ctx context.Context, builds map[string][]string) error {
 		err  error
 	}
 
-	queue := built(u.plan)
+	queue := make([]string, 0, len(builds))
+
+	for name := range builds {
+		queue = append(queue, name)
+	}
+
+	sort.Strings(queue)
+
 	done := make(chan result)
 
 	var running []string
@@ -757,21 +768,86 @@ func (u *up) build(ctx context.Context, builds map[string][]string) error {
 	return nil
 }
 
-// buildOne builds a service, or pulls back the image kept for this commit when there is one: which it did, when
-// images are kept ("pulled back", "built"). Each of the build's steps is a span under its own.
+// pullBack pulls back, all at once, each build kept for this commit (unless it's to build again), and takes it out
+// of builds: what's left is built. One that doesn't come back is only built. Each is a part of its own,
+// pull-kept-<service>, counted with the pulls.
+func (u *up) pullBack(ctx context.Context, builds map[string][]string) {
+	k := u.o.Kept
+
+	if k == nil || k.Rebuild || !u.keptOK {
+		return
+	}
+
+	var back []string
+
+	for _, name := range built(u.plan) {
+		if _, ok := builds[name]; ok && k.Images[name] != "" {
+			back = append(back, name)
+		}
+	}
+
+	if len(back) == 0 {
+		return
+	}
+
+	u.s.state("progress Pulling back the images built before for this commit")
+
+	var wg sync.WaitGroup
+
+	pulled := make([]bool, len(back))
+
+	for i, name := range back {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			kept := k.Images[name]
+			part := "pull-kept-" + name
+			start := u.o.Now()
+
+			u.s.mark("begin", part)
+			err := u.docker(ctx, "", nil, nil, "--config", u.keptConfig, "pull", "-q", kept)
+
+			if err == nil {
+				err = u.docker(ctx, "", nil, nil, "tag", kept, BuiltImage(u.o.Project, name))
+			}
+
+			u.s.mark("end", part)
+
+			how := "pulled back"
+
+			if err != nil {
+				how = "not kept"
+			}
+
+			if ctx.Err() == nil {
+				u.ended(part, "pull back", start, map[string]any{"stagd.service": name, "stagd.kept": how}, nil)
+			}
+
+			if err == nil {
+				pulled[i] = os.WriteFile(u.path("build-"+name+".log"), []byte("The image built before for this commit, pulled back: "+kept+"\n"), 0o644) == nil
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	for i, name := range back {
+		if pulled[i] {
+			delete(builds, name)
+		}
+	}
+}
+
+// buildOne builds a service: one with somewhere to be kept is kept once the preview runs ("built"). Each of the
+// build's steps is a span under its own.
 func (u *up) buildOne(ctx context.Context, name string, args []string) (string, error) {
 	log := "build-" + name + ".log"
-	built := BuiltImage(u.o.Project, name)
 	kept := ""
 
 	if u.o.Kept != nil {
 		kept = u.o.Kept.Images[name]
-	}
-
-	if kept != "" && u.keptOK && !u.o.Kept.Rebuild {
-		if u.docker(ctx, "", nil, nil, "--config", u.keptConfig, "pull", "-q", kept) == nil && u.docker(ctx, "", nil, nil, "tag", kept, built) == nil {
-			return "pulled back", os.WriteFile(u.path(log), []byte("The image built before for this commit, pulled back: "+kept+"\n"), 0o644)
-		}
 	}
 
 	steps := newSteps("build-"+name, name, u.o.Now, u.s.span)
