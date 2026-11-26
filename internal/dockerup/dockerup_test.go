@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -111,15 +112,18 @@ func TestCompose(t *testing.T) {
 // fakeDocker stands in for docker: each call logged; builds take a moment, and fail for the services in failing;
 // pulls of the images in late fail until they've been tried that many times. tar runs for real.
 type fakeDocker struct {
-	mu       sync.Mutex
-	calls    []string
-	failing  map[string]bool
-	late     map[string]int
-	tries    map[string]int
-	kept     map[string]bool
-	stdin    map[string]string
-	building int
-	most     int
+	mu      sync.Mutex
+	calls   []string
+	failing map[string]bool
+	late    map[string]int
+	tries   map[string]int
+	kept    map[string]bool
+	stdin   map[string]string
+
+	// The one-shot's exit code in the events.
+	migrateExit string
+	building    int
+	most        int
 }
 
 func (f *fakeDocker) run(ctx context.Context, c Cmd) error {
@@ -175,6 +179,17 @@ func (f *fakeDocker) run(ctx context.Context, c Cmd) error {
 			}
 		}
 
+		fmt.Fprintln(c.Out, "#0 building with \"default\" instance using docker driver")
+		fmt.Fprintln(c.Out, "#1 [internal] load build definition from Dockerfile")
+		fmt.Fprintln(c.Out, "#1 DONE 0.0s")
+		fmt.Fprintln(c.Out, "#2 [1/3] FROM docker.io/library/node:24@sha256:abc")
+		fmt.Fprintln(c.Out, "#2 CACHED")
+		fmt.Fprintln(c.Out, "#3 [builder 2/3] RUN npm ci --token=never-in-a-span")
+		fmt.Fprintln(c.Out, "#3 0.512 added 312 packages")
+		fmt.Fprintln(c.Out, "#3 DONE 0.6s")
+		fmt.Fprintln(c.Out, "#4 exporting to image")
+		fmt.Fprintln(c.Out, "#4 DONE 0.1s")
+
 		for service := range f.failing {
 			if strings.HasPrefix(image, "stagd-build/"+service+":") {
 				fmt.Fprintln(c.Out, "step 3/7")
@@ -183,6 +198,37 @@ func (f *fakeDocker) run(ctx context.Context, c Cmd) error {
 				return errors.New("exit status 1")
 			}
 		}
+
+	case "events":
+		// Each service's container made, started, and healthy or done, as Docker says them; the health checks' noise too.
+		event := func(service, action string, attrs map[string]string) {
+			a := map[string]string{"com.docker.compose.project": "stagd-preview", "com.docker.compose.service": service}
+
+			for k, v := range attrs {
+				a[k] = v
+			}
+
+			line, _ := json.Marshal(map[string]any{"Type": "container", "Action": action, "Actor": map[string]any{"Attributes": a}, "timeNano": time.Now().UnixNano()})
+			fmt.Fprintln(c.Out, string(line))
+		}
+
+		for _, s := range []string{"db", "migrate", "api", "web"} {
+			event(s, "create", nil)
+		}
+
+		event("db", "start", nil)
+		event("db", "exec_die", map[string]string{"exitCode": "1"})
+		event("db", "health_status: healthy", nil)
+		event("migrate", "start", nil)
+		event("migrate", "die", map[string]string{"exitCode": f.migrateExit})
+		event("api", "start", nil)
+		event("api", "health_status: healthy", nil)
+		event("web", "start", nil)
+		event("other", "start", nil)
+
+		<-ctx.Done()
+
+		return ctx.Err()
 
 	case "pull":
 		image := args[len(args)-1]
@@ -246,7 +292,7 @@ func run(t *testing.T, plan string, change func(*Options, *fakeDocker)) (string,
 		t.Fatal(err)
 	}
 
-	f := &fakeDocker{failing: map[string]bool{}, late: map[string]int{}, tries: map[string]int{}, kept: map[string]bool{}, stdin: map[string]string{}}
+	f := &fakeDocker{failing: map[string]bool{}, late: map[string]int{}, tries: map[string]int{}, kept: map[string]bool{}, stdin: map[string]string{}, migrateExit: "0"}
 	env := map[string]string{"STAGD_SOURCE_TOKEN": "src-token", "STAGD_REGISTRY_PASSWORD_1": "reg-pass", "STAGD_KEPT_PASSWORD": "kept-pass"}
 
 	o := Options{
@@ -317,7 +363,7 @@ func TestUp(t *testing.T) {
 
 	for _, want := range []string{
 		"--build-arg A=1 --build-arg B=2",
-		"build --load -t stagd-build/api:stagd-preview --target prod ",
+		"build --load --progress=plain -t stagd-build/api:stagd-preview --target prod ",
 		"pull -q postgres:17",
 		"compose -f ",
 	} {
@@ -342,7 +388,7 @@ func TestUpFailedBuild(t *testing.T) {
 		t.Fatal("no error")
 	}
 
-	if first := strings.SplitN(state, "\n", 2)[0]; first != "failed web: the build failed: step 3/7 npm ERR! broken" {
+	if first := strings.SplitN(state, "\n", 2)[0]; !strings.HasPrefix(first, "failed web: the build failed: ") || !strings.HasSuffix(first, "step 3/7 npm ERR! broken") {
 		t.Errorf("state %q", first)
 	}
 }
@@ -384,17 +430,17 @@ func TestUpKept(t *testing.T) {
 	calls := strings.Join(f.calls, "\n")
 
 	// web's pulled back, api's built and kept once it runs.
-	if strings.Contains(calls, "build --load -t stagd-build/web:") || !strings.Contains(calls, "tag nscr.io/ws/stagd-build:aaa stagd-build/web:stagd-preview") {
+	if strings.Contains(calls, "build --load --progress=plain -t stagd-build/web:") || !strings.Contains(calls, "tag nscr.io/ws/stagd-build:aaa stagd-build/web:stagd-preview") {
 		t.Errorf("web built:\n%s", calls)
 	}
 
-	if !strings.Contains(calls, "build --load -t stagd-build/api:") || !strings.HasSuffix(calls, "push -q nscr.io/ws/stagd-build:bbb") {
+	if !strings.Contains(calls, "build --load --progress=plain -t stagd-build/api:") || !strings.HasSuffix(calls, "push -q nscr.io/ws/stagd-build:bbb") {
 		t.Errorf("api not built and kept:\n%s", calls)
 	}
 
 	_, f, _ = run(t, samplePlan, kept(true))
 
-	if calls := strings.Join(f.calls, "\n"); !strings.Contains(calls, "build --load -t stagd-build/web:") || !strings.Contains(calls, "push -q nscr.io/ws/stagd-build:aaa") {
+	if calls := strings.Join(f.calls, "\n"); !strings.Contains(calls, "build --load --progress=plain -t stagd-build/web:") || !strings.Contains(calls, "push -q nscr.io/ws/stagd-build:aaa") {
 		t.Errorf("rebuild:\n%s", calls)
 	}
 }
@@ -425,5 +471,105 @@ func TestInside(t *testing.T) {
 		if (err != nil) != (want == "") || got != want {
 			t.Errorf("inside(%q) = %q, %v", path, got, err)
 		}
+	}
+}
+
+// spansOf is the spans in a state, by key.
+func spansOf(t *testing.T, state string) map[string]Span {
+	t.Helper()
+
+	out := map[string]Span{}
+
+	for _, line := range strings.Split(state, "\n") {
+		data, ok := strings.CutPrefix(line, "span ")
+
+		if !ok {
+			continue
+		}
+
+		var sp Span
+
+		if err := json.Unmarshal([]byte(data), &sp); err != nil {
+			t.Fatalf("%q: %v", line, err)
+		}
+
+		if _, twice := out[sp.Key]; twice {
+			t.Errorf("span %s twice", sp.Key)
+		}
+
+		out[sp.Key] = sp
+	}
+
+	return out
+}
+
+func TestUpSpans(t *testing.T) {
+	state, _, err := run(t, samplePlan, nil)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	spans := spansOf(t, state)
+
+	var keys []string
+
+	for k := range spans {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	want := "build-api build-api step 1 build-api step 2 build-api step 3 build-api step 4 build-web build-web step 1 build-web step 2 build-web step 3 build-web step 4 " +
+		"login pull-db pull-migrate source start start-api start-db start-migrate start-web"
+
+	if got := strings.Join(keys, " "); got != want {
+		t.Fatalf("spans:\n%s\nwant\n%s", got, want)
+	}
+
+	// The parts of the run have no parent; a build's steps are under it, which step and whether cached, never its text.
+	if sp := spans["build-web"]; sp.Parent != "" || sp.Name != "build" || sp.Attributes["stagd.service"] != "web" || sp.End < sp.Start {
+		t.Errorf("build-web: %+v", sp)
+	}
+
+	steps := map[string]any{}
+
+	for _, n := range []string{"1", "2", "3", "4"} {
+		sp := spans["build-web step "+n]
+
+		if sp.Parent != "build-web" || sp.Name != "step" {
+			t.Errorf("step %s: %+v", n, sp)
+		}
+
+		steps[fmt.Sprint(sp.Attributes["stagd.step"])] = sp.Attributes["stagd.cached"]
+	}
+
+	if fmt.Sprint(steps) != "map[1/3:true 2/3:false export:false internal:false]" {
+		t.Errorf("steps: %v", steps)
+	}
+
+	if strings.Contains(state, "npm") || strings.Contains(state, "never-in-a-span") || strings.Contains(state, "node:24") {
+		t.Errorf("a step's text in the spans:\n%s", state)
+	}
+
+	// Each service's start, under the start: healthy, done, or started where there's nothing to wait for.
+	for _, service := range []string{"db", "migrate", "api", "web"} {
+		if sp := spans["start-"+service]; sp.Parent != "start" || sp.Name != "service_start" || sp.Error != "" || sp.Attributes["stagd.service"] != service {
+			t.Errorf("start-%s: %+v", service, sp)
+		}
+	}
+}
+
+func TestUpSpansFailed(t *testing.T) {
+	state, _, _ := run(t, samplePlan, func(_ *Options, f *fakeDocker) { f.migrateExit = "1" })
+
+	if sp := spansOf(t, state)["start-migrate"]; sp.Error != "failed" {
+		t.Errorf("a one-shot that exited 1: %+v", sp)
+	}
+
+	state, _, _ = run(t, samplePlan, func(_ *Options, f *fakeDocker) { f.failing["web"] = true })
+
+	if sp := spansOf(t, state)["build-web"]; sp.Error != "failed" {
+		t.Errorf("a failed build: %+v", sp)
 	}
 }

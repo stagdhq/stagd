@@ -19,6 +19,11 @@
 // so far, for the deploy's trace:
 //
 //	<ms since the epoch> begin|end <part>, e.g. build-web or start
+//
+// Then the spans of the parts that ended, for Stagd to forward in the trace:
+// each part, the steps of each build and each service's start (Span).
+//
+//	span {"key": "build-web", "name": "build", "start": …, "end": …}
 package dockerup
 
 import (

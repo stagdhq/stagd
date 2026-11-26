@@ -144,6 +144,7 @@ type stage struct {
 	mu    sync.Mutex
 	line  string
 	marks strings.Builder
+	spans strings.Builder
 }
 
 func (s *stage) mark(what, part string) {
@@ -173,7 +174,7 @@ func (s *stage) state(format string, args ...any) {
 func (s *stage) write() {
 	next := s.path + ".next"
 
-	if err := os.WriteFile(next, []byte(s.line+"\n"+s.marks.String()), 0o644); err != nil {
+	if err := os.WriteFile(next, []byte(s.line+"\n"+s.marks.String()+s.spans.String()), 0o644); err != nil {
 		fmt.Fprintln(os.Stderr, "writing the state:", err)
 
 		return
@@ -258,6 +259,11 @@ func (u *up) path(name string) string {
 
 // docker runs docker, what it prints going to the log named (in the stage's directory), when one is.
 func (u *up) docker(ctx context.Context, log string, env []string, stdin io.Reader, args ...string) error {
+	return u.dockerTo(ctx, log, nil, env, stdin, args...)
+}
+
+// dockerTo is docker, what it prints going through wrap (when there's one) on its way to the log.
+func (u *up) dockerTo(ctx context.Context, log string, wrap func(io.Writer) io.Writer, env []string, stdin io.Reader, args ...string) error {
 	var out io.Writer
 
 	if log != "" {
@@ -272,7 +278,16 @@ func (u *up) docker(ctx context.Context, log string, env []string, stdin io.Read
 		out = f
 	}
 
+	if wrap != nil {
+		out = wrap(out)
+	}
+
 	return u.o.Run(ctx, Cmd{Name: "docker", Args: args, Env: env, Stdin: stdin, Out: out})
+}
+
+// ended records a part of the run as a span: from start to now, failed when err is.
+func (u *up) ended(key, name string, start time.Time, attributes map[string]any, err error) {
+	u.s.span(Span{Key: key, Name: name, Start: ms(start), End: ms(u.o.Now()), Attributes: attributes, Error: failed(err)})
 }
 
 // tail is a log's last 8 lines as one, at most 600 characters.
@@ -364,7 +379,31 @@ func (u *up) run(ctx context.Context) error {
 	u.s.state("progress Starting the containers")
 	u.s.mark("begin", "start")
 
-	if err := u.docker(ctx, "up.log", nil, nil, "compose", "-f", u.path("compose.yaml"), "up", "-d", "--remove-orphans", "--wait", "--wait-timeout", fmt.Sprint(StartWait)); err != nil {
+	// Each service's start, from Docker's events while compose starts them.
+	started := u.o.Now()
+	events, stop := context.WithCancel(ctx)
+	following := make(chan struct{})
+
+	go func() {
+		defer close(following)
+
+		u.follow(events, started.Add(-time.Second), newStarts(p, o.Project, u.s.span))
+	}()
+
+	err = u.docker(ctx, "up.log", nil, nil, "compose", "-f", u.path("compose.yaml"), "up", "-d", "--remove-orphans", "--wait", "--wait-timeout", fmt.Sprint(StartWait))
+
+	// The last events a moment to arrive.
+	select {
+	case <-following:
+	case <-time.After(time.Second):
+	}
+
+	stop()
+	<-following
+
+	u.ended("start", "start", started, nil, err)
+
+	if err != nil {
 		return fail("Starting the containers failed: %s", u.tail("up.log"))
 	}
 
@@ -391,15 +430,20 @@ func (u *up) login(ctx context.Context) error {
 	u.auth = []string{"DOCKER_CONFIG=" + config}
 	u.s.mark("begin", "login")
 
+	start := u.o.Now()
+
 	for _, r := range u.plan.Registries {
 		password := strings.NewReader(u.o.Getenv(r.PasswordEnv))
 
 		if err := u.docker(ctx, "login.log", u.auth, password, "login", r.Host, "-u", r.Username, "--password-stdin"); err != nil {
+			u.ended("login", "login", start, nil, err)
+
 			return fail("Couldn't log in to %s: %s", r.Host, u.tail("login.log"))
 		}
 	}
 
 	u.s.mark("end", "login")
+	u.ended("login", "login", start, nil, nil)
 
 	return nil
 }
@@ -425,9 +469,15 @@ func (u *up) startPulls(ctx context.Context) []*pulling {
 			defer close(job.done)
 
 			part := "pull-" + job.service
+			start := u.o.Now()
+
 			u.s.mark("begin", part)
 			job.err = u.pullImage(ctx, job)
 			u.s.mark("end", part)
+
+			if ctx.Err() == nil {
+				u.ended(part, "pull", start, map[string]any{"stagd.service": job.service, "stagd.waited": job.waiting.Load()}, job.err)
+			}
 		}()
 	}
 
@@ -518,6 +568,22 @@ func (u *up) source(ctx context.Context, dir string) error {
 	u.s.state("progress Fetching the source")
 	u.s.mark("begin", "source")
 
+	start := u.o.Now()
+	err := u.fetch(ctx, dir)
+
+	u.ended("source", "source", start, nil, err)
+
+	if err != nil {
+		return err
+	}
+
+	u.s.mark("end", "source")
+
+	return nil
+}
+
+// fetch downloads the source's tarball and unpacks it into dir, its top directory left out.
+func (u *up) fetch(ctx context.Context, dir string) error {
 	os.RemoveAll(dir)
 
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -550,8 +616,6 @@ func (u *up) source(ctx context.Context, dir string) error {
 		return fail("Couldn't unpack the source")
 	}
 
-	u.s.mark("end", "source")
-
 	return nil
 }
 
@@ -559,7 +623,8 @@ func (u *up) source(ctx context.Context, dir string) error {
 func (u *up) buildArgs(src, name string) ([]string, error) {
 	b := u.plan.Builds[name]
 	// --load: where the default builder isn't the engine's own (Docker Desktop's), the image is still loaded into it.
-	args := []string{"build", "--load", "-t", BuiltImage(u.o.Project, name)}
+	// --progress=plain: each step's start and end, for its span (steps), and a log a person can read.
+	args := []string{"build", "--load", "--progress=plain", "-t", BuiltImage(u.o.Project, name)}
 
 	if b.Dockerfile != "" {
 		if strings.HasPrefix(b.Dockerfile, "/") {
@@ -647,9 +712,15 @@ func (u *up) build(ctx context.Context, builds map[string][]string) error {
 
 			go func() {
 				part := "build-" + name
+				start := u.o.Now()
+
 				u.s.mark("begin", part)
-				err := u.buildOne(ctx, name, builds[name])
+				how, err := u.buildOne(ctx, name, builds[name])
 				u.s.mark("end", part)
+
+				if ctx.Err() == nil {
+					u.ended(part, "build", start, map[string]any{"stagd.service": name, "stagd.kept": how}, err)
+				}
 
 				done <- result{name, err}
 			}()
@@ -686,8 +757,9 @@ func (u *up) build(ctx context.Context, builds map[string][]string) error {
 	return nil
 }
 
-// buildOne builds a service, or pulls back the image kept for this commit when there is one.
-func (u *up) buildOne(ctx context.Context, name string, args []string) error {
+// buildOne builds a service, or pulls back the image kept for this commit when there is one: which it did, when
+// images are kept ("pulled back", "built"). Each of the build's steps is a span under its own.
+func (u *up) buildOne(ctx context.Context, name string, args []string) (string, error) {
 	log := "build-" + name + ".log"
 	built := BuiltImage(u.o.Project, name)
 	kept := ""
@@ -698,21 +770,26 @@ func (u *up) buildOne(ctx context.Context, name string, args []string) error {
 
 	if kept != "" && u.keptOK && !u.o.Kept.Rebuild {
 		if u.docker(ctx, "", nil, nil, "--config", u.keptConfig, "pull", "-q", kept) == nil && u.docker(ctx, "", nil, nil, "tag", kept, built) == nil {
-			return os.WriteFile(u.path(log), []byte("The image built before for this commit, pulled back: "+kept+"\n"), 0o644)
+			return "pulled back", os.WriteFile(u.path(log), []byte("The image built before for this commit, pulled back: "+kept+"\n"), 0o644)
 		}
 	}
 
-	if err := u.docker(ctx, log, u.auth, nil, args...); err != nil {
-		return err
+	steps := newSteps("build-"+name, name, u.o.Now, u.s.span)
+	wrap := func(out io.Writer) io.Writer { return &lines{out: out, fn: steps.line} }
+
+	if err := u.dockerTo(ctx, log, wrap, u.auth, nil, args...); err != nil {
+		return "", err
 	}
 
-	if kept != "" {
-		u.mu.Lock()
-		u.keep[name] = true
-		u.mu.Unlock()
+	if kept == "" {
+		return "", nil
 	}
 
-	return nil
+	u.mu.Lock()
+	u.keep[name] = true
+	u.mu.Unlock()
+
+	return "built", nil
 }
 
 // restore puts back the volumes kept while it slept, before anything starts, with compose's labels so it takes them
@@ -726,12 +803,18 @@ func (u *up) restore(ctx context.Context) error {
 		u.s.state("progress Putting back %s's data, kept while it slept", r.Volume)
 		u.s.mark("begin", part)
 
+		start := u.o.Now()
+
 		_ = u.docker(ctx, "", nil, nil, "volume", "create", "--label", "com.docker.compose.project="+u.o.Project, "--label", "com.docker.compose.volume="+r.Volume, volume)
 
 		env := []string{"STAGD_VOLUME_URL=" + u.o.Getenv(r.UrlEnv)}
 		unpack := `curl -fsS "$STAGD_VOLUME_URL" | tar xzf - -C /v`
 
-		if err := u.docker(ctx, log, env, nil, "run", "--rm", "--user", "0", "-v", volume+":/v", "-e", "STAGD_VOLUME_URL", VolumeHelperImage, "sh", "-c", unpack); err != nil {
+		err := u.docker(ctx, log, env, nil, "run", "--rm", "--user", "0", "-v", volume+":/v", "-e", "STAGD_VOLUME_URL", VolumeHelperImage, "sh", "-c", unpack)
+
+		u.ended(part, "restore", start, map[string]any{"stagd.volume": r.Volume}, err)
+
+		if err != nil {
 			return fail("Couldn't put back %s's data: %s", r.Volume, u.tail(log))
 		}
 
