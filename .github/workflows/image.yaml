@@ -57,3 +57,30 @@ jobs:
           build-args: VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # The runner, the same tags with -runner: Docker's CLI with stagd, for `stagd docker up` on compute where Stagd
+      # brings previews up itself. Stagd pins one by its commit (sha-<commit>-runner).
+      - id: runner-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/stagdhq/stagd
+          flavor: |
+            latest=false
+            suffix=-runner,onlatest=true
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runner
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.runner-meta.outputs.tags }}
+          labels: ${{ steps.runner-meta.outputs.labels }}
+          build-args: VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

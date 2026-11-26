@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package stagd.plan.v1;
+
+import "buf/validate/validate.proto";
+
+// Plan is what a preview runs, whatever compute runs it: its services, builds,
+// volumes and ingresses, where its source is, and the names of the environment
+// variables holding its secrets, never their values.
+//
+// Stagd makes one for each deploy and puts it on the compute: on Namespace and
+// Docker hosts, `stagd docker up plan.json` brings it up. The same plan runs on
+// your own Docker. How it runs on a given machine (the compose project, whether
+// ingresses are published, where built images are kept) isn't in the plan: the
+// command that runs it is told.
+//
+// As a file it's this message's JSON (protojson), e.g.
+//
+//   {"version": 1, "services": [{"name": "web", "image": "nginx:1.29", "ports": [80]}],
+//    "ingress": [{"name": "web", "service": "web", "port": 80, "primary": true}]}
+message Plan {
+  // The format: 1, the only one so far. A reader refuses one it doesn't know.
+  int32 version = 1 [(buf.validate.field).int32.const = 1];
+
+  repeated Service services = 2 [(buf.validate.field).repeated.min_items = 1];
+  repeated Volume volumes = 3;
+
+  // The preview's ways in from outside, in order: a machine that publishes
+  // them gives each a port of its own in this order.
+  repeated Ingress ingress = 4;
+
+  // How the services built from the source are built, by service.
+  map<string, Build> builds = 5 [(buf.validate.field).map.keys.string.pattern = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"];
+
+  // Where the repository is at the preview's commit, for the builds.
+  Source source = 6;
+
+  // Registries to log in to before pulling or building.
+  repeated Registry registries = 7;
+
+  // Volumes kept while the preview slept, put back before anything starts.
+  repeated Restore restore = 8;
+}
+
+// Service is one component of the preview.
+message Service {
+  // Lower-case letters, digits and dashes; once in a plan.
+  string name = 1 [(buf.validate.field).string.pattern = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"];
+
+  // What it runs, unless it's built (Plan.builds).
+  string image = 2;
+
+  // Replaces the image's command.
+  repeated string command = 3;
+
+  // Its environment, values as they are.
+  map<string, string> env = 4;
+
+  // Its environment holding secrets: each key's value is in the environment
+  // variable named, where whatever runs the plan finds it.
+  map<string, string> secret_env = 5 [(buf.validate.field).map.values.string.pattern = "^[A-Za-z_][A-Za-z0-9_]*$"];
+
+  // The ports it listens on.
+  repeated int32 ports = 6 [(buf.validate.field).repeated.items.int32 = {
+    gte: 1
+    lte: 65535
+  }];
+
+  // The services it starts after.
+  repeated string depends_on = 7;
+
+  // What it waits for in the services it depends on, beyond their starting:
+  // healthy or completed (a one-shot that exited 0), by service.
+  map<string, string> wait_for = 8 [(buf.validate.field).map.values.string = {
+    in: [
+      "started",
+      "healthy",
+      "completed"
+    ]
+  }];
+
+  repeated Mount mounts = 9;
+  Health health = 10;
+
+  // Runs to completion, e.g. migrations: never restarted, done once it exits 0.
+  bool one_shot = 11;
+
+  // How long to keep retrying its image's pull, in seconds: CI may not have
+  // pushed it yet.
+  int32 wait_seconds = 12 [(buf.validate.field).int32.gte = 0];
+}
+
+// Mount is one of the preview's volumes in a service's filesystem.
+message Mount {
+  string volume = 1 [(buf.validate.field).string.pattern = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"];
+  string path = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+// Health is how to tell a service is ready.
+message Health {
+  // Run in the container: ready once it exits 0.
+  repeated string command = 1;
+
+  // How long it may take to first be healthy, in seconds, e.g. a database
+  // restoring its seed: failing checks before then don't count.
+  int32 start_seconds = 2 [(buf.validate.field).int32.gte = 0];
+}
+
+// Volume is one of the preview's volumes.
+message Volume {
+  string name = 1 [(buf.validate.field).string.pattern = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"];
+}
+
+// Ingress is a way into the preview from outside.
+message Ingress {
+  string name = 1 [(buf.validate.field).string.pattern = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"];
+  string service = 2;
+  int32 port = 3 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 65535
+  }];
+
+  // The link on the pull request.
+  bool primary = 4;
+}
+
+// Build is how a service is built from the source.
+message Build {
+  // The directory built, in the repository.
+  string context = 1;
+
+  // The Dockerfile, from the context; empty is the context's Dockerfile.
+  string dockerfile = 2;
+  string target = 3;
+  map<string, string> args = 4;
+}
+
+// Source is the repository at the preview's commit: a gzipped tarball whose
+// one top directory is the repository.
+message Source {
+  string url = 1 [(buf.validate.field).string.uri = true];
+
+  // The environment variable holding a token for it, sent as a bearer token.
+  string token_env = 2 [(buf.validate.field).string.pattern = "^([A-Za-z_][A-Za-z0-9_]*)?$"];
+}
+
+// Registry is a registry to log in to.
+message Registry {
+  string host = 1 [(buf.validate.field).string.min_len = 1];
+  string username = 2;
+
+  // The environment variable holding the password.
+  string password_env = 3 [(buf.validate.field).string.pattern = "^[A-Za-z_][A-Za-z0-9_]*$"];
+}
+
+// Restore is a volume's data to put back: a gzipped tar at the link in the
+// environment variable named.
+message Restore {
+  string volume = 1 [(buf.validate.field).string.pattern = "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"];
+  string url_env = 2 [(buf.validate.field).string.pattern = "^[A-Za-z_][A-Za-z0-9_]*$"];
+}

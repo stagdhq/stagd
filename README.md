@@ -6,8 +6,9 @@ This repository is Stagd's open part:
 
 - **`stagd`**, the command line: everything the dashboard does, for your terminal and scripts.
 - **`stagd relay`**, which connects compute Stagd can't reach (a private Kubernetes cluster, a Docker host behind NAT) by dialling out to Stagd.
+- **`stagd docker up`**, which brings a preview up from its plan on Namespace and Docker hosts, and on your own Docker.
 - **The Kubernetes manifests** a cluster gets, so you can read exactly what runs in it.
-- **The API contract**, `stagd.api.v1`, which the CLI and the dashboard use, published at [buf.build/stagdhq/stagd](https://buf.build/stagdhq/stagd).
+- **The API contract**, `stagd.api.v1`, which the CLI and the dashboard use, and a preview's plan, `stagd.plan.v1`, both published at [buf.build/stagdhq/stagd](https://buf.build/stagdhq/stagd).
 
 Stagd itself is hosted at [app.stagd.dev](https://app.stagd.dev).
 
@@ -101,6 +102,16 @@ stagd compute connect docker --name build-box --run
 
 makes the connection, starts its relay as the container `stagd-relay` on a network of its own, and waits until it connects. For a connection made elsewhere (in the dashboard, say), `stagd compute install build-box --run` gives the relay a new token and starts it the same way. With `--print` instead, both print docker's commands for the relay, with its token, to run yourself. Whoever reaches the Docker API controls the host, so use a host meant for previews. To remove the relay, on the host: `stagd compute uninstall docker --run`.
 
+## A preview's plan
+
+A plan (`stagd.plan.v1.Plan`, as JSON) is what a preview runs, whatever compute runs it: its services, builds, volumes and ingresses, where its source is, and the names of the environment variables holding its secrets, never their values. On Namespace and Docker hosts, Stagd puts the deploy's plan on the instance and runs `stagd docker up` there. Run it yourself to bring the same preview up on your own Docker, your checkout as the source:
+
+```bash
+stagd docker up plan.json --source .
+```
+
+It builds side by side, as many as there are CPUs, while images are pulled, then starts it with compose, publishing ingresses from port 18000 in the plan's order. Where it stands goes to `.stagd/state`, the logs beside it: `build-<service>.log`, `pull-<service>.log`, `up.log`.
+
 ## Develop
 
 Everything runs with Go alone: `go tool task <name>` (Task is pinned in `go.mod`).
@@ -120,12 +131,13 @@ internal/
   client/           the API client, device login and token storage
   output/           tables and JSON
   relay/            stagd relay, and its protocol
+  dockerup/         stagd docker up: a plan brought up on Docker
   gen/              generated from proto/, never edited by hand
-proto/              the stagd.api.v1 contract (Buf)
+proto/              the stagd.api.v1 contract and stagd.plan.v1 (Buf)
 deploy/kubernetes/  what a cluster gets
 ```
 
-The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. A `v*` tag also makes the GitHub release, with the binaries, `install.sh`, `install.ps1` and `checksums.txt`, and updates the Homebrew cask in [stagdhq/homebrew-tap](https://github.com/stagdhq/homebrew-tap).
+The image is the binary on distroless, as an unprivileged user (65532). CI publishes `main` as `:main` and `:sha-<commit>`, and `v*` tags as their version and `:latest`. Each also comes as the runner, with `-runner` after the tag (`:sha-<commit>-runner`): Docker's CLI with `stagd` in it, which Stagd runs `stagd docker up` in. A `v*` tag also makes the GitHub release, with the binaries, `install.sh`, `install.ps1` and `checksums.txt`, and updates the Homebrew cask in [stagdhq/homebrew-tap](https://github.com/stagdhq/homebrew-tap).
 
 To release, tag with a one-line summary, written as it should read at the top of the notes: `git tag -a v0.5.0 -m "v0.5.0: What's in it"`, and push the tag. The release's notes, which are the changelog, are that summary and the commits since the last tag (`scripts/release-notes.sh`): `feat:` under New, `fix:` under Fixes, `deploy:`, `docs:`, `perf:` and `refactor:` under Also, and `chore:` left out. So write commit subjects for the notes, and use `feat:` or `fix:` for what users notice; `feat!:` marks a breaking change.
 

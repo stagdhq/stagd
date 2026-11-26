@@ -1,6 +1,6 @@
 # The stagd CLI as an image, for `stagd relay` above all: in a Kubernetes
 # cluster (deploy/kubernetes/stagd-relay.yaml), or on a Docker host with
-# the Docker socket.
+# the Docker socket. The runner target is Docker's CLI with stagd in it.
 #
 #   docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=v0.1.0 .
 
@@ -20,6 +20,15 @@ COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o /out/stagd ./cmd/stagd
+
+# The runner on compute where Stagd brings previews up itself (Namespace,
+# Docker hosts): Docker's CLI with compose, and stagd for `stagd docker up`.
+# Published as the -runner tags; the image's default is the one below.
+#
+#   docker buildx build --target runner .
+FROM docker:27-cli AS runner
+
+COPY --from=build /out/stagd /usr/local/bin/stagd
 
 # Nothing but the binary, CA certificates and time zones, as a user without
 # privileges (65532, which deploy/kubernetes/stagd-relay.yaml expects). On a
